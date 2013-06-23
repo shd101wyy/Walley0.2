@@ -25,7 +25,6 @@ x ->  TABLE: 0
 
 
 
-
 def lexer(input_str):
     output=[]
     count=0 # count of ( and )
@@ -425,17 +424,21 @@ def interpreter(tree):
                         
         return_value=interpreter(stm)
         
-        print "Before push---> "
-        print SYMBOLIC_TABLE
-        
         # push SYMBOLIC_TABLE
         SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
-        
-        print "After push---> "
-        print SYMBOLIC_TABLE
                 
         return return_value
     
+    # function if
+    # (if [judge] [run if pass] [run if not pass])
+    elif tree[0]=="if":
+        judge=interpreter(tree[1])
+        if judge=="1":
+            return interpreter(tree[2])
+        else:
+            return interpreter(tree[3])
+
+
     # function eval
     elif tree[0]=="eval":
         print "It is eval"
