@@ -22,6 +22,10 @@ x ->  TABLE: 0
 
 # eg (= x (+ 3 (- 4 5) ))-> [['(', '=', 'x', '(', '+', '3', '(', '-', '4', '5', ')', ')', ')'], True]
 '''
+
+
+
+
 def lexer(input_str):
     output=[]
     count=0 # count of ( and )
@@ -45,7 +49,27 @@ def lexer(input_str):
             start=i
             while(i!=len(input_str) and input_str[i]!=" " and input_str[i]!="(" and input_str[i]!=")"):
                 i=i+1
-            output.append(input_str[start:i])
+            to_append=input_str[start:i]
+            
+            # delete spaces
+            while input_str[i]==" ":
+                i=i+1
+                
+            output.append(to_append)
+            # quote
+            if to_append=="quote":
+                a=length-1
+                count2=0
+                while a>i:
+                    if input_str[a]==")":
+                        count2=count2+1
+                        if count2==count:
+                            print input_str[i:a]
+                            output.append(input_str[i:a])
+                            break
+                    a=a-1
+                i=a
+                continue
             continue
     
     return_obj=[]
@@ -98,9 +122,13 @@ def parser(arr):
 
 '''
     var:
-        table
         function
         symbol
+        
+    support :
+        quote
+        car
+        cdr
 '''
 
 def interpreter(tree,table_space={}):
@@ -108,10 +136,6 @@ def interpreter(tree,table_space={}):
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
         print "tree---> "+tree
-        if (tree in TABLE_SPACE.keys()):
-            var_value = TABLE_SPACE[tree]
-            if type(var_value)==str:
-                return var_value
         return tree
     # x = 12
     if tree[0]=="=":
@@ -123,11 +147,10 @@ def interpreter(tree,table_space={}):
         table_space[var_name]={}
 
         var_value=interpreter(tree[2],table_space[var_name])
-        if type(var_value)==str and var_value!="nil":
-            table_space[var_name]=var_value
+        table_space[var_name]=var_value
+        
         return "nil"
         
-    
     if tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
         i=2
         append_str=interpreter(tree[1])
@@ -136,37 +159,47 @@ def interpreter(tree,table_space={}):
             i=i+1
         return str(eval(append_str))
     
-    # ((= x 4)(= y 5))
-    if type(tree[0])==list:
-        for i in tree:
-            interpreter(i,table_space)
-        return "nil"
+    if tree[0]=="quote":
+        print 'it is quote'
+        return tree[1]
     
-    # (x z) table
-    print "Enter here--> ",
-    print tree
-    
-    append_str="( "+tree[0]
-    return_obj=TABLE_SPACE[tree[0]]
-    i=1
-    while i<length: #and type(return_obj)!=str:
-        append_str=append_str +" "+ tree[i]
-        return_obj=return_obj[tree[i]]
-        i=i+1
-    print return_obj
-    append_str=append_str+" )"
-    if type(return_obj)==dict:
-        return append_str
-    return return_obj
-    
+    if tree[0]=="car":
+        print "it is car"
+        value=interpreter(tree[1],table_space)
+        print value
+        if value[0]!="(":
+            print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
+        else:
+            value=value[1:len(value)-1]
+            i=0
+            while i!=len(value) and value[i]!=" ":
+                i=i+1
+            return value[0:i]
+    if tree[0]=="cdr":
+        print "it is cdr"
+        value=interpreter(tree[1],table_space)
+        print value
+        if value[0]!="(":
+            print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
+        else:
+            value=value[1:len(value)-1]
+            i=0
+            while i!=len(value) and value[i]!=" ":
+                i=i+1
+            return "("+value[i:len(value)]+")"
+            
     
     
 TABLE_SPACE={}
-x=lexer("((= x (= z 12))(= z x))")
+x=lexer("(cdr (quote (1 2 3)))")
+if x[1]==False:
+    print "Incomplete Statement"
+    exit(0)
 y=parser(x[0])
 print x
 print y
 z=interpreter(y,TABLE_SPACE)
+print "\n\n\n\n=========="
 print z
 print TABLE_SPACE
 
