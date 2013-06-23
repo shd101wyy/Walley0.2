@@ -51,13 +51,14 @@ def lexer(input_str):
                 i=i+1
             to_append=input_str[start:i]
             
-            # delete spaces
-            while input_str[i]==" ":
-                i=i+1
                 
             output.append(to_append)
             # quote
             if to_append=="quote":
+                # delete spaces
+                while i!=len(input_str) and input_str[i]==" ":
+                     i=i+1
+                     
                 a=length-1
                 count2=0
                 while a>i:
@@ -136,26 +137,33 @@ def interpreter(tree,table_space={}):
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
         print "tree---> "+tree
-        return tree
+        if tree.isdigit():
+            return tree
+        else:
+            if tree in table_space.keys():
+                return table_space[tree]
+            else:
+                print "\nError...\nUndefined value "+tree+"\n"
+                exit(0)
     # x = 12
     if tree[0]=="=":
         if length!=3:
             print "Error. = need 3 values inside"
             exit(0)
-        var_name=interpreter(tree[1])
+        var_name=tree[1]
         
         table_space[var_name]={}
 
-        var_value=interpreter(tree[2],table_space[var_name])
+        var_value=interpreter(tree[2],table_space)
         table_space[var_name]=var_value
         
         return "nil"
         
     if tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
         i=2
-        append_str=interpreter(tree[1])
+        append_str=interpreter(tree[1],table_space)
         while i<length:
-            append_str=append_str+tree[0]+interpreter(tree[i]) 
+            append_str=append_str+tree[0]+interpreter(tree[i],table_space) 
             i=i+1
         return str(eval(append_str))
     
@@ -163,6 +171,8 @@ def interpreter(tree,table_space={}):
         print 'it is quote'
         return tree[1]
     
+    # car function
+    # (car '(1 2 3)) -> 1
     if tree[0]=="car":
         print "it is car"
         value=interpreter(tree[1],table_space)
@@ -175,6 +185,9 @@ def interpreter(tree,table_space={}):
             while i!=len(value) and value[i]!=" ":
                 i=i+1
             return value[0:i]
+        
+    # cdr function
+    # (cdr '(1 2 3)) -> (2 3)
     if tree[0]=="cdr":
         print "it is cdr"
         value=interpreter(tree[1],table_space)
@@ -186,12 +199,33 @@ def interpreter(tree,table_space={}):
             i=0
             while i!=len(value) and value[i]!=" ":
                 i=i+1
-            return "("+value[i:len(value)]+")"
-            
+            # trim
+            return "("+value[i:len(value)].strip()+")"
+    
+    # function cons
+    # (cons 12 '(1 2 3)) -> (12 1 2 3)
+    if tree[0]=="cons":
+        print "it is cons"
+        value1=interpreter(tree[1],table_space)
+        value2=interpreter(tree[2],table_space)
+        print value1
+        print value2
+        if value2[0]!="(":
+            print "Error...\nFunction 'cons' only support (cons [value] [list])\n"
+        else:
+            return "("+value1+" "+value2[1:len(value2)]
+    
+    # function stms
+    # (stms [stm1] [stm2]) run stm1,stm2... in turn
+    if tree[0]=="stms":
+        i=1
+        while i<len(tree):
+            print interpreter(tree[i],table_space)
+            i=i+1
     
     
 TABLE_SPACE={}
-x=lexer("(cdr (quote (1 2 3)))")
+x=lexer("(stms (= x 12) (= y (+ x 3)) y)")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
