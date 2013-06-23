@@ -123,9 +123,9 @@ def parser(arr):
     return output
 
 
-def pushSymbolicTable(symbolic_table):
-    symbolic_table=symbolic_table[0:len(symbolic_table)-1]
-
+def pushSymbolicTable(SYMBOLIC_TABLE):
+    SYMBOLIC_TABLE=SYMBOLIC_TABLE[0:len(SYMBOLIC_TABLE)-1]
+    return SYMBOLIC_TABLE
 '''
     var:
         function
@@ -137,7 +137,18 @@ def pushSymbolicTable(symbolic_table):
         cdr
 '''
 
-def interpreter(tree,symbolic_table={}):
+
+# GLOBAL VALUE 
+# SYMBOLIC_TABLE
+
+SYMBOLIC_TABLE=[]
+SYMBOLIC_TABLE.append({})
+        
+
+def interpreter(tree):
+    global SYMBOLIC_TABLE
+    
+    
     length=len(tree)
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
@@ -146,11 +157,11 @@ def interpreter(tree,symbolic_table={}):
             return tree
         else:
             
-            length=len(symbolic_table)
+            length=len(SYMBOLIC_TABLE)
             i=length-1
             while i>=0:
-                if tree in symbolic_table[i].keys():
-                    return symbolic_table[i][tree]
+                if tree in SYMBOLIC_TABLE[i].keys():
+                    return SYMBOLIC_TABLE[i][tree]
                 i=i-1
             print "\nError...\nUndefined value "+tree+"\n"
             exit(0)
@@ -163,8 +174,8 @@ def interpreter(tree,symbolic_table={}):
             exit(0)
         var_name=tree[1]
         
-        var_value=interpreter(tree[2],symbolic_table)
-        symbolic_table[0][var_name]=var_value
+        var_value=interpreter(tree[2])
+        SYMBOLIC_TABLE[0][var_name]=var_value
         
         return "nil"
     # local x = 12
@@ -175,21 +186,21 @@ def interpreter(tree,symbolic_table={}):
             exit(0)
         var_name=tree[1]
         
-        var_value=interpreter(tree[2],symbolic_table)
-        symbolic_table[len(symbolic_table)-1][var_name]=var_value
+        var_value=interpreter(tree[2])
+        SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
         
     elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
         i=2
-        append_str=interpreter(tree[1],symbolic_table)
+        append_str=interpreter(tree[1])
         while i<length:
-            append_str=append_str+tree[0]+interpreter(tree[i],symbolic_table) 
+            append_str=append_str+tree[0]+interpreter(tree[i]) 
             i=i+1
         return str(eval(append_str))
     
     elif tree[0]=="==":
         print "===="
-        value1=interpreter(tree[1],symbolic_table)
-        value2=interpreter(tree[2],symbolic_table)
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
         print value1
         print value2
     
@@ -203,7 +214,7 @@ def interpreter(tree,symbolic_table={}):
     # (car '(1 2 3)) -> 1
     elif tree[0]=="car":
         print "it is car"
-        value=interpreter(tree[1],symbolic_table)
+        value=interpreter(tree[1])
         print value
         if value[0]!="(":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
@@ -218,7 +229,7 @@ def interpreter(tree,symbolic_table={}):
     # (cdr '(1 2 3)) -> (2 3)
     elif tree[0]=="cdr":
         print "it is cdr"
-        value=interpreter(tree[1],symbolic_table)
+        value=interpreter(tree[1])
         print value
         if value[0]!="(":
             print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
@@ -234,8 +245,8 @@ def interpreter(tree,symbolic_table={}):
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
     elif tree[0]=="cons":
         print "it is cons"
-        value1=interpreter(tree[1],symbolic_table)
-        value2=interpreter(tree[2],symbolic_table)
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
         print value1
         print value2
         if value2[0]!="(":
@@ -247,9 +258,12 @@ def interpreter(tree,symbolic_table={}):
     # (stms [stm1] [stm2]) run stm1,stm2... in turn
     elif tree[0]=="stms":
         i=1
-        while i<len(tree):
-            print interpreter(tree[i],symbolic_table)
+        while i<len(tree)-1:
+            interpreter(tree[i])
             i=i+1
+            
+        # only return the last one
+        return interpreter(tree[i])
     # function lambda
     # (= add (lambda (a b) (+ a b)))
     elif tree[0]=="lambda":
@@ -274,7 +288,7 @@ def interpreter(tree,symbolic_table={}):
         i=1
         output="("
         while i<len(tree):
-            output=output+interpreter(tree[i],symbolic_table)
+            output=output+interpreter(tree[i])
             if i+1!=len(tree):
                 output=output+" "
             i=i+1
@@ -284,7 +298,7 @@ def interpreter(tree,symbolic_table={}):
     # function number?
     # (number? 12) -> 1
     elif tree[0]=="number?":
-        value=interpreter(tree[1],symbolic_table)
+        value=interpreter(tree[1])
         if value.isdigit():
             return "1"
         else:
@@ -293,7 +307,7 @@ def interpreter(tree,symbolic_table={}):
     # function list?
     # (list? (quote (1 2 3))) -> 1
     elif tree[0]=="list?":
-        value=interpreter(tree[1],symbolic_table)
+        value=interpreter(tree[1])
         if value[0]=="(" and value[len(value)-1]==")":
             return "1"
         else:
@@ -303,7 +317,7 @@ def interpreter(tree,symbolic_table={}):
     # (atom? 12) -> 1
     # (atom? '(1 2)) -> 0
     elif tree[0]=="atom?":
-        value=interpreter(tree[1],symbolic_table)
+        value=interpreter(tree[1])
         if value[0]=="(" and value[len(value)-1]==")":
             return "0"
         else:
@@ -311,7 +325,7 @@ def interpreter(tree,symbolic_table={}):
     
     
     elif tree[0]=="print":
-        print interpreter(tree[1],symbolic_table)
+        print interpreter(tree[1])
     
     # function let
     # (let [assignment] [stm])
@@ -320,24 +334,30 @@ def interpreter(tree,symbolic_table={}):
     # x is local
     elif tree[0]=="let":
         # local
-        temp_table_space={}
-        
+        SYMBOLIC_TABLE.append({})
+
+
         print "It is let"
         assignment=tree[1]
         for i in assignment:
             var_name=i[0]
-            temp_table_space[var_name]={}
-            var_value=interpreter(i[1],temp_table_space)
-            temp_table_space[var_name]=var_value
+            var_value=interpreter(i[1])
+            SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
+
         
         stm=tree[2]
+                        
+        return_value=interpreter(stm)
         
-        symbolic_table.append(temp_table_space)
-        return_value=interpreter(stm,symbolic_table)
+        print "Before push---> "
+        print SYMBOLIC_TABLE
         
-        # push symbolic_table
-        pushSymbolicTable(symbolic_table)
+        # push SYMBOLIC_TABLE
+        SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
         
+        print "After push---> "
+        print SYMBOLIC_TABLE
+                
         return return_value
     
     # call function directly
@@ -345,11 +365,11 @@ def interpreter(tree,symbolic_table={}):
         function_name=tree[0]
         # function_procedure
         if type(function_name)==str:
-            function_procedure=symbolic_table[0][function_name]
+            function_procedure=SYMBOLIC_TABLE[0][function_name]
             pass
         # ((lambda (a b) (+ a b)) 3 4) ---> 7
         else:
-            function_procedure=interpreter(function_name,symbolic_table)
+            function_procedure=interpreter(function_name)
         
         # remove <procedure  >
         function_procedure=function_procedure[11:len(function_procedure)-2]
@@ -388,7 +408,7 @@ def interpreter(tree,symbolic_table={}):
         print "run_str---> "+run_str
         run_str_tree=parser(lexer(run_str)[0])
         
-        return interpreter(run_str_tree,symbolic_table)
+        return interpreter(run_str_tree)
     
 
 '''
@@ -398,21 +418,18 @@ SYMBOLIC TABLE
 
 
 '''
-SYMBOLIC_TABLE=[]
-SYMBOLIC_TABLE.append({})
-        
-x=lexer("(stms (= x 12) (= y 13) (= add (lambda () (+ x y))) (add))")
+    
+x=lexer("()")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
 y=parser(x[0])
 print x
 print y
-z=interpreter(y,SYMBOLIC_TABLE)
+z=interpreter(y)
 print "\n\n\n\n=========="
 print z
 print SYMBOLIC_TABLE
-
 
 
 
