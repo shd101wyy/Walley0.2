@@ -491,13 +491,12 @@ def interpreter(tree):
         return interpreter(run_str_tree)
     
 
-'''
-SYMBOLIC TABLE
-0     GLOBAL 
-1...n LOCAL
+
+#SYMBOLIC TABLE
+#0     GLOBAL 
+#1...n LOCAL
 
 
-'''
     
 x=lexer("(and (== 1 1) (== 3 3))")
 if x[1]==False:
