@@ -263,9 +263,16 @@ def interpreter(tree,table_space={}):
         return interpreter(stm,temp_table_space)
     # call function directly
     else:
-        print "Call Function "+tree[0]
         function_name=tree[0]
-        function_procedure=table_space[function_name]
+        # function_procedure
+        if type(function_name)==str:
+            function_procedure=table_space[function_name]
+            pass
+        # ((lambda (a b) (+ a b)) 3 4) ---> 7
+        else:
+            function_procedure=interpreter(function_name,table_space)
+        
+        # remove <procedure  >
         function_procedure=function_procedure[11:len(function_procedure)-2]
         i=0
         count=0
@@ -307,7 +314,7 @@ def interpreter(tree,table_space={}):
         
         
 TABLE_SPACE={}
-x=lexer("(stms (= add (lambda (a b) (+ a b))) (print (add 3 4)) )")
+x=lexer("(= x ((lambda (a b) (+ a b)) 3 4))")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
