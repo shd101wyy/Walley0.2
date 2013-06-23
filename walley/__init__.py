@@ -360,6 +360,10 @@ def interpreter(tree):
                 
         return return_value
     
+    # function eval
+    elif tree[0]=="eval":
+        print "It is eval"
+        return interpreter(parser(lexer(interpreter(tree[1]))[0]))
     # call function directly
     else:
         function_name=tree[0]
@@ -419,7 +423,7 @@ SYMBOLIC TABLE
 
 '''
     
-x=lexer("()")
+x=lexer("(eval (quote (= x 12)))")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
