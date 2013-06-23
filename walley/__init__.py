@@ -167,6 +167,15 @@ def interpreter(tree,table_space={}):
             i=i+1
         return str(eval(append_str))
     
+    elif tree[0]=="==":
+        print "===="
+        value1=interpreter(tree[1],table_space)
+        value2=interpreter(tree[2],table_space)
+        print value1
+        print value2
+    
+    # quote
+    # (quote (1,2,3)) --> (1,2,3)
     elif tree[0]=="quote":
         print 'it is quote'
         return tree[1]
@@ -239,6 +248,17 @@ def interpreter(tree,table_space={}):
         return_str=return_str+") >"
         return return_str
     
+    elif tree[0]=="list":
+        i=1
+        output="("
+        while i<len(tree):
+            output=output+interpreter(tree[i],table_space)
+            if i+1!=len(tree):
+                output=output+" "
+            i=i+1
+        output=output+")"
+        return output
+    
     elif tree[0]=="print":
         print interpreter(tree[1],table_space)
     
@@ -310,11 +330,11 @@ def interpreter(tree,table_space={}):
         run_str_tree=parser(lexer(run_str)[0])
         
         return interpreter(run_str_tree,table_space)
-        
+    
         
         
 TABLE_SPACE={}
-x=lexer("(= x ((lambda (a b) (+ a b)) 3 4))")
+x=lexer("(stms (= x 12) (list 1 2 x))")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
