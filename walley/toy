@@ -41,6 +41,27 @@ def lexer(input_str):
         elif input_str[i]==" ":
             i=i+1
             continue
+        # string
+        elif input_str[i]=="\"":
+            count=0
+            start=i
+            while i<length:
+                if input_str[i]=="\"" and input_str[i-1]!="\\":
+                    count=count+1
+                    if count==2:
+                        output.append(input_str[start:i+1])
+                        break
+                i=i+1
+
+            if count!=2:
+                print "Error...\nInvalid String"
+
+            i=i+1
+            if input_str[i]!=" " or input_str[i]!=")":
+                print "Error...\nInvalid String2"
+
+            continue
+
         else:
             start=i
             while(i!=len(input_str) and input_str[i]!=" " and input_str[i]!="(" and input_str[i]!=")"):
@@ -315,6 +336,11 @@ def interpreter(tree):
             print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
         else:
             value=value[1:len(value)-1]
+
+            if len(value.strip())==0:
+                print "Error...\nFunction 'cdr' does not support empty list"
+                return ""
+
             i=0
             while i!=len(value) and value[i]!=" ":
                 i=i+1
@@ -329,7 +355,7 @@ def interpreter(tree):
         value2=interpreter(tree[2])
         print value1
         print value2
-        if value2[0]!="(":
+        if value2[0]!="(" or value2[len(value2)-1]!=")":
             print "Error...\nFunction 'cons' only support (cons [value] [list])\n"
         else:
             return "("+value1+" "+value2[1:len(value2)]
@@ -463,7 +489,7 @@ def interpreter(tree):
                     break
                 i=i-1
             if find==False:
-                print "\nError...\nUndefined function "+function_name+"\n"
+                print "\nError...\nUndefined function '"+function_name+"'\n"
                 return ""
         # ((lambda (a b) (+ a b)) 3 4) ---> 7
         else:
