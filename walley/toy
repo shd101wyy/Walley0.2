@@ -14,9 +14,6 @@ keyword:
 
 (= x 12)  ->          x = 12
 (= x) -> 12
-x ->  TABLE: 0
-    FUNCTION: 0
-    SYMBOL: 1
 
 (= x (+ 3 4)) ->     x = 7
 
@@ -149,6 +146,9 @@ def interpreter(tree):
     
     
     length=len(tree)
+    if length==0:
+        print "invalid statement"
+        return ""
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
         #print "tree---> "+tree
@@ -163,15 +163,16 @@ def interpreter(tree):
                     return SYMBOLIC_TABLE[i][tree]
                 i=i-1
             print "\nError...\nUndefined value "+tree+"\n"
-            exit(0)
-            
+    
     # x = 12
     # add to global symbolic table
     elif tree[0]=="=":
         if length!=3:
             print "Error. = need 3 values inside"
-            exit(0)
         var_name=tree[1]
+
+        if var_name.isdigit():
+            print "Error...\nBad variable name -> "+var_name
         
         var_value=interpreter(tree[2])
         SYMBOLIC_TABLE[0][var_name]=var_value
@@ -182,7 +183,6 @@ def interpreter(tree):
     elif tree[0]=="local=":
         if length!=3:
             print "Error. = need 3 values inside"
-            exit(0)
         var_name=tree[1]
         
         var_value=interpreter(tree[2])
@@ -291,10 +291,15 @@ def interpreter(tree):
         print "it is car"
         value=interpreter(tree[1])
         print value
-        if value[0]!="(":
+        if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
         else:
             value=value[1:len(value)-1]
+
+            if len(value.strip())==0:
+                print "Error...\nFunction 'car' does not support empty list"
+                return ""
+
             i=0
             while i!=len(value) and value[i]!=" ":
                 i=i+1
@@ -306,7 +311,7 @@ def interpreter(tree):
         print "it is cdr"
         value=interpreter(tree[1])
         print value
-        if value[0]!="(":
+        if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
         else:
             value=value[1:len(value)-1]
@@ -448,8 +453,18 @@ def interpreter(tree):
         function_name=tree[0]
         # function_procedure
         if type(function_name)==str:
-            function_procedure=SYMBOLIC_TABLE[0][function_name]
-            pass
+            length=len(SYMBOLIC_TABLE)
+            i=length-1
+            find=False
+            while i>=0:
+                if function_name in SYMBOLIC_TABLE[i].keys():
+                    function_procedure=SYMBOLIC_TABLE[i][function_name]
+                    find=True
+                    break
+                i=i-1
+            if find==False:
+                print "\nError...\nUndefined function "+function_name+"\n"
+                return ""
         # ((lambda (a b) (+ a b)) 3 4) ---> 7
         else:
             function_procedure=interpreter(function_name)
@@ -523,7 +538,7 @@ while True:
     x=lexer(x)
     if x[1]==False:
         print "Incomplete Statement"
-        exit(0)
+        continue
     x=parser(x[0])
     interpreter(x)
 
