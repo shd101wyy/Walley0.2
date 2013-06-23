@@ -198,11 +198,87 @@ def interpreter(tree):
         return str(eval(append_str))
     
     elif tree[0]=="==":
-        print "===="
+        print "It is =="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         print value1
         print value2
+        if value1==value2:
+            return "1"
+        else:
+            return "0"
+    elif tree[0]==">":
+        print "It is >"
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1>value2:
+            return "1"
+        else:
+            return "0"
+    elif tree[0]=="<":
+        print "It is <"
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1<value2:
+            return "1"
+        else:
+            return "0"
+    elif tree[0]=="!=":
+        print "It is !="
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1!=value2:
+            return "1"
+        else:
+            return "0"
+        
+    elif tree[0]==">=":
+        print "It is >="
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1>=value2:
+            return "1"
+        else:
+            return "0"
+        
+    elif tree[0]=="<=":
+        print "It is <="
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1<=value2:
+            return "1"
+        else:
+            return "0"
+        
+    elif tree[0]=="not":
+        value = interpreter(tree[1])
+        if value=="0":
+            return "1"
+        else:
+            return "0"
+    ###   
+    #    p  q  and  or
+    #    1  0  0    1
+    #    1  1  1    1
+    #    0  0  0    0
+    #    0  1  0    1
+    ###
+        
+    elif tree[0]=="and":
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1=="1" and value2=="1":
+            return "1"
+        else:
+            return "0"
+    
+    elif tree[0]=="or":
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        if value1=="0" and value2=="0":
+            return "0"
+        else:
+            return "1"
     
     # function quote
     # (quote (1,2,3)) --> (1,2,3)
@@ -423,7 +499,7 @@ SYMBOLIC TABLE
 
 '''
     
-x=lexer("(eval (quote (= x 12)))")
+x=lexer("(and (== 1 1) (== 3 3))")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
@@ -434,6 +510,9 @@ z=interpreter(y)
 print "\n\n\n\n=========="
 print z
 print SYMBOLIC_TABLE
+
+x="3">"2"
+print x
 
 
 
