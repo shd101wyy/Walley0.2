@@ -136,7 +136,7 @@ def interpreter(tree,table_space={}):
     length=len(tree)
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
-        print "tree---> "+tree
+        #print "tree---> "+tree
         if tree.isdigit():
             return tree
         else:
@@ -146,7 +146,7 @@ def interpreter(tree,table_space={}):
                 print "\nError...\nUndefined value "+tree+"\n"
                 exit(0)
     # x = 12
-    if tree[0]=="=":
+    elif tree[0]=="=":
         if length!=3:
             print "Error. = need 3 values inside"
             exit(0)
@@ -159,7 +159,7 @@ def interpreter(tree,table_space={}):
         
         return "nil"
         
-    if tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
+    elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
         i=2
         append_str=interpreter(tree[1],table_space)
         while i<length:
@@ -167,13 +167,13 @@ def interpreter(tree,table_space={}):
             i=i+1
         return str(eval(append_str))
     
-    if tree[0]=="quote":
+    elif tree[0]=="quote":
         print 'it is quote'
         return tree[1]
     
     # car function
     # (car '(1 2 3)) -> 1
-    if tree[0]=="car":
+    elif tree[0]=="car":
         print "it is car"
         value=interpreter(tree[1],table_space)
         print value
@@ -188,7 +188,7 @@ def interpreter(tree,table_space={}):
         
     # cdr function
     # (cdr '(1 2 3)) -> (2 3)
-    if tree[0]=="cdr":
+    elif tree[0]=="cdr":
         print "it is cdr"
         value=interpreter(tree[1],table_space)
         print value
@@ -204,7 +204,7 @@ def interpreter(tree,table_space={}):
     
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
-    if tree[0]=="cons":
+    elif tree[0]=="cons":
         print "it is cons"
         value1=interpreter(tree[1],table_space)
         value2=interpreter(tree[2],table_space)
@@ -217,15 +217,97 @@ def interpreter(tree,table_space={}):
     
     # function stms
     # (stms [stm1] [stm2]) run stm1,stm2... in turn
-    if tree[0]=="stms":
+    elif tree[0]=="stms":
         i=1
         while i<len(tree):
             print interpreter(tree[i],table_space)
             i=i+1
+    # (= add (lambda (a b) (+ a b)))
+    elif tree[0]=="lambda":
+        return_str="<procedure ("
+        for i in tree[1]:
+            return_str=return_str+i+" "
+        
+        return_str=return_str.strip()
+        
+        return_str=return_str+") ("
+        for i in tree[2]:
+            return_str=return_str+i+" "
+            
+        return_str=return_str.strip()
+
+        return_str=return_str+") >"
+        return return_str
     
+    elif tree[0]=="print":
+        print interpreter(tree[1],table_space)
     
+    # call function let
+    # (let [assignment] [stm])
+    # (let ((x 12)) (print x))
+    # (let (x 12) (print x)) is invalid
+    # x is local
+    elif tree[0]=="let":
+        # local
+        temp_table_space={}
+        
+        print "It is let"
+        assignment=tree[1]
+        for i in assignment:
+            var_name=i[0]
+            temp_table_space[var_name]={}
+            var_value=interpreter(i[1],temp_table_space)
+            temp_table_space[var_name]=var_value
+                
+        stm=tree[2]
+        return interpreter(stm,temp_table_space)
+    # call function directly
+    else:
+        print "Call Function "+tree[0]
+        function_name=tree[0]
+        function_procedure=table_space[function_name]
+        function_procedure=function_procedure[11:len(function_procedure)-2]
+        i=0
+        count=0
+        
+        params=""
+        stms=""
+        
+        while i<len(function_procedure):
+            if function_procedure[i]=="(":
+                count=count+1
+            elif function_procedure[i]==")":
+                count=count-1
+                if count==0:
+                    params=function_procedure[0:i+1]
+                    stms=function_procedure[i+1:len(function_procedure)]
+                    break
+            i=i+1
+        #print function_procedure
+        #print params
+        #print stms
+        
+        params_tree=parser(lexer(params)[0])
+        
+        print params_tree
+        
+        run_str="(let ("
+        a=1
+        for i in params_tree:
+            run_str=run_str+"("+i+" "+tree[a]+")"
+            a=a+1
+        run_str=run_str+")"
+        run_str=run_str+stms+")"
+        
+        print "run_str---> "+run_str
+        run_str_tree=parser(lexer(run_str)[0])
+        
+        return interpreter(run_str_tree,table_space)
+        
+        
+        
 TABLE_SPACE={}
-x=lexer("(stms (= x 12) (= y (+ x 3)) y)")
+x=lexer("(stms (= add (lambda (a b) (+ a b))) (print (add 3 4)) )")
 if x[1]==False:
     print "Incomplete Statement"
     exit(0)
