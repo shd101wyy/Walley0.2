@@ -516,11 +516,38 @@ def interpreter(tree):
         else:
             return interpreter(tree[3])
 
+    # function cond
+    #
+    #    (cond [[judge1] [run stm1 if judge1 passed and then return]] [[judge2] [stm2]] ...)
+    #    (cond 
+    #        (
+    #            (== 12 13)
+    #            (print "1")
+    #        )
+    #        (
+    #            (== 12 12)
+    #            (print "2")
+    #        )
+    #    )
+    #      will print "2"
+    elif tree[0]=="cond":
+        i=1
+        while i<length:
+            judge=interpreter(tree[i][0])
+            
+            if judge=="1":
+                # pas
+                return interpreter(tree[i][1])
+
+            i=i+1
+
 
     # function eval
     elif tree[0]=="eval":
         print "It is eval"
         return interpreter(parser(lexer(interpreter(tree[1]))[0]))
+
+
     # call function directly
     else:
         function_name=tree[0]

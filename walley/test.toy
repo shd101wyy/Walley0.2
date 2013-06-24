@@ -1,3 +1,20 @@
 (define x 12)
 (if (== x 12) (print x)(print x))
-(= add (lambda (a b) (stms (+ a b))))
+(= add 
+	(lambda (a b)
+		(stms 
+			(+ a b)
+		)
+	)
+)
+
+
+(= ^ (lambda (a b) (^ a (- b 1))))    
+
+(define ^ 
+	(lambda (a b) 
+		(cond ())
+		(^ a (- b 1))
+	)
+)    
+
