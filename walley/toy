@@ -3,6 +3,24 @@
 '''
 walley
 
+    Copyright shd101wyy Yiyi Wang 2013~2014
+    Released under MIT license
+
+
+
+    TOY LANGUAGE
+
+    |======|
+       ||
+       ||
+       ||    /==\   \\ //
+       ||    |  |    \//
+       ||    \++/    //         language 
+                    //
+                   //
+
+
+
 obj
 func
 val
@@ -11,6 +29,13 @@ keyword:
     + - * /  %
     if def = 
         == >= <= > < != not and or 
+
+function:
+    car cdr cond if cons stms eval let print list quote atom? list? number? lambda
+
+
+
+
 
 (= x 12)  ->          x = 12
 (= x) -> 12
@@ -139,7 +164,7 @@ def lexer(input_str):
 '''
 def parser(arr):
     if len(arr)==1:
-        return arr
+        return arr[0]
     arr=arr[1:len(arr)-1]
     output=[]
     length=len(arr)
@@ -224,13 +249,6 @@ def interpreter(tree):
                 i=i-1
             print "\nError...\nUndefined value "+tree+"\n"
     
-    #   (= x 12)
-    #   x   --> show the value of x directly
-    #       
-    elif length==1:
-        #print "invalid statement"
-        print interpreter(tree[0])
-        return ""
     # x = 12
     # add to global symbolic table
     elif tree[0]=="=":
