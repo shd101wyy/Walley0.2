@@ -41,24 +41,46 @@ def lexer(input_str):
         elif input_str[i]==" ":
             i=i+1
             continue
+        
+        # quote
+        elif input_str[i]=="'":
+            start=i+1
+            i=i+1
+            count_of_bracket=0
+            while(i!=len(input_str)):
+                if input_str[i]=="(":
+                    count_of_bracket=count_of_bracket+1
+                elif input_str[i]==")":
+                    count_of_bracket=count_of_bracket-1
+                if count_of_bracket==0 and input_str[i]==" ":
+                    break
+                if count_of_bracket==-1:
+                    break
+                i=i+1
+            to_append=input_str[start:i]
+            output.append("(")
+            output.append("quote")
+            output.append(to_append)
+            output.append(")")
+
         # string
         elif input_str[i]=="\"":
-            count=0
+            count2=0
             start=i
             while i<length:
                 if input_str[i]=="\"" and input_str[i-1]!="\\":
-                    count=count+1
-                    if count==2:
+                    count2=count2+1
+                    if count2==2:
                         output.append(input_str[start:i+1])
                         break
                 i=i+1
 
-            if count!=2:
+            if count2!=2:
                 print "Error...\nInvalid String"
 
             i=i+1
-            if input_str[i]!=" " or input_str[i]!=")":
-                print "Error...\nInvalid String2"
+            if input_str[i]!=" " and input_str[i]!=")":
+                print "Error...\nInvalid String -> "+input_str[start:i+1]+"...\n"
 
             continue
 
@@ -175,6 +197,8 @@ def interpreter(tree):
         #print "tree---> "+tree
         if tree.isdigit():
             return tree
+        elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
+            return tree
         else:
             
             length=len(SYMBOLIC_TABLE)
@@ -189,16 +213,19 @@ def interpreter(tree):
     # add to global symbolic table
     elif tree[0]=="=":
         if length!=3:
-            print "Error. = need 3 values inside"
+            print "Error...\n = need 3 values inside\nLike (= x 12)"
+            return ""
+
         var_name=tree[1]
 
         if var_name.isdigit():
             print "Error...\nBad variable name -> "+var_name
+            return ""
         
         var_value=interpreter(tree[2])
         SYMBOLIC_TABLE[0][var_name]=var_value
         
-        return "nil"
+        return var_value
     # local x = 12
     # add to local symbolic table
     elif tree[0]=="local=":
@@ -557,6 +584,9 @@ print SYMBOLIC_TABLE
 x="3">"2"
 print x
 '''
+
+import sys
+
 
 while True:
     print ">>> ",
