@@ -13,7 +13,8 @@
 
 (define ^ 
 	(lambda (a b) 
-		(cond ())
+		(cond ((= b 0)
+				())  )
 		(^ a (- b 1))
 	)
 )    

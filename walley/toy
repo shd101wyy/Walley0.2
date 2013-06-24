@@ -138,6 +138,8 @@ def lexer(input_str):
 
 '''
 def parser(arr):
+    if len(arr)==1:
+        return arr
     arr=arr[1:len(arr)-1]
     output=[]
     length=len(arr)
@@ -205,9 +207,6 @@ def interpreter(tree):
     
     
     length=len(tree)
-    if length==0:
-        print "invalid statement"
-        return ""
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
         #print "tree---> "+tree
@@ -225,6 +224,13 @@ def interpreter(tree):
                 i=i-1
             print "\nError...\nUndefined value "+tree+"\n"
     
+    #   (= x 12)
+    #   x   --> show the value of x directly
+    #       
+    elif length==1:
+        #print "invalid statement"
+        print interpreter(tree[0])
+        return ""
     # x = 12
     # add to global symbolic table
     elif tree[0]=="=":
@@ -640,10 +646,14 @@ while True:
     print ">>> ",
     x=raw_input()
     x=lexer(x)
+    #print "Lexer----> ",
+    #print x
     if x[1]==False:
         print "Incomplete Statement"
         continue
     x=parser(x[0])
+    #print "Parser----> ",
+    #print x
     interpreter(x)
 
 
