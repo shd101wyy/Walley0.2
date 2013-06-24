@@ -32,6 +32,7 @@ keyword:
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
+    ... 
 
 
 
@@ -564,6 +565,12 @@ def interpreter(tree):
                 return interpreter(tree[i][1])
 
             i=i+1
+    
+    # function ...
+    # (= add (lambda (a b) (+ (... 0) (... 1))))
+    # I haven't decided how to implement this function
+    elif tree[0]=="...":
+        pass
 
 
     # function eval
