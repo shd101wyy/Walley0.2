@@ -41,7 +41,7 @@ def lexer(input_str):
         elif input_str[i]==" ":
             i=i+1
             continue
-        
+
         # quote
         elif input_str[i]=="'":
             start=i+1
@@ -182,7 +182,23 @@ def pushSymbolicTable(SYMBOLIC_TABLE):
 
 SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
-        
+
+''' 
+    convert 
+        [stms [+ a b]]
+    to
+        (stms (+ a b))
+'''
+def convertArrayToString(array):
+    output=""
+    for i in array:
+        if type(i)==str:
+            output=output+i+" "
+        else:
+            output=output+"("
+            output=output+convertArrayToString(i)
+            output=output+")"
+    return output
 
 def interpreter(tree):
     global SYMBOLIC_TABLE
@@ -407,8 +423,12 @@ def interpreter(tree):
         return_str=return_str.strip()
         
         return_str=return_str+") ("
-        for i in tree[2]:
-            return_str=return_str+i+" "
+
+        stms=convertArrayToString(tree[2])
+
+        return_str=return_str+stms
+        #for i in tree[2]:
+        #    return_str=return_str+i+" "
             
         return_str=return_str.strip()
 
@@ -587,7 +607,8 @@ print x
 
 import sys
 
-
+print "Toy Language >>>>>>>>>>>>>>>"
+print "Press ctrl+C to quit\n"
 while True:
     print ">>> ",
     x=raw_input()
