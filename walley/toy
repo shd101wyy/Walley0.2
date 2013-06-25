@@ -212,10 +212,6 @@ SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
 
-# (= x '(1 2 3))
-# (= (0 x) 12) -> x=(12 2 3)
-# save 0 to ARRAY
-ARRAY=[]
 
 ''' 
     convert 
@@ -224,7 +220,9 @@ ARRAY=[]
         (stms (+ a b))
 '''
 def convertArrayToString(array):
-    output=""
+    #if type(array)==str:
+    #    return array
+    output="("
     for i in array:
         if type(i)==str:
             output=output+i+" "
@@ -232,11 +230,12 @@ def convertArrayToString(array):
             output=output+"("
             output=output+convertArrayToString(i)
             output=output+")"
-    return output
+    return output.strip()+")"
 
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global ARRAY
+    global VAR_NAME
     
     length=len(tree)
     # (= x 3) x and 3 are just returned
@@ -259,34 +258,50 @@ def interpreter(tree):
     # x = 12
     # add to global symbolic table
     elif tree[0]=="=":
-        if length!=3:
-            print "Error...\n = need 3 values inside\nLike (= x 12)"
-            return ""
-
         var_name=tree[1]
 
         # (= x 12)
+
+        # or
+        # (= x '(1 2 3))
+        #   
+        # (= x 0 12) -> x = (12 2 3)
+        #
+        #
+        #
         if type(var_name)==str:
             if var_name.isdigit():
                 print "Error...\nBad variable name -> "+var_name
                 return ""
-        
-            var_value=interpreter(tree[2])
-            SYMBOLIC_TABLE[0][var_name]=var_value
+            if length==3:
+                var_value=interpreter(tree[2])
+                SYMBOLIC_TABLE[0][var_name]=var_value
+                return var_value
+            else:
+                var_name_value=interpreter(tree[1])
+                print "var name value ---> ",
+                print var_name_value
+                # string
+                if var_name_value[0]=="\"":
+                    var_value=var_name_value[1:len(var_name_value)-1]
 
-        # (= (0 x) 12)
-        else:
-            var_name=interpreter(tree[1])
+                    print "var value ---> ",
+                    print var_value
 
-            i = 0
+                    change_to_var_value=interpreter(tree[3])
+                    if change_to_var_value[0]!="\"":
+                        print "Error,,,,,"
+                    change_to_var_value=change_to_var_value[1:len(change_to_var_value)-1]
+                    var_value[int(tree[2])]=change_to_var_value
+                    SYMBOLIC_TABLE[0][var_name]=var_value
+                    return var_value
+                # list
+                elif var_name_value[0]=="(":
+                    pass
+                else:
+                    print "Error...\n"
+                pass
 
-            while i<len(ARRAY)-1:
-
-                i=i+1
-
-            ARRAY=[]
-        
-        return var_value
     # local x = 12
     # add to local symbolic table
     elif tree[0]=="local=":
@@ -461,7 +476,7 @@ def interpreter(tree):
         
         return_str=return_str.strip()
         
-        return_str=return_str+") ("
+        return_str=return_str+") "
 
         stms=convertArrayToString(tree[2])
 
@@ -471,7 +486,7 @@ def interpreter(tree):
             
         return_str=return_str.strip()
 
-        return_str=return_str+") >"
+        return_str=return_str+" >"
         return return_str
     
     # function list
@@ -609,15 +624,12 @@ def interpreter(tree):
         print "It is digit"
         value = interpreter(tree[1])
 
-
-        ARRAY.append(int(tree[0]))
-
-
         # (1 '(1 2 3))
         if value[0]=="(" and value[len(value)-1]==")":
             _tree_=parser(lexer(value)[0])
             print _tree_
-            return _tree_[int(tree[0])]
+            print convertArrayToString(_tree_[int(tree[0])])
+            return convertArrayToString(_tree_[int(tree[0])])
         # (1 "Hello")
         elif value[0]=="\"" and value[len(value)-1]=="\"":
             value=value[1:len(value)-1]
