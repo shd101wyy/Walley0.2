@@ -32,7 +32,7 @@ keyword:
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
-    ... 
+    ... while [digit] len
 
 
 
@@ -299,6 +299,9 @@ def interpreter(tree):
         print "It is >"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+
+
         if value1>value2:
             return "1"
         else:
@@ -578,7 +581,49 @@ def interpreter(tree):
         print "It is eval"
         return interpreter(parser(lexer(interpreter(tree[1]))[0]))
 
+    # function while
+    # (while (< i 10) (= i (+ i 1)))
+    elif tree[0]=="while":
+        while interpreter(tree[1])=="1":
+            interpreter(tree[2])
+        return ""
 
+
+    # function digit
+    # (0 '(1 2 3)) -> 1
+    # (2 '(1 2 3)) -> 3
+    # (3 '(1 2 3)) -> error
+
+    elif tree[0].isdigit():
+        print "It is digit"
+        value = interpreter(tree[1])
+        # (1 '(1 2 3))
+        if value[0]=="(" and value[len(value)-1]==")":
+            _tree_=parser(lexer(value)[0])
+            print _tree_
+            return _tree_[int(tree[0])]
+        # (1 "Hello")
+        elif value[0]=="\"" and value[len(value)-1]=="\"":
+            value=value[1:len(value)-1]
+            return value[int(tree[0])]
+        else:
+            print "Error...\nDigit only support list and string type param"
+
+    # function len
+    # (len "Hello") -> 5
+    # (len '(1 2 3)) -> 3
+    elif tree[0]=="len":
+        value = interpreter(tree[1])
+        # (len '(1 2 3))
+        if value[0]=="(" and value[len(value)-1]==")":
+            _tree_=parser(lexer(value)[0])
+            return len(_tree_)
+        # (len "Hello")
+        elif value[0]=="\"" and value[len(value)-1]=="\"":
+            value=value[1:len(value)-1]
+            return len(value)
+        else:
+            print "Error...\nFunction len only support list and string type param"
     # call function directly
     else:
         function_name=tree[0]
@@ -662,8 +707,6 @@ print SYMBOLIC_TABLE
 x="3">"2"
 print x
 '''
-
-import sys
 
 print "Toy Language >>>>>>>>>>>>>>>"
 print "Press ctrl+C to quit\n"
