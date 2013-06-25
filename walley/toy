@@ -105,7 +105,7 @@ def lexer(input_str):
                 print "Error...\nInvalid String"
 
             i=i+1
-            if input_str[i]!=" " and input_str[i]!=")":
+            if i!=length and input_str[i]!=" " and input_str[i]!=")":
                 print "Error...\nInvalid String -> "+input_str[start:i+1]+"...\n"
 
             continue
@@ -211,6 +211,12 @@ def pushSymbolicTable(SYMBOLIC_TABLE):
 SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
+
+# (= x '(1 2 3))
+# (= (0 x) 12) -> x=(12 2 3)
+# save 0 to ARRAY
+ARRAY=[]
+
 ''' 
     convert 
         [stms [+ a b]]
@@ -230,7 +236,7 @@ def convertArrayToString(array):
 
 def interpreter(tree):
     global SYMBOLIC_TABLE
-    
+    global ARRAY
     
     length=len(tree)
     # (= x 3) x and 3 are just returned
@@ -259,12 +265,26 @@ def interpreter(tree):
 
         var_name=tree[1]
 
-        if var_name.isdigit():
-            print "Error...\nBad variable name -> "+var_name
-            return ""
+        # (= x 12)
+        if type(var_name)==str:
+            if var_name.isdigit():
+                print "Error...\nBad variable name -> "+var_name
+                return ""
         
-        var_value=interpreter(tree[2])
-        SYMBOLIC_TABLE[0][var_name]=var_value
+            var_value=interpreter(tree[2])
+            SYMBOLIC_TABLE[0][var_name]=var_value
+
+        # (= (0 x) 12)
+        else:
+            var_name=interpreter(tree[1])
+
+            i = 0
+
+            while i<len(ARRAY)-1:
+
+                i=i+1
+
+            ARRAY=[]
         
         return var_value
     # local x = 12
@@ -386,16 +406,7 @@ def interpreter(tree):
         if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
         else:
-            value=value[1:len(value)-1]
-
-            if len(value.strip())==0:
-                print "Error...\nFunction 'car' does not support empty list"
-                return ""
-
-            i=0
-            while i!=len(value) and value[i]!=" ":
-                i=i+1
-            return value[0:i]
+            return interpreter(parser(lexer("(0 '"+value+")")[0]))
         
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
@@ -597,6 +608,11 @@ def interpreter(tree):
     elif tree[0].isdigit():
         print "It is digit"
         value = interpreter(tree[1])
+
+
+        ARRAY.append(int(tree[0]))
+
+
         # (1 '(1 2 3))
         if value[0]=="(" and value[len(value)-1]==")":
             _tree_=parser(lexer(value)[0])
