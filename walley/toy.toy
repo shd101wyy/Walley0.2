@@ -1,0 +1,21 @@
+(stms
+	"This program is written by Yiyi Wang to test Toy Language"
+	"I recommended u to start the program by stating (stms ) function"
+
+
+
+	" this is function ^ "
+	(= ^ (lambda (a b)
+			(if (== b 1) a
+				(* a (^ a (- b 1)))
+			)
+		)
+	)
+	
+	"bind ** to ^"
+	(= ** ^)
+	"test ** function"
+	(print (** 3 4))
+
+
+)

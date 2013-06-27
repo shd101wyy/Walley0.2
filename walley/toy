@@ -44,6 +44,67 @@ function:
 (= x (+ 3 4)) ->     x = 7
 
 # eg (= x (+ 3 (- 4 5) ))-> [['(', '=', 'x', '(', '+', '3', '(', '-', '4', '5', ')', ')', ')'], True]
+
+
+
+
+
+Macro
+
+
+Macro Database
+variable must start with $
+
+    ==================================
+    (for i in 0 10
+        (print i)
+    )
+
+     ->
+
+    (stms 
+        (= i 0)
+        (while (< i 0)
+            (print i)
+        )
+    )
+
+    (=> 
+        "translate"
+        "symbol"
+        '(for $i $v in $1 $2 $3))  
+        
+
+        "return "
+        "symbol"
+
+        (cond
+            ((< $1 $2)
+                '(while (< $i $1) (stms $3 (= $1 (+ $1 1))))
+            )
+        )
+    ) 
+
+
+    ==================================
+
+    (square x) -> (* x x)
+    (=> '(square $x) '(* $x $x))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 '''
 
 import sys
@@ -244,6 +305,9 @@ SYMBOLIC_TABLE[0]["let"]="let"
 
 
 
+MARCRO_DATABASE={}
+
+
 
 ''' 
     convert 
@@ -264,8 +328,7 @@ def convertArrayToString(array):
 
 def interpreter(tree):
     global SYMBOLIC_TABLE
-    global ARRAY
-    global VAR_NAME
+    global MARCRO_DATABASE
     
     length=len(tree)
     # (= x 3) x and 3 are just returned
@@ -307,30 +370,30 @@ def interpreter(tree):
                 var_value=interpreter(tree[2])
                 SYMBOLIC_TABLE[0][var_name]=var_value
                 return var_value
-            else:
-                var_name_value=interpreter(tree[1])
-                print "var name value ---> ",
-                print var_name_value
-                # string
-                if var_name_value[0]=="\"":
-                    var_value=var_name_value[1:len(var_name_value)-1]
-
-                    print "var value ---> ",
-                    print var_value
-
-                    change_to_var_value=interpreter(tree[3])
-                    if change_to_var_value[0]!="\"":
-                        print "Error,,,,,"
-                    change_to_var_value=change_to_var_value[1:len(change_to_var_value)-1]
-                    var_value[int(tree[2])]=change_to_var_value
-                    SYMBOLIC_TABLE[0][var_name]=var_value
-                    return var_value
-                # list
-                elif var_name_value[0]=="(":
-                    pass
-                else:
-                    print "Error...\n"
-                pass
+            #else:
+            #    var_name_value=interpreter(tree[1])
+            #    print "var name value ---> ",
+            #    print var_name_value
+            #    # string
+            #    if var_name_value[0]=="\"":
+            #        var_value=var_name_value[1:len(var_name_value)-1]
+            #
+            #        print "var value ---> ",
+            #        print var_value
+            #
+            #        change_to_var_value=interpreter(tree[3])
+            #        if change_to_var_value[0]!="\"":
+            #            print "Error,,,,,"
+            #        change_to_var_value=change_to_var_value[1:len(change_to_var_value)-1]
+            #        var_value[int(tree[2])]=change_to_var_value
+            #        SYMBOLIC_TABLE[0][var_name]=var_value
+            #        return var_value
+            #    # list
+            #    elif var_name_value[0]=="(":
+            #        pass
+            #    else:
+            #        print "Error...\n"
+            #    pass
 
     # local x = 12
     # add to local symbolic table
@@ -702,6 +765,34 @@ def interpreter(tree):
         else:
             print "Error...\nFunction len only support list and string type param"
     
+
+    # macro
+    #elif tree[0]=="=>":
+    #    print tree
+    #    if tree[1][0]!="quote":
+    #        print "Error...Function => support format (=> quote return_quote)"
+    #        print "(=> '(square $) '(* $ $))"#
+    #
+    #    from_ = interpreter(tree[1])
+    #    #print from_
+    #    tree_ = parser(lexer(from_)[0])
+    #    #print tree_
+    #
+    #    SYMBOLIC_TABLE[0][tree_[0]]=[]
+    #    SYMBOLIC_TABLE[0][tree_[0]].append(tree_)
+    #    SYMBOLIC_TABLE[0][tree_[0]].append(tree[2])
+    #    print SYMBOLIC_TABLE
+
+
+    #elif tree[0]=="macroexpand":
+    #    value=interpreter(tree[1])
+    #    if value[0]!="(" or value[len(value)-1]!=")":
+    #        print "Error...Function macroexpand"
+    #        return ""
+    #
+    #    print value
+
+
     # point ->
     # (-> y x)
     #
@@ -734,6 +825,28 @@ def interpreter(tree):
             function_procedure=interpreter(function_name)
         
 
+        # MACRO
+        # it has problem now here
+        #if type(function_procedure)!=str:
+        #    print "MACRO"
+        #    print tree
+        #    print function_procedure
+
+            # eg
+            # tree                  ['square', '5']
+            # function_procedure    [['square', '$'], ['quote', '(* $ $)']]
+
+
+        #    from_=function_procedure[0]
+        #    len1=len(tree)
+        #    len2=len(function_procedure[0])
+
+        #    if len1!=len2:
+        #        pass
+        #    else:
+        #        pass
+        #    exit(0)
+
         #print "function_procedure --> "+function_procedure
 
         if function_procedure[0:11]!="<procedure ":
@@ -763,8 +876,7 @@ def interpreter(tree):
             i=i+1
         #print function_procedure
         #print params
-        #print stms
-        
+        #print stms        
         params_tree=parser(lexer(params)[0])
         
         
