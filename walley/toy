@@ -32,7 +32,7 @@ keyword:
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
-    ... while [digit] len
+    ... while [digit] len #->#
 
 
 
@@ -45,6 +45,9 @@ function:
 
 # eg (= x (+ 3 (- 4 5) ))-> [['(', '=', 'x', '(', '+', '3', '(', '-', '4', '5', ')', ')', ')'], True]
 '''
+
+import sys
+print sys.argv
 
 
 
@@ -410,6 +413,14 @@ def interpreter(tree):
     # (quote (1,2,3)) --> (1,2,3)
     elif tree[0]=="quote":
         print 'it is quote'
+
+        # list
+        #if tree[1][0]=="(" and tree[1][len(tree[1])-1]==")":
+        #    print "It is list"
+        #    return parser(lexer(tree[1])[0])
+
+
+        # return directly
         return tree[1]
     
     # function car
@@ -535,8 +546,8 @@ def interpreter(tree):
         print interpreter(tree[1])
     
     # function let
-    # (let [assignment] [stm])
-    # (let ((x 12)) (print x))
+    # (let [assignment] [stm] [stm] ...)  return last stm
+    # (let ((x 12)) (print x)) is valid
     # (let (x 12) (print x)) is invalid
     # x is local
     elif tree[0]=="let":
@@ -552,8 +563,12 @@ def interpreter(tree):
             SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
 
         
-        stm=tree[2]
-                        
+        i=2
+        while i<length-1:
+            interpreter(tree[i])
+            i=i+1
+
+        stm=tree[i]                
         return_value=interpreter(stm)
         
         # push SYMBOLIC_TABLE
@@ -652,6 +667,17 @@ def interpreter(tree):
             return len(value)
         else:
             print "Error...\nFunction len only support list and string type param"
+    
+    # point ->
+    # (-> y x)
+    #
+    #eg
+    #    (= x 12)    : x=12
+    #    (-> y x)    : y points to x
+    #    (= x 13)    : x=13 then y=13 as well
+    #
+    
+
     # call function directly
     else:
         function_name=tree[0]
