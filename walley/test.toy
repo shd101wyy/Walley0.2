@@ -1,4 +1,10 @@
 (stms
-	(=> '(square $) '(* $ $))
-	(macroexpand '(square 5))
+	(=>
+		square 
+		(
+			'($) '(* $ $)
+		)
+
+	)
+	(macroexpand '(square 3))
 )

@@ -89,7 +89,14 @@ variable must start with $
     ==================================
 
     (square x) -> (* x x)
-    (=> '(square $x) '(* $x $x))
+    (square x y) -> (* x y)
+
+    (=> start_name ([1] [translate 1 to .1]) ([2] [.2]))
+
+    (=> square 
+        ('($) '(* $ $))
+        ('($ $$) '(* $ $$))
+    )
 
 
 
@@ -768,28 +775,64 @@ def interpreter(tree):
 
     # macro
     #elif tree[0]=="=>":
+    #    print "It is => macro"
     #    print tree
-    #    if tree[1][0]!="quote":
-    #        print "Error...Function => support format (=> quote return_quote)"
-    #        print "(=> '(square $) '(* $ $))"#
     #
-    #    from_ = interpreter(tree[1])
-    #    #print from_
-    #    tree_ = parser(lexer(from_)[0])
-    #    #print tree_
+    #    start_name=tree[1]
     #
-    #    SYMBOLIC_TABLE[0][tree_[0]]=[]
-    #    SYMBOLIC_TABLE[0][tree_[0]].append(tree_)
-    #    SYMBOLIC_TABLE[0][tree_[0]].append(tree[2])
+    #    i=2
+    #    while i<length:
+    #        inside=tree[i]
+    #
+    #        from_=interpreter(tree[i][0])
+    #        to_=interpreter(tree[i][1])
+
+    #        print "from ---> "+from_
+    #        print "to   ---> "+to_
+    #        print "\n"
+
+    #        SYMBOLIC_TABLE[0][start_name]=[]
+
+    #        to_append=[]
+    #        to_append.append(parser(lexer(from_)[0]))
+    #        to_append.append(to_)
+
+    #        SYMBOLIC_TABLE[0][start_name].append(to_append)
+
+    #        i=i+1
+        
+
     #    print SYMBOLIC_TABLE
+    #    return ""
+        
 
-
+    # (macroexpand '(square 3))
+    # ->
+    # (* 3 3)
     #elif tree[0]=="macroexpand":
+    #    print "It is macroexpand"
+        #'square': [[['$'], '(* $ $)\n\t\t']]
     #    value=interpreter(tree[1])
     #    if value[0]!="(" or value[len(value)-1]!=")":
     #        print "Error...Function macroexpand"
     #        return ""
+    #    
+    #    _tree_=parser(lexer(value)[0])
+    #    print _tree_
     #
+    #    start_name=_tree_[0]
+    #
+    #    if start_name in SYMBOLIC_TABLE[0].keys():
+    #        modes=SYMBOLIC_TABLE[0][start_name]
+    #        for i in modes:
+    #            mode_0=i[0]
+    #            if len(mode_0)+1!=len(_tree_):
+    #                continue
+    #    else:
+    #        print "Error..."
+
+
+
     #    print value
 
 
