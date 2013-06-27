@@ -214,6 +214,12 @@ def pushSymbolicTable(SYMBOLIC_TABLE):
 SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
+# add embeded function
+SYMBOLIC_TABLE[0]["+"]="+"
+SYMBOLIC_TABLE[0]["-"]="-"
+SYMBOLIC_TABLE[0]["*"]="*"
+SYMBOLIC_TABLE[0]["/"]="/"
+SYMBOLIC_TABLE[0]["%"]="%"
 
 
 ''' 
@@ -707,15 +713,17 @@ def interpreter(tree):
         # ((lambda (a b) (+ a b)) 3 4) ---> 7
         else:
             function_procedure=interpreter(function_name)
-
-            if function_procedure[0:12]=="<procedure ":
-                pass
-            # solve ((car '(+ -)) 3 4) problem
-            else:
-                #print "IT IS NOT PROCEDURE"
-                tree[0]=function_procedure
-                return interpreter(tree)
         
+
+        #print "function_procedure --> "+function_procedure
+
+        if function_procedure[0:11]!="<procedure ":
+            # solve ((car '(+ -)) 3 4) problem
+            #print "IT IS NOT PROCEDURE"
+            tree[0]=function_procedure
+            return interpreter(tree)
+        
+
         # remove <procedure  >
         function_procedure=function_procedure[11:len(function_procedure)-2]
         i=0
