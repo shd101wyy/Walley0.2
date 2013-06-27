@@ -32,7 +32,7 @@ keyword:
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
-    ... while [digit] len #->#
+    ... while [digit] len 
 
 
 
@@ -429,10 +429,21 @@ def interpreter(tree):
         print "it is car"
         value=interpreter(tree[1])
         print value
+        print value
         if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
         else:
-            return interpreter(parser(lexer("(0 '"+value+")")[0]))
+            value=value[1:len(value)-1]
+
+            if len(value.strip())==0:
+                print "Error...\nFunction 'car' does not support empty list"
+                return ""
+
+            i=0
+            while i!=len(value) and value[i]!=" ":
+                i=i+1
+            return value[0:i]
+
         
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
