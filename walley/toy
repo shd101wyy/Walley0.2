@@ -67,7 +67,7 @@ def lexer(input_str):
             output.append(input_str[i])
             i=i+1
             continue
-        elif input_str[i]==" ":
+        elif input_str[i]==" " or input_str[i]=="\n" or input_str[i]=="\t":
             i=i+1
             continue
 
@@ -115,7 +115,7 @@ def lexer(input_str):
 
         else:
             start=i
-            while(i!=len(input_str) and input_str[i]!=" " and input_str[i]!="(" and input_str[i]!=")"):
+            while(i!=len(input_str) and input_str[i]!=" " and input_str[i]!="(" and input_str[i]!=")") and input_str[i]!="\n" and input_str[i]!="\t":
                 i=i+1
             to_append=input_str[start:i]
             
@@ -801,22 +801,38 @@ print SYMBOLIC_TABLE
 x="3">"2"
 print x
 '''
-
-print "Toy Language >>>>>>>>>>>>>>>"
-print "Press ctrl+C to quit\n"
-while True:
-    print ">>> ",
-    x=raw_input()
-    x=lexer(x)
-    #print "Lexer----> ",
-    #print x
+if len(sys.argv)==2:
+    file_name=sys.argv[1]
+    file=open(file_name)
+    string_in_side = file.read()
+    print "--> "+string_in_side
+    x=lexer(string_in_side)
+    print x
     if x[1]==False:
         print "Incomplete Statement"
-        continue
+        exit(0)
     x=parser(x[0])
     #print "Parser----> ",
     #print x
     interpreter(x)
 
+elif len(sys.argv)==1:
+    print "Toy Language >>>>>>>>>>>>>>>"
+    print "Press ctrl+C to quit\n"
+    while True:
+        print ">>> ",
+        x=raw_input()
+        x=lexer(x)
+        #print "Lexer----> ",
+        #print x
+        if x[1]==False:
+            print "Incomplete Statement"
+            continue
+        x=parser(x[0])
+        #print "Parser----> ",
+        #print x
+        interpreter(x)
+else:
+    print "Argv Error.."
 
 

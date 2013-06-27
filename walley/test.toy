@@ -1,21 +1,4 @@
-(define x 12)
-(if (== x 12) (print x)(print x))
-(= add 
-	(lambda (a b)
-		(stms 
-			(+ a b)
-		)
-	)
+(stms
+	(print "Hello")
+	(print "Hi")
 )
-
-
-(= ^ (lambda (a b) (^ a (- b 1))))    
-
-(define ^ 
-	(lambda (a b) 
-		(cond ((= b 0)
-				())  )
-		(^ a (- b 1))
-	)
-)    
-
