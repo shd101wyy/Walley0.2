@@ -27,7 +27,7 @@ val
 
 keyword:
     + - * /  %
-    if def = 
+    if = 
         == >= <= > < != not and or 
 
 function:
@@ -220,6 +220,29 @@ SYMBOLIC_TABLE[0]["-"]="-"
 SYMBOLIC_TABLE[0]["*"]="*"
 SYMBOLIC_TABLE[0]["/"]="/"
 SYMBOLIC_TABLE[0]["%"]="%"
+SYMBOLIC_TABLE[0]["car"]="car"
+SYMBOLIC_TABLE[0]["cdr"]="cdr"
+SYMBOLIC_TABLE[0]["quote"]="quote"
+SYMBOLIC_TABLE[0]["="]="="
+SYMBOLIC_TABLE[0][">"]=">"
+SYMBOLIC_TABLE[0]["<"]="<"
+SYMBOLIC_TABLE[0]["=="]="=="
+SYMBOLIC_TABLE[0]["!="]="!="
+SYMBOLIC_TABLE[0][">="]=">="
+SYMBOLIC_TABLE[0]["<="]="<="
+SYMBOLIC_TABLE[0]["and"]="and"
+SYMBOLIC_TABLE[0]["or"]="or"
+SYMBOLIC_TABLE[0]["not"]="not"
+SYMBOLIC_TABLE[0]["print"]="print"
+SYMBOLIC_TABLE[0]["list"]="list"
+SYMBOLIC_TABLE[0]["cons"]="cons"
+SYMBOLIC_TABLE[0]["cond"]="cond"
+SYMBOLIC_TABLE[0]["if"]="if"
+SYMBOLIC_TABLE[0]["stms"]="stms"
+SYMBOLIC_TABLE[0]["eval"]="eval"
+SYMBOLIC_TABLE[0]["let"]="let"
+
+
 
 
 ''' 
@@ -437,17 +460,12 @@ def interpreter(tree):
         if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
         else:
-            value=value[1:len(value)-1]
 
-            if len(value.strip())==0:
-                print "Error...\nFunction 'car' does not support empty list"
-                return ""
-
-            i=0
-            while i!=len(value) and value[i]!=" ":
-                i=i+1
-            return value[0:i]
-
+            _tree_=parser(lexer(value)[0])
+            if type(_tree_[0])==str:
+                return _tree_[0]
+            else:
+                return interpreter(_tree_[0])
         
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
@@ -458,17 +476,14 @@ def interpreter(tree):
         if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
         else:
-            value=value[1:len(value)-1]
-
-            if len(value.strip())==0:
-                print "Error...\nFunction 'cdr' does not support empty list"
-                return ""
-
-            i=0
-            while i!=len(value) and value[i]!=" ":
-                i=i+1
-            # trim
-            return "("+value[i:len(value)].strip()+")"
+            _tree_=parser(lexer(value)[0])
+            if len(_tree_)==0:
+                print "Error\nFunction 'cdr' cannot be used on empty list"
+            elif len(_tree_)==1:
+                return "()"
+            else:
+                _tree_=_tree_[1:len(_tree_)]
+                return convertArrayToString(_tree_)
     
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
