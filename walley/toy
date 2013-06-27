@@ -259,9 +259,7 @@ def convertArrayToString(array):
         if type(i)==str:
             output=output+i+" "
         else:
-            output=output+"("
             output=output+convertArrayToString(i)
-            output=output+")"
     return output.strip()+")"
 
 def interpreter(tree):
@@ -511,6 +509,9 @@ def interpreter(tree):
     # function lambda
     # (= add (lambda (a b) (+ a b)))
     elif tree[0]=="lambda":
+
+        print "It is lambda"
+
         return_str="<procedure ("
         for i in tree[1]:
             return_str=return_str+i+" "
@@ -528,6 +529,9 @@ def interpreter(tree):
         return_str=return_str.strip()
 
         return_str=return_str+" >"
+
+        #print "Lambda ----> "+return_str
+
         return return_str
     
     # function list
@@ -763,13 +767,18 @@ def interpreter(tree):
         
         params_tree=parser(lexer(params)[0])
         
-        print params_tree
         
         run_str="(let ("
         a=1
         for i in params_tree:
-            run_str=run_str+"("+i+" "+tree[a]+")"
+            if type(tree[a])==str:
+                param=tree[a]
+            else:
+                param=interpreter(tree[a])
+
+            run_str=run_str+"("+i+" "+param+")"
             a=a+1
+
         run_str=run_str+")"
         run_str=run_str+stms+")"
         
@@ -805,13 +814,16 @@ if len(sys.argv)==2:
     file_name=sys.argv[1]
     file=open(file_name)
     string_in_side = file.read()
-    print "--> "+string_in_side
+    #print "\n\nLexer---->\n"
+    #print "--> "+string_in_side
     x=lexer(string_in_side)
-    print x
+    #print x
     if x[1]==False:
         print "Incomplete Statement"
         exit(0)
     x=parser(x[0])
+    #print "\n\nParser---->\n"
+    #print x
     #print "Parser----> ",
     #print x
     interpreter(x)

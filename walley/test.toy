@@ -1,4 +1,9 @@
 (stms
-	(print "Hello")
-	(print "Hi")
+	(= ^ (lambda (a b)
+			(if (== b 1) a
+				(* a (^ a (- b 1)))
+			)
+		)
+	)
+	(print (^ 3 4))
 )
