@@ -428,8 +428,6 @@ def interpreter(tree):
     elif tree[0]=="car":
         print "it is car"
         value=interpreter(tree[1])
-        print value
-        print value
         if value[0]!="(" or value[len(value)-1]!=")":
             print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
         else:
@@ -646,22 +644,22 @@ def interpreter(tree):
     # (2 '(1 2 3)) -> 3
     # (3 '(1 2 3)) -> error
 
-    elif tree[0].isdigit():
-        print "It is digit"
-        value = interpreter(tree[1])
-
-        # (1 '(1 2 3))
-        if value[0]=="(" and value[len(value)-1]==")":
-            _tree_=parser(lexer(value)[0])
-            print _tree_
-            print convertArrayToString(_tree_[int(tree[0])])
-            return convertArrayToString(_tree_[int(tree[0])])
-        # (1 "Hello")
-        elif value[0]=="\"" and value[len(value)-1]=="\"":
-            value=value[1:len(value)-1]
-            return value[int(tree[0])]
-        else:
-            print "Error...\nDigit only support list and string type param"
+    #elif tree[0].isdigit():
+    #    print "It is digit"
+    #    value = interpreter(tree[1])
+    #
+    #    # (1 '(1 2 3))
+    #    if value[0]=="(" and value[len(value)-1]==")":
+    #        _tree_=parser(lexer(value)[0])
+    #        print _tree_
+    #        print convertArrayToString(_tree_[int(tree[0])])
+    #        return convertArrayToString(_tree_[int(tree[0])])
+    #    # (1 "Hello")
+    #    elif value[0]=="\"" and value[len(value)-1]=="\"":
+    #        value=value[1:len(value)-1]
+    #        return value[int(tree[0])]
+    #    else:
+    #        print "Error...\nDigit only support list and string type param"
 
     # function len
     # (len "Hello") -> 5
