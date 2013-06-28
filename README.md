@@ -10,6 +10,8 @@ type "./toy" in terminal or cmd
 	commands:
 		toy    								# Run toy repl 一行一行地运行
 		toy [file_name]						# Run file [file_name] 运行[file_name]文件
+		toy compress [file_name]			# Compress file [file_name] to make it smaller
+											# will remove \n and extra spaces 压缩文件
 
 
 我想把Toy语言做成一种“寄生”语言。。

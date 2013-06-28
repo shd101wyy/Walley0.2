@@ -112,8 +112,7 @@ variable must start with $
 
 '''
 
-import sys
-print sys.argv
+
 
 #=========== MATH ==============
 #===============================
@@ -1452,6 +1451,12 @@ def interpreter(tree):
 #0     GLOBAL 
 #1...n LOCAL
 
+import sys
+print sys.argv
+
+# COMMANDS
+
+# run one file
 if len(sys.argv)==2:
     file_name=sys.argv[1]
     file=open(file_name)
@@ -1469,6 +1474,34 @@ if len(sys.argv)==2:
     #print "Parser----> ",
     #print x
     interpreter(x)
+
+# compress file
+elif len(sys.argv)==3 and sys.argv[1]=="compress":
+    file_name=sys.argv[2]
+    file=open(file_name)
+    string_in_side = file.read()
+
+    x = lexer(string_in_side)[0]
+    if x[1]==False:
+        print "Incomplete Statement\nCannot compress file "+file_name
+        exit(0)
+    i=0
+    output = ""
+    length = len(x)
+    while i<length:
+        if x[i]=="(":
+            output = output+"("
+            i=i+1
+            continue
+        else:
+            output=output+x[i]
+            if i+1!=length and x[i+1]==")":
+                i=i+1
+            else:
+                output=output+" "
+                i=i+1
+    print output
+
 
 elif len(sys.argv)==1:
     print "Toy Language >>>>>>>>>>>>>>>"
