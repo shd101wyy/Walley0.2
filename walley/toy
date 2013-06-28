@@ -189,10 +189,12 @@ def lexer(input_str):
 
             if count2!=2:
                 print "Error...\nInvalid String"
+                return [[],False]
 
             i=i+1
             if i!=length and input_str[i]!=" " and input_str[i]!=")" and input_str[i]!="\n":
                 print "Error...\nInvalid String -> "+input_str[start:i+1]+"...\n"
+                return [[],False]
 
             continue
 
@@ -717,7 +719,10 @@ def interpreter(tree):
     elif tree[0]=="print":
         value = interpreter(tree[1])
         if type(value)==str:
-            print value
+            if len(value)!=0 and value[0]=="\"":
+                print eval(value)
+            else:
+                print value
         else:
             print convertArrayToString(value)
         return ""

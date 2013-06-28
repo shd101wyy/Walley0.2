@@ -29,5 +29,6 @@
 
 	"test list-length"
 	(print (list-length '(1 2 3)))
+	(print (list-length 12))
 
 )
