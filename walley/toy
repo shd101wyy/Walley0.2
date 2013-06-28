@@ -437,7 +437,7 @@ def interpreter(tree):
         return str(eval(append_str))
     
     elif tree[0]=="==":
-        print "It is =="
+        #print "It is =="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         print value1
@@ -447,7 +447,7 @@ def interpreter(tree):
         else:
             return "0"
     elif tree[0]==">":
-        print "It is >"
+        #print "It is >"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
 
@@ -458,7 +458,7 @@ def interpreter(tree):
         else:
             return "0"
     elif tree[0]=="<":
-        print "It is <"
+        #print "It is <"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         if value1<value2:
@@ -466,7 +466,7 @@ def interpreter(tree):
         else:
             return "0"
     elif tree[0]=="!=":
-        print "It is !="
+        #print "It is !="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         if value1!=value2:
@@ -475,7 +475,7 @@ def interpreter(tree):
             return "0"
         
     elif tree[0]==">=":
-        print "It is >="
+        #print "It is >="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         if value1>=value2:
@@ -484,7 +484,7 @@ def interpreter(tree):
             return "0"
         
     elif tree[0]=="<=":
-        print "It is <="
+        #print "It is <="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         if value1<=value2:
@@ -525,7 +525,7 @@ def interpreter(tree):
     # function quote
     # (quote (1,2,3)) --> (1,2,3)
     elif tree[0]=="quote":
-        print 'it is quote'
+        #print 'it is quote'
 
         quote_value=tree[1]
 
@@ -553,7 +553,7 @@ def interpreter(tree):
     # function car
     # (car '(1 2 3)) -> 1
     elif tree[0]=="car":
-        print "it is car"
+        #print "it is car"
         value=interpreter(tree[1])
         #print value
         return value[0]
@@ -571,7 +571,7 @@ def interpreter(tree):
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
     elif tree[0]=="cdr":
-        print "it is cdr"
+        #print "it is cdr"
         value=interpreter(tree[1])
         #print value
         if len(value)==0:
@@ -596,7 +596,7 @@ def interpreter(tree):
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
     elif tree[0]=="cons":
-        print "it is cons"
+        #print "it is cons"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         print value1
@@ -620,7 +620,7 @@ def interpreter(tree):
     # (= add (lambda (a b) (+ a b)))
     elif tree[0]=="lambda":
 
-        print "It is lambda"
+        #print "It is lambda"
 
         return_str="<procedure ("
         for i in tree[1]:
@@ -648,19 +648,20 @@ def interpreter(tree):
     # (list 1 2 3) ---> (1 2 3)
     elif tree[0]=="list":
         i=1
-        output="("
+        output=[]
         while i<len(tree):
-            output=output+interpreter(tree[i])
-            if i+1!=len(tree):
-                output=output+" "
+            output.append(interpreter(tree[i]))
             i=i+1
-        output=output+")"
         return output
     
     # function number?
     # (number? 12) -> 1
     elif tree[0]=="number?":
         value=interpreter(tree[1])
+        # list
+        if type(value)!=str:
+            return "0"
+        # not list
         if value.isdigit():
             return "1"
         else:
@@ -670,7 +671,7 @@ def interpreter(tree):
     # (list? (quote (1 2 3))) -> 1
     elif tree[0]=="list?":
         value=interpreter(tree[1])
-        if value[0]=="(" and value[len(value)-1]==")":
+        if type(value)!=str:
             return "1"
         else:
             return "0"
@@ -680,12 +681,23 @@ def interpreter(tree):
     # (atom? '(1 2)) -> 0
     elif tree[0]=="atom?":
         value=interpreter(tree[1])
-        if value[0]=="(" and value[len(value)-1]==")":
+        if type(value)!=str:
             return "0"
         else:
             return "1"
-    
-    
+    # function empty? and null?
+    # if () -> true 1
+    # if not () like (1 2) -> false 0
+    elif tree[0]=="empty?" or tree[0]=="null?":
+        value=interpreter(tree[1])
+        if type(value)==str:
+            return "Error...Function empty can only be used for list type value"
+        else:
+            if len(value)==0:
+                return "1"
+            else:
+                return "0"
+
     elif tree[0]=="print":
         value = interpreter(tree[1])
         if type(value)==str:
@@ -705,7 +717,7 @@ def interpreter(tree):
         SYMBOLIC_TABLE.append({})
 
 
-        print "It is let"
+        #print "It is let"
         assignment=tree[1]
         for i in assignment:
             var_name=i[0]
@@ -769,7 +781,7 @@ def interpreter(tree):
 
     # function eval
     elif tree[0]=="eval":
-        print "It is eval"
+        #print "It is eval"
         return interpreter(parser(lexer(interpreter(tree[1]))[0]))
 
     # function while
@@ -985,7 +997,7 @@ def interpreter(tree):
         run_str=run_str+")"
         run_str=run_str+stms+")"
         
-        print "run_str---> "+run_str
+        #print "run_str---> "+run_str
         run_str_tree=parser(lexer(run_str)[0])
         
         return interpreter(run_str_tree)
@@ -1046,7 +1058,7 @@ elif len(sys.argv)==1:
         x=parser(x[0])
         #print "Parser----> ",
         #print x
-        interpreter(x)
+        print interpreter(x)
 else:
     print "Argv Error.."
 
