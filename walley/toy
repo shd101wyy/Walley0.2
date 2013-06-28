@@ -809,6 +809,10 @@ def interpreter(tree):
         #print "It is =="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
         
         if value1==value2:
             return "1"
@@ -819,7 +823,9 @@ def interpreter(tree):
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
 
-
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
 
         if value1>value2:
             return "1"
@@ -829,6 +835,11 @@ def interpreter(tree):
         #print "It is <"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
+
         if value1<value2:
             return "1"
         else:
@@ -837,6 +848,11 @@ def interpreter(tree):
         #print "It is !="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
+
         if value1!=value2:
             return "1"
         else:
@@ -846,6 +862,11 @@ def interpreter(tree):
         #print "It is >="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
+
         if value1>=value2:
             return "1"
         else:
@@ -855,6 +876,11 @@ def interpreter(tree):
         #print "It is <="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
+        if isNumber(value1) and isNumber(value2):
+            value1=eval(value1)
+            value2=eval(value2)
+            
         if value1<=value2:
             return "1"
         else:
