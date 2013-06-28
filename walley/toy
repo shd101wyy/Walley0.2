@@ -428,10 +428,11 @@ def interpreter(tree):
         SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
         
     elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/" or tree[0]=="%":
+        sign=interpreter(tree[0])
         i=2
         append_str=interpreter(tree[1])
         while i<length:
-            append_str=append_str+tree[0]+interpreter(tree[i]) 
+            append_str=append_str+sign+interpreter(tree[i]) 
             i=i+1
         return str(eval(append_str))
     
@@ -807,9 +808,8 @@ def interpreter(tree):
     elif tree[0]=="len":
         value = interpreter(tree[1])
         # (len '(1 2 3))
-        if value[0]=="(" and value[len(value)-1]==")":
-            _tree_=parser(lexer(value)[0])
-            return len(_tree_)
+        if type(value)!=str:
+            return str(len(value))
         # (len "Hello")
         elif value[0]=="\"" and value[len(value)-1]=="\"":
             value=value[1:len(value)-1]
@@ -947,17 +947,20 @@ def interpreter(tree):
         # remove <procedure  >
         function_procedure=function_procedure[11:len(function_procedure)-2]
         i=0
-        count=0
+        count_of_bracket=0
+        count_of_double_quote=0
         
         params=""
         stms=""
         
         while i<len(function_procedure):
-            if function_procedure[i]=="(":
-                count=count+1
-            elif function_procedure[i]==")":
-                count=count-1
-                if count==0:
+            if function_procedure[i]=="\"":
+                count_of_double_quote=count_of_double_quote+1
+            elif function_procedure[i]=="(" and count_of_double_quote%2==0:
+                count_of_bracket=count_of_bracket+1
+            elif function_procedure[i]==")" and count_of_double_quote%2==0:
+                count_of_bracket=count_of_bracket-1
+                if count_of_bracket==0:
                     params=function_procedure[0:i+1]
                     stms=function_procedure[i+1:len(function_procedure)]
                     break
