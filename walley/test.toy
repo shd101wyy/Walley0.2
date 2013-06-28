@@ -1,4 +1,7 @@
 (stms
-	(= add (lambda (a b) (stms (print ...) (+ a b))))
-	(print (add 3 4))
+	(= list-length (lambda (_list_)
+		(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
+		)
+	)
+	(print (list-length '(1 2 3)))
 )
