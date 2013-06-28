@@ -175,6 +175,8 @@ def stringIsDigit(input_str):
 # 3/4 --> true
 # is Number includes fraction and float
 def isNumber(input_str):
+    if type(input_str)!=str:
+        return False
     if stringIsDigit(input_str):
         return True
 
@@ -880,7 +882,7 @@ def interpreter(tree):
         if isNumber(value1) and isNumber(value2):
             value1=eval(value1)
             value2=eval(value2)
-            
+
         if value1<=value2:
             return "1"
         else:
