@@ -4,6 +4,25 @@ Toy language is a lisp dialect written in Python 2.7.5 ......
 Well.... It cannot be regarded as lisp dialect cuz I did not learn lisp very well
 It does not support "Macro" now cuz.... idk what macro really is ..... so hard... XD
 
+	./----
+		toy      
+		init.py
+		toy.py        toy language source code file
+		toy.toy       toy language libraries
+		test.py       test file
+		test.toy      test file
+
+#=================
+In toy.py file:
+	function:
+		lexer: used to tokenize string, return array, array[0] is token list, array[1] is the result of lexical analysis
+		parser: used to parse token list to generate tree
+		interpreter: used to run parsed tree
+
+		to run one string, eg:
+			interpreter(parser(lexer("(That is the string you want to run)")[0]))
+			
+#================
 To Run Toy Language, run "toy" file in walley folder
 type "./toy" in terminal or cmd
 
