@@ -458,8 +458,7 @@ def interpreter(tree):
         #print "It is =="
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
-        print value1
-        print value2
+        
         if value1==value2:
             return "1"
         else:
@@ -618,10 +617,14 @@ def interpreter(tree):
         value2=interpreter(tree[2])
         print value1
         print value2
-        if value2[0]!="(" or value2[len(value2)-1]!=")":
+        if type(value2)==str:
             print "Error...\nFunction 'cons' only support (cons [value] [list])\n"
         else:
-            return "("+value1+" "+value2[1:len(value2)]
+            output=[]
+            output.append(value1)
+            for a in value2:
+                output.append(a)
+            return output
     
     # function stms
     # (stms [stm1] [stm2]) run stm1,stm2... in turn
