@@ -810,83 +810,122 @@ def interpreter(tree):
     elif tree[0]=="==":
         #print "It is =="
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
-        
-        if value1==value2:
-            return "1"
-        else:
-            return "0"
+
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous==value:
+                previous=value
+            else:
+                return "0"
+            i=i+1
+        return "1"
+
     elif tree[0]==">":
         #print "It is >"
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
 
-        if value1>value2:
-            return "1"
-        else:
-            return "0"
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous>value:
+                previous = value
+            else:
+                return "0"
+            i=i+1
+        return "1"
+
     elif tree[0]=="<":
         #print "It is <"
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
 
-        if value1<value2:
-            return "1"
-        else:
-            return "0"
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous<value:
+                previous = value
+            else:
+                return "0"
+            i=i+1
+        return "1"
+
     elif tree[0]=="!=":
         #print "It is !="
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
 
-        if value1!=value2:
-            return "1"
-        else:
-            return "0"
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous!=value:
+                previous = value
+            else:
+                return "0"
+            i=i+1
+        return "1"
         
     elif tree[0]==">=":
         #print "It is >="
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
 
-        if value1>=value2:
-            return "1"
-        else:
-            return "0"
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous>=value:
+                previous = value
+            else:
+                return "0"
+            i=i+1
+        return "1"
         
     elif tree[0]=="<=":
         #print "It is <="
         value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-
-        if isNumber(value1) and isNumber(value2):
+        if isNumber(value1):
             value1=eval(value1)
-            value2=eval(value2)
 
-        if value1<=value2:
-            return "1"
-        else:
-            return "0"
+        previous=value1
+        i=2
+        while i<length:
+            value=interpreter(tree[i])
+            if isNumber(value):
+                value=eval(value)
+
+            if previous<=value:
+                previous = value
+            else:
+                return "0"
+            i=i+1
+        return "1"
         
     elif tree[0]=="not":
         value = interpreter(tree[1])
@@ -903,20 +942,20 @@ def interpreter(tree):
     ###
         
     elif tree[0]=="and":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        if value1=="1" and value2=="1":
-            return "1"
-        else:
-            return "0"
+        i=1
+        while i<length:
+            if interpreter(tree[i])=="0":
+                return "0"
+            i=i+1
+        return "1"
     
     elif tree[0]=="or":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        if value1=="0" and value2=="0":
-            return "0"
-        else:
-            return "1"
+        i=1
+        while i<length:
+            if interpreter(tree[i])!="0":
+                return "1"
+            i=i+1
+        return "0"
     
     # function quote
     # (quote (1,2,3)) --> (1,2,3)
@@ -1102,11 +1141,11 @@ def interpreter(tree):
         value = interpreter(tree[1])
         if type(value)==str:
             if len(value)!=0 and value[0]=="\"":
-                print eval(value)
+                print eval(value),
             else:
-                print value
+                print value,
         else:
-            print convertArrayToString(value)
+            print convertArrayToString(value),
         return ""
         #print interpreter(tree[1])
     
@@ -1437,6 +1476,8 @@ elif len(sys.argv)==1:
     while True:
         print ">>> ",
         x=raw_input()
+        if x=="":
+            continue
         x=lexer(x)
         #print "Lexer----> ",
         #print x
