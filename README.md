@@ -2,6 +2,7 @@ Walley0.2
 =========
 Toy language is a lisp dialect written in Python 2.7.5 ......
 Well.... It cannot be regarded as lisp dialect cuz I did not learn lisp very well
+It does not support "Macro" now cuz.... idk what macro really is ..... so hard... XD
 
 To Run Toy Language, run "toy" file in walley folder
 type "./toy" in terminal or cmd
