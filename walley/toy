@@ -27,12 +27,12 @@ val
 
 keyword:
     + - * /  %
-    if = 
+    = 
         == >= <= > < != not and or 
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
-    ... while [digit] len 
+    ... while [digit] len empty? null?
 
 
 
@@ -303,27 +303,43 @@ SYMBOLIC_TABLE[0]["-"]="-"
 SYMBOLIC_TABLE[0]["*"]="*"
 SYMBOLIC_TABLE[0]["/"]="/"
 SYMBOLIC_TABLE[0]["%"]="%"
-SYMBOLIC_TABLE[0]["car"]="car"
-SYMBOLIC_TABLE[0]["cdr"]="cdr"
-SYMBOLIC_TABLE[0]["quote"]="quote"
+
 SYMBOLIC_TABLE[0]["="]="="
+SYMBOLIC_TABLE[0]["local="]="local="
+
 SYMBOLIC_TABLE[0][">"]=">"
 SYMBOLIC_TABLE[0]["<"]="<"
 SYMBOLIC_TABLE[0]["=="]="=="
 SYMBOLIC_TABLE[0]["!="]="!="
 SYMBOLIC_TABLE[0][">="]=">="
 SYMBOLIC_TABLE[0]["<="]="<="
+
 SYMBOLIC_TABLE[0]["and"]="and"
 SYMBOLIC_TABLE[0]["or"]="or"
 SYMBOLIC_TABLE[0]["not"]="not"
-SYMBOLIC_TABLE[0]["print"]="print"
-SYMBOLIC_TABLE[0]["list"]="list"
+
+SYMBOLIC_TABLE[0]["car"]="car"
+SYMBOLIC_TABLE[0]["cdr"]="cdr"
+SYMBOLIC_TABLE[0]["quote"]="quote"
 SYMBOLIC_TABLE[0]["cons"]="cons"
 SYMBOLIC_TABLE[0]["cond"]="cond"
+
+
+SYMBOLIC_TABLE[0]["print"]="print"
+SYMBOLIC_TABLE[0]["list"]="list"
 SYMBOLIC_TABLE[0]["if"]="if"
 SYMBOLIC_TABLE[0]["stms"]="stms"
 SYMBOLIC_TABLE[0]["eval"]="eval"
 SYMBOLIC_TABLE[0]["let"]="let"
+SYMBOLIC_TABLE[0]["lambda"]="lambda"
+SYMBOLIC_TABLE[0]["len"]="len"
+
+
+SYMBOLIC_TABLE[0]["list?"]="list?"
+SYMBOLIC_TABLE[0]["atom?"]="atom?"
+SYMBOLIC_TABLE[0]["number?"]="number?"
+SYMBOLIC_TABLE[0]["empty?"]="empty?"
+SYMBOLIC_TABLE[0]["null?"]="null?"
 
 
 
@@ -691,12 +707,13 @@ def interpreter(tree):
     elif tree[0]=="empty?" or tree[0]=="null?":
         value=interpreter(tree[1])
         if type(value)==str:
-            return "Error...Function empty can only be used for list type value"
+            return "Error...Function empty? and null? can only be used for list type value"
         else:
             if len(value)==0:
                 return "1"
             else:
                 return "0"
+
 
     elif tree[0]=="print":
         value = interpreter(tree[1])
@@ -982,8 +999,10 @@ def interpreter(tree):
         #print stms        
         params_tree=parser(lexer(params)[0])
         
+        # ... is the function argument list
+        run_str="(let ((... (quote "+params+"))"
+
         
-        run_str="(let ("
         a=1
         for i in params_tree:
             if type(tree[a])==str:
@@ -997,7 +1016,7 @@ def interpreter(tree):
         run_str=run_str+")"
         run_str=run_str+stms+")"
         
-        #print "run_str---> "+run_str
+        print "run_str---> "+run_str
         run_str_tree=parser(lexer(run_str)[0])
         
         return interpreter(run_str_tree)
