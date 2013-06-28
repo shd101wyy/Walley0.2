@@ -1033,7 +1033,7 @@ def interpreter(tree):
         if type(value)!=str:
             return "0"
         # not list
-        if value.isdigit():
+        if isNumber(value):
             return "1"
         else:
             return "0"
