@@ -17,5 +17,17 @@
 	"test ** function"
 	(print (** 3 4))
 
+	"list-length"
+	"which can be used to get the length of list"
+	(= list-length (lambda (_list_)
+		(if (list? _list_)
+			(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
+			(print "Error...\nFunction list-length can not be used to get length of non-list type value")
+		)
+	  )
+	)
+
+	"test list-length"
+	(print (list-length '(1 2 3)))
 
 )

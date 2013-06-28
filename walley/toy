@@ -191,7 +191,7 @@ def lexer(input_str):
                 print "Error...\nInvalid String"
 
             i=i+1
-            if i!=length and input_str[i]!=" " and input_str[i]!=")":
+            if i!=length and input_str[i]!=" " and input_str[i]!=")" and input_str[i]!="\n":
                 print "Error...\nInvalid String -> "+input_str[start:i+1]+"...\n"
 
             continue
