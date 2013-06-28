@@ -19,8 +19,6 @@ walley
                     //
                    //
 
-
-
 obj
 func
 val
@@ -32,7 +30,7 @@ keyword:
 
 function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
-    ... while [digit] len empty? null?
+    ... while [digit] len empty? null? float fraction
 
 
 
@@ -645,6 +643,9 @@ SYMBOLIC_TABLE[0]["-"]="-"
 SYMBOLIC_TABLE[0]["*"]="*"
 SYMBOLIC_TABLE[0]["/"]="/"
 SYMBOLIC_TABLE[0]["%"]="%"
+SYMBOLIC_TABLE[0]["float"]="float"
+SYMBOLIC_TABLE[0]["fraction"]="fraction"
+
 
 SYMBOLIC_TABLE[0]["="]="="
 SYMBOLIC_TABLE[0]["local="]="local="
@@ -799,6 +800,11 @@ def interpreter(tree):
         #return str(eval(append_str))
         return append_str
     
+
+    elif tree[0]=="float":
+        return fraction_to_double(interpreter(tree[1]))
+    elif tree[0]=="fraction":
+        return double_to_fraction(interpreter(tree[1]))
     elif tree[0]=="==":
         #print "It is =="
         value1=interpreter(tree[1])
