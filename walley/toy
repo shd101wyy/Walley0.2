@@ -139,15 +139,18 @@ def lexer(input_str):
             i=i+1
             continue
 
-        # quote
-        elif input_str[i]=="'":
+        # quote and unquote 
+        elif input_str[i]=="'" or input_str[i]==",":
             start=i+1
             i=i+1
             count_of_bracket=0
+            count_of_double_quote=0
             while(i!=len(input_str)):
-                if input_str[i]=="(":
+                if input_str[i]=="\"":
+                    count_of_double_quote=count_of_double_quote+1
+                elif input_str[i]=="(" and count_of_double_quote%2==0: # make sure ( is not inside ""
                     count_of_bracket=count_of_bracket+1
-                elif input_str[i]==")":
+                elif input_str[i]==")" and count_of_double_quote%2==0: # make sure ( is not inside ""
                     count_of_bracket=count_of_bracket-1
                 if count_of_bracket==0 and input_str[i]==" ":
                     break
@@ -156,9 +159,21 @@ def lexer(input_str):
                 i=i+1
             to_append=input_str[start:i]
             output.append("(")
-            output.append("quote")
-            output.append(to_append)
+
+            # quote
+            if input_str[start-1]=="'":
+                output.append("quote")
+            # unquote
+            else:
+                output.append("unquote")
+
+            x=lexer(to_append)[0]
+            for a in x:
+                output.append(a)
+            
+
             output.append(")")
+            continue
 
         # string
         elif input_str[i]=="\"":
@@ -190,25 +205,25 @@ def lexer(input_str):
                 
             output.append(to_append)
             # quote
-            if to_append=="quote":
+            #if to_append=="quote":
                 # delete spaces
-                while i!=len(input_str) and input_str[i]==" ":
-                     i=i+1
+            #    while i!=len(input_str) and input_str[i]==" ":
+            #         i=i+1
                      
-                a=length-1
-                count2=0
-                while a>i:
-                    if input_str[a]=="(":
-                        count2=count2-1
-                    elif input_str[a]==")":
-                        count2=count2+1
-                        if count2==count:
-                            print input_str[i:a]
-                            output.append(input_str[i:a])
-                            break
-                    a=a-1
-                i=a
-                continue
+            #    a=length-1
+            #    count2=0
+            #    while a>i:
+            #        if input_str[a]=="(":
+            #            count2=count2-1
+            #        elif input_str[a]==")":
+            #            count2=count2+1
+            #            if count2==count:
+            #                print input_str[i:a]
+            #                output.append(input_str[i:a])
+            #                break
+            #        a=a-1
+            #    i=a
+            #    continue
             continue
     
     return_obj=[]
@@ -511,47 +526,71 @@ def interpreter(tree):
     elif tree[0]=="quote":
         print 'it is quote'
 
-        # list
-        #if tree[1][0]=="(" and tree[1][len(tree[1])-1]==")":
-        #    print "It is list"
-        #    return parser(lexer(tree[1])[0])
+        quote_value=tree[1]
 
+        # if a=12
+        # a -> a
+        # [[unquote a] a]-> [12 a]
+        # [unquote a]-> 12
+        def calculateQuote(quote_value):
+            # a
+            if type(quote_value)==str:
+                return quote_value
+            # [quote a]
+            elif type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
+                return interpreter(quote_value[1])
+            else:
+                output=[]
+                for a in quote_value:
+                    output.append(calculateQuote(a))
+                return output
+            
 
-        # return directly
-        return tree[1]
+        return_tree = calculateQuote(quote_value)
+        return return_tree
     
     # function car
     # (car '(1 2 3)) -> 1
     elif tree[0]=="car":
         print "it is car"
         value=interpreter(tree[1])
-        if value[0]!="(" or value[len(value)-1]!=")":
-            print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
-        else:
+        #print value
+        return value[0]
 
-            _tree_=parser(lexer(value)[0])
-            if type(_tree_[0])==str:
-                return _tree_[0]
-            else:
-                return interpreter(_tree_[0])
+        #if value[0]!="(" or value[len(value)-1]!=")":
+        #    print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
+        #else:
+
+        #    _tree_=parser(lexer(value)[0])
+        #    if type(_tree_[0])==str:
+        #        return _tree_[0]
+        #    else:
+        #        return interpreter(_tree_[0])
         
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
     elif tree[0]=="cdr":
         print "it is cdr"
         value=interpreter(tree[1])
-        print value
-        if value[0]!="(" or value[len(value)-1]!=")":
-            print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
+        #print value
+        if len(value)==0:
+            print "Error\nFunction 'cdr' cannot be used on empty list"
+        elif len(value)==1:
+            return []
         else:
-            _tree_=parser(lexer(value)[0])
-            if len(_tree_)==0:
-                print "Error\nFunction 'cdr' cannot be used on empty list"
-            elif len(_tree_)==1:
-                return "()"
-            else:
-                _tree_=_tree_[1:len(_tree_)]
-                return convertArrayToString(_tree_)
+            return value[1:len(value)]
+
+        #if value[0]!="(" or value[len(value)-1]!=")":
+        #    print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
+        #else:
+        #    _tree_=parser(lexer(value)[0])
+        #    if len(_tree_)==0:
+        #        print "Error\nFunction 'cdr' cannot be used on empty list"
+        #    elif len(_tree_)==1:
+        #        return "()"
+        #    else:
+        #        _tree_=_tree_[1:len(_tree_)]
+        #        return convertArrayToString(_tree_)
     
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
@@ -647,7 +686,13 @@ def interpreter(tree):
     
     
     elif tree[0]=="print":
-        print interpreter(tree[1])
+        value = interpreter(tree[1])
+        if type(value)==str:
+            print value
+        else:
+            print convertArrayToString(value)
+        return ""
+        #print interpreter(tree[1])
     
     # function let
     # (let [assignment] [stm] [stm] ...)  return last stm
