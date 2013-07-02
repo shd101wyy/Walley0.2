@@ -383,7 +383,7 @@ def Walley_Operator_For_Fraction(num1_str, num2_str, sign):
         return str(float(eval(num1_str+sign+num2_str)))
     
     if isNumber(num1_str)==False or isNumber(num2_str)==False:
-        print "Error... cannot process "+num1_str+sign+num2_str
+        print("Error... cannot process "+num1_str+sign+num2_str)
         return ""
     
     if sign=="+":
@@ -395,7 +395,7 @@ def Walley_Operator_For_Fraction(num1_str, num2_str, sign):
     elif sign=="*":
         return fraction_time(num1_str, num2_str)
     else:
-        printf("Mistake occurred while calling function Walley_Operator_For_Fraction\nUnseen sign %c occurred\n",sign)
+        print("Mistake occurred while calling function Walley_Operator_For_Fraction\nUnseen sign "+sign+" occurred\n")
         return "Mistake occurred while calling function Walley_Operator_For_Fraction\nUnseen sign occurred\n"
 
 
@@ -421,7 +421,7 @@ def Walley_Calculation(value1, value2, sign):
         
         elif sign[0]=="*" :
             if value1IsString==True and value2IsString==True :
-                print "Error.. Can not multiply two string "+value1+" and "+value2+"\n"
+                print("Error.. Can not multiply two string "+value1+" and "+value2+"\n")
                 return ""
             else:
                 num=0
@@ -443,7 +443,7 @@ def Walley_Calculation(value1, value2, sign):
                 return output_str
         
         else:
-            print "Error.. Sign "+sign+" can not be used for string calculation for "+value1+" and "+value2+"\n"
+            print("Error.. Sign "+sign+" can not be used for string calculation for "+value1+" and "+value2+"\n")
             return ""
 
 
@@ -525,12 +525,12 @@ def lexer(input_str):
                 i=i+1
             
             if count2!=2:
-                print "Error...\nInvalid String"
+                print("Error...\nInvalid String")
                 return [[],False]
 
             i=i+1
             if i!=length and input_str[i]!=" " and input_str[i]!=")" and input_str[i]!="\n":
-                print "Error...\nInvalid String -> "+input_str[start:i+1]+"...\n"
+                print("Error...\nInvalid String -> "+input_str[start:i+1]+"...\n")
                 return [[],False]
 
             continue
@@ -726,7 +726,7 @@ def interpreter(tree):
                 if tree in SYMBOLIC_TABLE[i].keys():
                     return SYMBOLIC_TABLE[i][tree]
                 i=i-1
-            print "\nError...\nUndefined value "+tree+"\n"
+            print("\nError...\nUndefined value "+tree+"\n")
 
     # x = 12
     # add to global symbolic table
@@ -744,7 +744,7 @@ def interpreter(tree):
         #
         if type(var_name)==str:
             if var_name.isdigit():
-                print "Error...\nBad variable name -> "+var_name
+                print("Error...\nBad variable name -> "+var_name)
                 return ""
             if length==3:
                 var_value=interpreter(tree[2])
@@ -779,7 +779,7 @@ def interpreter(tree):
     # add to local symbolic table
     elif tree[0]=="local=":
         if length!=3:
-            print "Error. = need 3 values inside"
+            print("Error. = need 3 values inside")
         var_name=tree[1]
         
         var_value=interpreter(tree[2])
@@ -1006,7 +1006,7 @@ def interpreter(tree):
         value=interpreter(tree[1])
         #print value
         if len(value)==0:
-            print "Error\nFunction 'cdr' cannot be used on empty list"
+            print("Error\nFunction 'cdr' cannot be used on empty list")
         elif len(value)==1:
             return []
         else:
@@ -1030,10 +1030,8 @@ def interpreter(tree):
         #print "it is cons"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
-        print value1
-        print value2
         if type(value2)==str:
-            print "Error...\nFunction 'cons' only support (cons [value] [list])\n"
+            print("Error...\nFunction 'cons' only support (cons [value] [list])\n")
         else:
             output=[]
             output.append(value1)
@@ -1266,7 +1264,7 @@ def interpreter(tree):
             value=value[1:len(value)-1]
             return len(value)
         else:
-            print "Error...\nFunction len only support list and string type param"
+            print("Error...\nFunction len only support list and string type param")
 
     
     # function denominator
@@ -1368,7 +1366,7 @@ def interpreter(tree):
                     break
                 i=i-1
             if find==False:
-                print "\nError...\nUndefined function '"+function_name+"'\n"
+                print("\nError...\nUndefined function '"+function_name+"'\n")
                 return ""
         # ((lambda (a b) (+ a b)) 3 4) ---> 7
         else:
