@@ -1058,9 +1058,10 @@ def interpreter(tree):
         
         param_tree = parser(lexer(tree[1])[0])
         stm_tree = parser(lexer(tree[2])[0])
-        function_array = []
+        function_array = ["<procedure"]
         function_array.append(param_tree)
         function_array.append(stm_tree)
+        function_array.append(">")
         return function_array
 
         return_str="<procedure ("
@@ -1380,7 +1381,7 @@ def interpreter(tree):
         let_tree=["let"]
         param_tree=[]
         a = 1
-        for i in function_procedure[0]:
+        for i in function_procedure[1]:
             temp = []
             temp.append(i)
             temp.append(tree[a])
@@ -1388,7 +1389,7 @@ def interpreter(tree):
             param_tree.append(temp)
 
         let_tree.append(param_tree)
-        let_tree.append(function_procedure[1])
+        let_tree.append(function_procedure[2])
 
         return interpreter(let_tree)
         exit(0)
