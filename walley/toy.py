@@ -1056,6 +1056,13 @@ def interpreter(tree):
         
         #print "It is lambda"
         
+        param_tree = parser(lexer(tree[1])[0])
+        stm_tree = parser(lexer(tree[2])[0])
+        function_array = []
+        function_array.append(param_tree)
+        function_array.append(stm_tree)
+        return function_array
+
         return_str="<procedure ("
         for i in tree[1]:
             return_str=return_str+i+" "
@@ -1067,14 +1074,10 @@ def interpreter(tree):
         stms=convertArrayToString(tree[2])
 
         return_str=return_str+stms
-        #for i in tree[2]:
-        #    return_str=return_str+i+" "
 
         return_str=return_str.strip()
 
         return_str=return_str+" >"
-
-        #print "Lambda ----> "+return_str
 
         return return_str
 
@@ -1364,36 +1367,32 @@ def interpreter(tree):
         else:
             function_procedure=interpreter(function_name)
         
-        
-        # MACRO
-        # it has problem now here
-        #if type(function_procedure)!=str:
-        #    print "MACRO"
-        #    print tree
-        #    print function_procedure
-        
-        # eg
-        # tree                  ['square', '5']
-        # function_procedure    [['square', '$'], ['quote', '(* $ $)']]
-        
-        
-        #    from_=function_procedure[0]
-        #    len1=len(tree)
-        #    len2=len(function_procedure[0])
-        
-        #    if len1!=len2:
-        #        pass
-        #    else:
-        #        pass
-        #    exit(0)
-        
-        #print "function_procedure --> "+function_procedure
-        
-        if function_procedure[0:11]!="<procedure ":
-            # solve ((car '(+ -)) 3 4) problem
-            #print "IT IS NOT PROCEDURE"
+        if type(function_procedure)==str:
             tree[0]=function_procedure
             return interpreter(tree)
+        
+        #if function_procedure[0:11]!="<procedure ":
+            # solve ((car '(+ -)) 3 4) problem
+            #print "IT IS NOT PROCEDURE"
+        #    tree[0]=function_procedure
+        #    return interpreter(tree)
+
+        let_tree=["let"]
+        param_tree=[]
+        a = 1
+        for i in function_procedure[0]:
+            temp = []
+            temp.append(i)
+            temp.append(tree[a])
+            a = a+1
+            param_tree.append(temp)
+
+        let_tree.append(param_tree)
+        let_tree.append(function_procedure[1])
+
+        return interpreter(let_tree)
+        exit(0)
+
 
         
         # remove <procedure  >
