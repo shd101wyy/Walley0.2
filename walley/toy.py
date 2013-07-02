@@ -1269,6 +1269,17 @@ def interpreter(tree):
             print "Error...\nFunction len only support list and string type param"
 
     
+    # function denominator
+    # get denominator of number
+    elif tree[0]=="denominator":
+        value = interpreter(tree[1])
+        return denominator_of_fraction(value)
+    # function numerator
+    # get numerator of number
+    elif tree[0]=="numerator":
+        value = interpreter(tree[1])
+        return numerator_of_fraction(value)
+
     # macro
     #elif tree[0]=="=>":
     #    print "It is => macro"
