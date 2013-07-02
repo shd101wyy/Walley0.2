@@ -1380,19 +1380,42 @@ def interpreter(tree):
 
         let_tree=["let"]
         param_tree=[]
+
+        #(add 3 4)
+        # user_param_tree -> [3,4]
+        #(for i in 14)
+        # user_param_tree -> [i,in,14]
+        quote_user_param_tree=["quote"]
+        user_param_tree=[]
         a = 1
+        while a<len(tree):
+            user_param_tree.append(tree[a])
+            a=a+1
+        quote_user_param_tree.append(user_param_tree)
+
+
+        a = 0
         for i in function_procedure[1]:
             temp = []
             temp.append(i)
-            temp.append(tree[a])
+            temp.append(user_param_tree[a])
             a = a+1
             param_tree.append(temp)
+
+        # add user_param_tree
+        temp=[]
+        temp.append("...")
+        temp.append(quote_user_param_tree)
+        param_tree.append(temp)
 
         let_tree.append(param_tree)
         let_tree.append(function_procedure[2])
 
+        #print let_tree
+        #exit(0)
+
         return interpreter(let_tree)
-        exit(0)
+        
 
 
         
