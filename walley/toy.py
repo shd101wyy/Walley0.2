@@ -112,8 +112,7 @@
     '''
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...\nFunction list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\") "
-
+TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\") "
 #=========== MATH ==============
 #===============================
 #===============================
@@ -1395,12 +1394,28 @@ def interpreter(tree):
 
 
         a = 0
-        for i in function_procedure[1]:
-            temp = []
-            temp.append(i)
-            temp.append(user_param_tree[a])
-            a = a+1
+        i = 0
+        while i<len(user_param_tree) :
+            if a==len(function_procedure[1]) and len(function_procedure[1])!=len(user_param_tree):
+                temp=[]
+                temp.append("..")
+                quote_array=["quote"]
+                quote_array.append([])
+                while i<len(user_param_tree):
+                    quote_array[1].append(user_param_tree[i])
+                    i=i+1
+                temp.append(quote_array)
+                param_tree.append(temp)
+                break
+
+            temp=[]
+            temp.append(function_procedure[1][a])
+            temp.append(user_param_tree[i])
             param_tree.append(temp)
+
+            i=i+1
+            a=a+1
+
 
         # add user_param_tree
         temp=[]
@@ -1416,56 +1431,6 @@ def interpreter(tree):
 
         return interpreter(let_tree)
         
-
-
-        
-        # remove <procedure  >
-        function_procedure=function_procedure[11:len(function_procedure)-2]
-        i=0
-        count_of_bracket=0
-        count_of_double_quote=0
-        
-        params=""
-        stms=""
-        
-        while i<len(function_procedure):
-            if function_procedure[i]=="\"":
-                count_of_double_quote=count_of_double_quote+1
-            elif function_procedure[i]=="(" and count_of_double_quote%2==0:
-                count_of_bracket=count_of_bracket+1
-            elif function_procedure[i]==")" and count_of_double_quote%2==0:
-                count_of_bracket=count_of_bracket-1
-                if count_of_bracket==0:
-                    params=function_procedure[0:i+1]
-                    stms=function_procedure[i+1:len(function_procedure)]
-                    break
-            i=i+1
-        #print function_procedure
-        #print params
-        #print stms
-        params_tree=parser(lexer(params)[0])
-
-        # ... is the function argument list
-        run_str="(let ((... (quote "+params+"))"
-
-
-        a=1
-        for i in params_tree:
-            if type(tree[a])==str:
-                param=tree[a]
-            else:
-                param = convertArrayToString(tree[a])
-            
-            run_str=run_str+"("+i+" "+param+")"
-            a=a+1
-        
-        run_str=run_str+")"
-        run_str=run_str+stms+")"
-        
-        #print "run_str---> "+run_str
-        run_str_tree=parser(lexer(run_str)[0])
-        
-        return interpreter(run_str_tree)
 
 
 
