@@ -43,6 +43,11 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
             i=i+1
             continue
         else:
+            # deal with string problem
+            if x[i][0]=="\"":
+                x[i]="\\"+x[i]
+                x[i]=x[i][0:len(x[i])-1]
+                x[i]=x[i]+"\\\""
             output=output+x[i]
             if i+1!=length and x[i+1]==")":
                 i=i+1

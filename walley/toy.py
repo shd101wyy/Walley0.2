@@ -1,3 +1,4 @@
+# codeset: utf8
 '''
     walley
     
@@ -9,13 +10,13 @@
     TOY LANGUAGE
     
     |======|
-    ||
-    ||
-    ||    /==\   \\ //
-    ||    |  |    \//
-    ||    \++/    //         language
-    //
-    //
+       ||
+       ||
+       ||    /==\   \\ //
+       ||    |  |    \//
+       ||    \++/    //         language
+                    //
+                   //
     
     obj
     func
@@ -110,7 +111,8 @@
     
     '''
 
-
+# the script that is required to run before starting the toy program
+TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...\nFunction list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\") "
 
 #=========== MATH ==============
 #===============================
@@ -677,7 +679,6 @@ SYMBOLIC_TABLE[0]["lambda"]="lambda"
 SYMBOLIC_TABLE[0]["len"]="len"
 
 
-SYMBOLIC_TABLE[0]["list?"]="list?"
 SYMBOLIC_TABLE[0]["atom?"]="atom?"
 SYMBOLIC_TABLE[0]["number?"]="number?"
 SYMBOLIC_TABLE[0]["empty?"]="empty?"
@@ -1100,15 +1101,6 @@ def interpreter(tree):
         else:
             return "0"
 
-    # function list?
-    # (list? (quote (1 2 3))) -> 1
-    elif tree[0]=="list?":
-        value=interpreter(tree[1])
-        if type(value)!=str:
-            return "1"
-        else:
-            return "0"
-
     # function atom?
     # (atom? 12) -> 1
     # (atom? '(1 2)) -> 0
@@ -1457,3 +1449,16 @@ def interpreter(tree):
 #SYMBOLIC TABLE
 #0     GLOBAL 
 #1...n LOCAL
+
+def toy_runString(input_str):
+    x=lexer(input_str)
+    if x[1]==False:
+        print "Error...Incomplete Statements"
+    else:
+        x=parser(x[0])
+        interpreter(x)
+
+# RUN TO_RUN
+toy_runString(TO_RUN)
+
+

@@ -2,6 +2,13 @@
 	"This program is written by Yiyi Wang to test Toy Language"
 	"I recommended u to start the program by stating (stms ) function"
 
+
+	"list? function will return 1 if it is list"
+	(= list? (lambda (a)
+			(if (atom? a) 0 1)
+		)
+	)
+
 	"======================================================================"
 
 	" this is function ^ "
@@ -15,7 +22,7 @@
 	"bind ** to ^"
 	(= ** ^)
 	"test ** function"
-	(print (** 3 4))
+	"(print (** 3 4))"
 
 	"======================================================================"
 	"list "
@@ -30,8 +37,8 @@
 		)
 
 		"test list-length"
-		(print (list-length '(1 2 3)))
-		(print (list-length 12))
+		"(print (list-length '(1 2 3)))"
+		"(print (list-length 12))"
 
 		"====================================="
 		"list-get"
@@ -44,26 +51,9 @@
 			)
 		)
 		"test list-get"
-		(print (list-get '(12 2 14) 2))
+		"(print (list-get '(12 2 14) 2))"
 
-		"===================================="
-		"list-set"
-		"set value at index for list"
-		"eg (= x '(1 2 3) (list-set x 0 12) ----> x := (12 2 3)   "
-		(= list-set (lambda (_list_ index set_value)
-				(stms
-					(local= output '())
-					(local= i 0)
-					(while (< i index)
-						(local= value (car _list_))
-						(local= output (cons value output))
-					)
-					(
 
-					i)
-				)
-			)
-		)
 
 
 
