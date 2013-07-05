@@ -110,9 +110,14 @@
     
     
     '''
+# This is the virtual file system
+# that hold all modules
+VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
 TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\") "
+VirtualFileSystem["walley_toy"]=TO_RUN
+
 #=========== MATH ==============
 #===============================
 #===============================
@@ -1273,6 +1278,11 @@ def interpreter(tree):
         value = interpreter(tree[1])
         return numerator_of_fraction(value)
 
+    # load module (file) from virtual file system
+    elif tree[0]=="load":
+        value = interpreter(tree[1])
+        toy_runString(VirtualFileSystem[value[1:len(value)-1]])
+
     # macro
     #elif tree[0]=="=>":
     #    print "It is => macro"
@@ -1447,6 +1457,6 @@ def toy_runString(input_str):
         interpreter(x)
 
 # RUN TO_RUN
-toy_runString(TO_RUN)
+toy_runString("(load \"walley_toy\")")
 
 
