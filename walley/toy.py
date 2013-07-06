@@ -25,7 +25,7 @@
     keyword:
     + - * /  %
     =
-    == >= <= > < != not and or
+    == >= <= > < != not and or (only need to program == > and or not, and program < <= >= != in toy language)
     
     function:
     car cdr cond if cons stms eval let print list quote atom? list? number? lambda
@@ -110,6 +110,8 @@
     
     
     '''
+
+
 # This is the virtual file system
 # that hold all modules
 VirtualFileSystem={}
@@ -1014,6 +1016,9 @@ def interpreter(tree):
             print("Error\nFunction 'cdr' cannot be used on empty list")
         elif len(value)==1:
             return []
+        # pair
+        elif len(value)==3 and value[1]==".":
+            return value[2]
         else:
             return value[1:len(value)]
 
@@ -1036,7 +1041,13 @@ def interpreter(tree):
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
         if type(value2)==str:
-            print("Error...\nFunction 'cons' only support (cons [value] [list])\n")
+            # add pair support
+            #print("Error...\nFunction 'cons' only support (cons [value] [list])\n")
+            output=[]
+            output.append(value1)
+            output.append(".")
+            output.append(value2)
+            return output
         else:
             output=[]
             output.append(value1)
