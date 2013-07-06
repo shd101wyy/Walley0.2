@@ -117,7 +117,8 @@
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms (print \"Hello\"))"
+TO_RUN="(= x 12)"
+
 VirtualFileSystem["walley_toy"]=TO_RUN
 
 #=========== MATH ==============
@@ -657,16 +658,6 @@ SYMBOLIC_TABLE[0]["fraction"]="fraction"
 SYMBOLIC_TABLE[0]["="]="="
 SYMBOLIC_TABLE[0]["local="]="local="
 
-#SYMBOLIC_TABLE[0][">"]=">"
-#SYMBOLIC_TABLE[0]["<"]="<"
-#SYMBOLIC_TABLE[0]["=="]="=="
-#SYMBOLIC_TABLE[0]["!="]="!="
-#SYMBOLIC_TABLE[0][">="]=">="
-#SYMBOLIC_TABLE[0]["<="]="<="
-
-SYMBOLIC_TABLE[0]["and"]="and"
-SYMBOLIC_TABLE[0]["or"]="or"
-SYMBOLIC_TABLE[0]["not"]="not"
 
 SYMBOLIC_TABLE[0]["car"]="car"
 SYMBOLIC_TABLE[0]["cdr"]="cdr"
@@ -856,35 +847,7 @@ def interpreter(tree):
         else:
             return "0"       
         
-    elif tree[0]=="not":
-        value = interpreter(tree[1])
-        if value=="0":
-            return "1"
-        else:
-            return "0"
-    ###
-    #    p  q  and  or
-    #    1  0  0    1
-    #    1  1  1    1
-    #    0  0  0    0
-    #    0  1  0    1
-    ###
 
-    elif tree[0]=="and":
-        i=1
-        while i<length:
-            if interpreter(tree[i])=="0":
-                return "0"
-            i=i+1
-        return "1"
-
-    elif tree[0]=="or":
-        i=1
-        while i<length:
-            if interpreter(tree[i])!="0":
-                return "1"
-            i=i+1
-        return "0"
 
     # function quote
     # (quote (1,2,3)) --> (1,2,3)
