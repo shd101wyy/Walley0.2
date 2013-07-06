@@ -750,7 +750,7 @@ def interpreter(tree):
         #
         #
         if type(var_name)==str:
-            if var_name.isdigit():
+            if var_name.isdigit() or var_name==".":
                 print("Error...\nBad variable name -> "+var_name)
                 return ""
             if length==3:
@@ -1412,18 +1412,51 @@ def interpreter(tree):
         # user_param_tree -> [3,4]
         #(for i in 14)
         # user_param_tree -> [i,in,14]
-        quote_user_param_tree=["quote"]
         user_param_tree=[]
         a = 1
         while a<len(tree):
             user_param_tree.append(tree[a])
             a=a+1
-        quote_user_param_tree.append(user_param_tree)
 
+        num_of_function_param = len(function_procedure[1])
+        num_of_user_param = len(user_param_tree)
+
+        i=0
+        while i<num_of_function_param:
+            if function_procedure[1][i]==".":
+                num_of_function_param = num_of_function_param-1
+                break
+            i=i+1
+
+
+        if num_of_user_param<num_of_function_param:
+            print "Error...Missing params"
+            return "";
 
         a = 0
         i = 0
         while i<len(user_param_tree) :
+            # too many parameters
+            if a>=num_of_function_param:
+                print "Error...Too many params"
+                return ""
+
+            if function_procedure[1][a]==".":
+                variadic_var_name = function_procedure[1][a+1]
+
+                quote_array = ["quote"]
+                temp=[]
+                temp.append(variadic_var_name)
+                quote_array=["quote"]
+                quote_array.append([])
+                while i<num_of_user_param:
+                    quote_array[1].append(user_param_tree[i])
+                    i=i+1
+                temp.append(quote_array)
+                param_tree.append(temp)
+                break
+
+            '''
             if a==len(function_procedure[1]) and len(function_procedure[1])!=len(user_param_tree):
                 temp=[]
                 temp.append("..")
@@ -1435,7 +1468,7 @@ def interpreter(tree):
                 temp.append(quote_array)
                 param_tree.append(temp)
                 break
-
+            '''
             temp=[]
             temp.append(function_procedure[1][a])
             temp.append(user_param_tree[i])
@@ -1445,11 +1478,13 @@ def interpreter(tree):
             a=a+1
 
 
+        '''
         # add user_param_tree
         temp=[]
         temp.append("...")
         temp.append(quote_user_param_tree)
         param_tree.append(temp)
+        '''
 
         let_tree.append(param_tree)
         let_tree.append(function_procedure[2])
