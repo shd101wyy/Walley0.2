@@ -1,7 +1,14 @@
 (stms
-	(= list-length (lambda (_list_)
-		(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
+	(= == (lambda (. args)
+		(if (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args)) )
+			)
 		)
 	)
-	(print (list-length '(1 2 3)))
+	(= < (lambda (. args)
+		(if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (and (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
+			)
+		)
+	)	
+
+	(print (< 3 4 5 6 5))
 )

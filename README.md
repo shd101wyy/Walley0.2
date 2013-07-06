@@ -161,9 +161,13 @@ embeded functions:
 
 
 
-
-
-
+	##########
+	Variadic Function parameters
+	. args
+	(= add (lambda (. args) (+ 12 (car args))))
+				    -------
+				    . args 为可变参数 variadic params
+	(add 3 4) -> 12+3=15, args = (3 4)
 
 
 

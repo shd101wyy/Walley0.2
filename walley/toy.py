@@ -117,7 +117,7 @@
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"list? function will return 1 if it is list\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\") "
+TO_RUN="(stms (print \"Hello\"))"
 VirtualFileSystem["walley_toy"]=TO_RUN
 
 #=========== MATH ==============
@@ -645,11 +645,11 @@ SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
 # add embeded function
-SYMBOLIC_TABLE[0]["+"]="+"
-SYMBOLIC_TABLE[0]["-"]="-"
-SYMBOLIC_TABLE[0]["*"]="*"
-SYMBOLIC_TABLE[0]["/"]="/"
-SYMBOLIC_TABLE[0]["%"]="%"
+#SYMBOLIC_TABLE[0]["+"]="+"
+#SYMBOLIC_TABLE[0]["-"]="-"
+#SYMBOLIC_TABLE[0]["*"]="*"
+#SYMBOLIC_TABLE[0]["/"]="/"
+#SYMBOLIC_TABLE[0]["%"]="%"
 SYMBOLIC_TABLE[0]["float"]="float"
 SYMBOLIC_TABLE[0]["fraction"]="fraction"
 
@@ -657,12 +657,12 @@ SYMBOLIC_TABLE[0]["fraction"]="fraction"
 SYMBOLIC_TABLE[0]["="]="="
 SYMBOLIC_TABLE[0]["local="]="local="
 
-SYMBOLIC_TABLE[0][">"]=">"
-SYMBOLIC_TABLE[0]["<"]="<"
-SYMBOLIC_TABLE[0]["=="]="=="
-SYMBOLIC_TABLE[0]["!="]="!="
-SYMBOLIC_TABLE[0][">="]=">="
-SYMBOLIC_TABLE[0]["<="]="<="
+#SYMBOLIC_TABLE[0][">"]=">"
+#SYMBOLIC_TABLE[0]["<"]="<"
+#SYMBOLIC_TABLE[0]["=="]="=="
+#SYMBOLIC_TABLE[0]["!="]="!="
+#SYMBOLIC_TABLE[0][">="]=">="
+#SYMBOLIC_TABLE[0]["<="]="<="
 
 SYMBOLIC_TABLE[0]["and"]="and"
 SYMBOLIC_TABLE[0]["or"]="or"
@@ -689,6 +689,18 @@ SYMBOLIC_TABLE[0]["atom?"]="atom?"
 SYMBOLIC_TABLE[0]["number?"]="number?"
 SYMBOLIC_TABLE[0]["empty?"]="empty?"
 SYMBOLIC_TABLE[0]["null?"]="null?"
+
+
+'''
+ADD EMBEDED FUNCTION WHICH CANNOT BE USED AS VAR NAME
+'''
+
+SYMBOLIC_TABLE[0]["__ADD__"]="__ADD__"
+SYMBOLIC_TABLE[0]["__MINUS__"]="__MINUS__"
+SYMBOLIC_TABLE[0]["__MULT__"]="__MULT__"
+SYMBOLIC_TABLE[0]["__DIV__"]="__DIV__"
+SYMBOLIC_TABLE[0]["__EQUAL__"]="__EQUAL__"
+SYMBOLIC_TABLE[0]["__LT__"]="__LT__"
 
 
 
@@ -791,146 +803,59 @@ def interpreter(tree):
         
         var_value=interpreter(tree[2])
         SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
-
-    elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":
+    
+    #elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":    
+    #    sign=interpreter(tree[0])
         
-        sign=interpreter(tree[0])
-        
-        i=2
-        append_str=interpreter(tree[1])
-        while i<length:
+    #    i=2
+    #    append_str=interpreter(tree[1])
+    #    while i<length:
             
-            append_str = Walley_Calculation(append_str,interpreter(tree[i]),sign)
-            #append_str=append_str+sign+interpreter(tree[i])
-            i=i+1
-        #return str(eval(append_str))
-        return append_str
-
+    #        append_str = Walley_Calculation(append_str,interpreter(tree[i]),sign)
+    #        i=i+1
+    #    return append_str
+    
+    elif tree[0]=="__ADD__":
+        return str(eval(interpreter(tree[1])+"+"+interpreter(tree[2])))
+    elif tree[0]=="__MINUS__":
+        return str(eval(interpreter(tree[1])+"-"+interpreter(tree[2])))
+    elif tree[0]=="__MULT__":
+        return str(eval(interpreter(tree[1])+"*"+interpreter(tree[2])))
+    elif tree[0]=="__DIV__":
+        return str(eval(interpreter(tree[1])+"/"+interpreter(tree[2])))
 
     elif tree[0]=="float":
         return fraction_to_double(interpreter(tree[1]))
     elif tree[0]=="fraction":
         return double_to_fraction(interpreter(tree[1]))
-    elif tree[0]=="==":
-        #print "It is =="
+
+    elif tree[0]=="__EQUAL__":
         value1=interpreter(tree[1])
         if isNumber(value1):
             value1=eval(value1)
-        
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous==value:
-                previous=value
-            else:
-                return "0"
-            i=i+1
-        return "1"
 
-    elif tree[0]==">":
-        #print "It is >"
+        value2=interpreter(tree[2])
+        if isNumber(value2):
+            value2=eval(value2)
+
+        if value1==value2:
+            return "1"
+        else:
+            return "0"
+    elif tree[0]=="__LT__":
         value1=interpreter(tree[1])
         if isNumber(value1):
             value1=eval(value1)
-        
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous>value:
-                previous = value
-            else:
-                return "0"
-            i=i+1
-        return "1"
 
-    elif tree[0]=="<":
-        #print "It is <"
-        value1=interpreter(tree[1])
-        if isNumber(value1):
-            value1=eval(value1)
-        
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous<value:
-                previous = value
-            else:
-                return "0"
-            i=i+1
-        return "1"
+        value2=interpreter(tree[2])
+        if isNumber(value2):
+            value2=eval(value2)
 
-    elif tree[0]=="!=":
-        #print "It is !="
-        value1=interpreter(tree[1])
-        if isNumber(value1):
-            value1=eval(value1)
+        if value1<value2:
+            return "1"
+        else:
+            return "0"       
         
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous!=value:
-                previous = value
-            else:
-                return "0"
-            i=i+1
-        return "1"
-
-    elif tree[0]==">=":
-        #print "It is >="
-        value1=interpreter(tree[1])
-        if isNumber(value1):
-            value1=eval(value1)
-        
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous>=value:
-                previous = value
-            else:
-                return "0"
-            i=i+1
-        return "1"
-
-    elif tree[0]=="<=":
-        #print "It is <="
-        value1=interpreter(tree[1])
-        if isNumber(value1):
-            value1=eval(value1)
-        
-        previous=value1
-        i=2
-        while i<length:
-            value=interpreter(tree[i])
-            if isNumber(value):
-                value=eval(value)
-            
-            if previous<=value:
-                previous = value
-            else:
-                return "0"
-            i=i+1
-        return "1"
-
     elif tree[0]=="not":
         value = interpreter(tree[1])
         if value=="0":
@@ -1294,68 +1219,6 @@ def interpreter(tree):
         value = interpreter(tree[1])
         toy_runString(VirtualFileSystem[value[1:len(value)-1]])
 
-    # macro
-    #elif tree[0]=="=>":
-    #    print "It is => macro"
-    #    print tree
-    #
-    #    start_name=tree[1]
-    #
-    #    i=2
-    #    while i<length:
-    #        inside=tree[i]
-    #
-    #        from_=interpreter(tree[i][0])
-    #        to_=interpreter(tree[i][1])
-    
-    #        print "from ---> "+from_
-    #        print "to   ---> "+to_
-    #        print "\n"
-    
-    #        SYMBOLIC_TABLE[0][start_name]=[]
-    
-    #        to_append=[]
-    #        to_append.append(parser(lexer(from_)[0]))
-    #        to_append.append(to_)
-    
-    #        SYMBOLIC_TABLE[0][start_name].append(to_append)
-    
-    #        i=i+1
-    
-    
-    #    print SYMBOLIC_TABLE
-    #    return ""
-    
-    
-    # (macroexpand '(square 3))
-    # ->
-    # (* 3 3)
-    #elif tree[0]=="macroexpand":
-    #    print "It is macroexpand"
-    #'square': [[['$'], '(* $ $)\n\t\t']]
-    #    value=interpreter(tree[1])
-    #    if value[0]!="(" or value[len(value)-1]!=")":
-    #        print "Error...Function macroexpand"
-    #        return ""
-    #
-    #    _tree_=parser(lexer(value)[0])
-    #    print _tree_
-    #
-    #    start_name=_tree_[0]
-    #
-    #    if start_name in SYMBOLIC_TABLE[0].keys():
-    #        modes=SYMBOLIC_TABLE[0][start_name]
-    #        for i in modes:
-    #            mode_0=i[0]
-    #            if len(mode_0)+1!=len(_tree_):
-    #                continue
-    #    else:
-    #        print "Error..."
-    
-    
-    
-    #    print value
-    
     
     # point ->
     # (-> y x)
@@ -1399,11 +1262,6 @@ def interpreter(tree):
             tree[0]=function_procedure
             return interpreter(tree)
         
-        #if function_procedure[0:11]!="<procedure ":
-            # solve ((car '(+ -)) 3 4) problem
-            #print "IT IS NOT PROCEDURE"
-        #    tree[0]=function_procedure
-        #    return interpreter(tree)
 
         let_tree=["let"]
         param_tree=[]
@@ -1428,18 +1286,17 @@ def interpreter(tree):
                 break
             i=i+1
 
-
-        if num_of_user_param<num_of_function_param:
-            print "Error...Missing params"
-            return "";
+        #if num_of_user_param<num_of_function_param:
+        #    print "Error...Missing params"
+        #    return "";
 
         a = 0
         i = 0
-        while i<len(user_param_tree) :
+        while a < num_of_function_param :
             # too many parameters
-            if a>=num_of_function_param:
-                print "Error...Too many params"
-                return ""
+            #if a>=num_of_function_param:
+            #    print "Error...Too many params"
+            #    return ""
 
             if function_procedure[1][a]==".":
                 variadic_var_name = function_procedure[1][a+1]
@@ -1450,41 +1307,20 @@ def interpreter(tree):
                 quote_array=["quote"]
                 quote_array.append([])
                 while i<num_of_user_param:
-                    quote_array[1].append(user_param_tree[i])
+                    quote_array[1].append( interpreter(user_param_tree[i]))
                     i=i+1
                 temp.append(quote_array)
                 param_tree.append(temp)
                 break
 
-            '''
-            if a==len(function_procedure[1]) and len(function_procedure[1])!=len(user_param_tree):
-                temp=[]
-                temp.append("..")
-                quote_array=["quote"]
-                quote_array.append([])
-                while i<len(user_param_tree):
-                    quote_array[1].append(user_param_tree[i])
-                    i=i+1
-                temp.append(quote_array)
-                param_tree.append(temp)
-                break
-            '''
             temp=[]
             temp.append(function_procedure[1][a])
-            temp.append(user_param_tree[i])
+            temp.append(interpreter(user_param_tree[i]))
             param_tree.append(temp)
 
             i=i+1
             a=a+1
 
-
-        '''
-        # add user_param_tree
-        temp=[]
-        temp.append("...")
-        temp.append(quote_user_param_tree)
-        param_tree.append(temp)
-        '''
 
         let_tree.append(param_tree)
         let_tree.append(function_procedure[2])

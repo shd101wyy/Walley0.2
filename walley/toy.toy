@@ -2,6 +2,76 @@
 	"This program is written by Yiyi Wang to test Toy Language"
 	"I recommended u to start the program by stating (stms ) function"
 
+	"Arithmetic Operation"
+	"Now only support number, exclude fraction, real, complex"
+	(= + (lambda (. args)
+		(if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))
+			)
+		)
+	)
+	(= - (lambda (. args)
+		(if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))
+			)
+		)
+	)
+
+	(= * (lambda (. args)
+		(if (null? args) 0 (__MULT__ (car args) (apply * (cdr args)))
+			)
+		)
+	)
+	(= / (lambda (. args)
+		(if (null? args) 0 (__DIV__ (car args) (apply / (cdr args)))
+			)
+		)
+	)
+
+	
+	"Condition judge > < == != >= <="
+	(= == (lambda (. args)
+		(if (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args)) )
+			)
+		)
+	)
+	(= < (lambda (. args)
+		(if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (and (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
+			)
+		)
+	)	
+	(= <= (lambda (. args)
+		(if (== 2 (len args)) (or (apply == args) (apply < args)) (and (or (apply == (list (car args) (car (car args)) ) ) (apply < (list (car args) (car (car args))))) (apply <= (cdr args)) )
+			)
+		)
+	)
+
+	"greater"
+	(= __GT__ (lambda (a b)(
+		if (apply < (list a b)) 0 1
+			)
+		)
+	)
+
+	(= > (lambda (. args) (
+		if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (and (__GT__ (car args) (car (cdr args))) (apply > (cdr args)) )
+			)
+		)
+	)
+
+	(= >= (lambda (. args)(
+		if (== 2 (len args)) (or (apply == args) (apply > args)) (and (or (apply == (list (car args) (car (car args)) ) ) (apply > (list (car args) (car (car args))))) (apply >= (cdr args)) )
+			)
+		)
+	)
+
+	(= != (lambda (. args)
+		(if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (and (not (== (car args) (car (cdr args)))) (apply != (cdr args)) )
+			)
+		)
+	)
+	(print (<= 6 5 4 3 4))
+	(print (and 0 0 0 1))
+
+
 	"(reminder 3 4) ->3"
 	(= reminder (lambda (a b) 
 			(
@@ -82,54 +152,52 @@
 			)
 		)
 	)
-	(print (list-append '(1 2) '(14 15) ))
+	"(print (list-append '(1 2) '(14 15) ))"
 
 	"==============="
 	"Function: Range"
-	(= range (lambda (a)
-			(if (== 1 (list-length ...))
-				(stms
-					(local= i 0)
-					(local= output '())
-					(while (< i a)
-						(stms
-							(local= output (list-append output i))
-							(local= i (+ i 1))
+	"(range 10)"
+	"(range 0 10)"
+	"(range 0 10 1)"
+	(= range (lambda (arg0 . args) (stms
+				(cond 
+					((== args '())
+						(stms 
+							(local= begin 0)
+							(local= end arg0)
+							(local= interval 1)
+							(local= output '())
 						)
 					)
-					output
-				)
-				(if (== 2 (list-length ...))
-					(stms
-						(local= i a)
-						(local= output '())
-						(while (< i (eval (list-get .. 0)))
-							(stms
-								(local= output (list-append output i))
-								(local= i (+ i 1))
-							)
+					((== 1 (list-length args))
+						(stms 
+							(local= begin arg0)
+							(local= end (car args))
+							(local= interval 1)
+							(local= output '())
 						)
-						output
 					)
+					(1 
+						(stms 
+							(local= begin arg0)
+							(local= end (car args))
+							(local= interval (car (cdr args)))
+							(local= output '())
 
-					(stms
-						(local= i a)
-						(local= output '())
-						(local= max (eval (list-get .. 0)))
-						(while (< i max)
-							(stms
-								(local= output (list-append output i))
-								(local= i (+ i (eval (list-get .. 1))))
-							)
 						)
-						output
-					)
+					) 
+
 				)
+				(if (> interval 0 ) 
+					(while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))
+					(while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))
+				)
+				output
 			)
 		)
 	)
 	"Test"
-	(print (range 2 100 0.5))
+	"(print (range 2 100 1))"
 
 
 
