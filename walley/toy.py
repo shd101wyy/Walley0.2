@@ -1236,6 +1236,7 @@ def interpreter(tree):
         user_param_tree=[]
         a = 1
         while a<len(tree):
+            # Does not calculate, use Lazy Evaluation
             user_param_tree.append(tree[a])
             a=a+1
 
@@ -1270,7 +1271,8 @@ def interpreter(tree):
                 quote_array=["quote"]
                 quote_array.append([])
                 while i<num_of_user_param:
-                    quote_array[1].append( interpreter(user_param_tree[i]))
+                    #Lazy Evalutation
+                    quote_array[1].append(user_param_tree[i])
                     i=i+1
                 temp.append(quote_array)
                 param_tree.append(temp)
@@ -1278,7 +1280,10 @@ def interpreter(tree):
 
             temp=[]
             temp.append(function_procedure[1][a])
-            temp.append(interpreter(user_param_tree[i]))
+
+            #Lazy Evaluation
+            temp.append(user_param_tree[i])
+
             param_tree.append(temp)
 
             i=i+1
