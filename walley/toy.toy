@@ -2,6 +2,15 @@
 	"This program is written by Yiyi Wang to test Toy Language"
 	"I recommended u to start the program by stating (stms ) function"
 
+	"(reminder 3 4) ->3"
+	(= reminder (lambda (a b) 
+			(
+				if (< a b) a (reminder (- a b) b)
+			)
+		)
+	)
+	(= % reminder)
+
 
 	"list? function will return 1 if it is list"
 	(= list? (lambda (a)
