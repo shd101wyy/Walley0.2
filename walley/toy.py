@@ -1365,7 +1365,14 @@ def interpreter(tree):
     #    (-> y x)    : y points to x
     #    (= x 13)    : x=13 then y=13 as well
     #
-    
+    elif tree[0]=="apply":
+        call_function_name = tree[1]
+        params = interpreter(tree[2])
+        output=[]
+        output.append(call_function_name)
+        for i in params:
+            output.append(i)
+        return interpreter(output)
     
     # call function directly
     else:
