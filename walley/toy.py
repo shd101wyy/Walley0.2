@@ -118,8 +118,7 @@ from __future__ import division
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"Arithmetic Operation\" \"Now only support number, exclude fraction, real, complex\" (= + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (= - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (= * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (= / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) \"Condition judge > < == != >= <=\" (= == (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))))))) (= < (lambda (. args) (if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (= <= (lambda (. args) (if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) \"greater\" (= __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (= > (lambda (. args) (if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (= >= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (= != (lambda (. args) (if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)))))) (= __AND__ (lambda (a b) (if a (if b 1 0) 0))) (= __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (= and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (= or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (= not (lambda (a) (if a 0 1))) \"function if\" \"(if [judge] [run if pass] [run if not pass])\" (= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2)))) \"One bug here\" \"(print (<= 4 3 4))\" \"(reminder 3 4) ->3\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" (= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1))))))) \"(print (factorial 2))\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\" \"=====================\" \"Function: list-append\" \"(list-append '() 12) -> (12)\" \"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))\" (= list-append (lambda (a b) (stms (local= output (cons b (quote ()))) (local= i (- (list-length a) 1)) (while (>= i 0) (stms (local= output (cons (list-get a i) output)) (local= i (- i 1)))) output))) \"(print (list-append '(1 2) '(14 15) ))\" \"===============\" \"Function: Range\" \"(range 10)\" \"(range 0 10)\" \"(range 0 10 1)\" (= range (lambda (arg0 . args) (stms (cond ((== args (quote ())) (stms (local= begin 0) (local= end arg0) (local= interval 1) (local= output (quote ())))) ((== 1 (list-length args)) (stms (local= begin arg0) (local= end (car args)) (local= interval 1) (local= output (quote ())))) (1 (stms (local= begin arg0) (local= end (car args)) (local= interval (car (cdr args))) (local= output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval)))) (while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))) output))) \"Test\" \"(print (range 2 100 1))\") "
-
+TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"Arithmetic Operation\" \"Now only support number, exclude fraction, real, complex\" (= + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (= - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (= * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (= / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) (= null? (lambda (a) (if (eq a (quote ())) 1 0))) (= empty? null?) \"Condition judge > < == != >= <=\" (= == (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))))))) (= < (lambda (. args) (if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (= <= (lambda (. args) (if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) \"greater\" (= __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (= > (lambda (. args) (if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (= >= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (= != (lambda (. args) (if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)))))) (= __AND__ (lambda (a b) (if a (if b 1 0) 0))) (= __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (= and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (= or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (= not (lambda (a) (if a 0 1))) \"function if\" \"(if [judge] [run if pass] [run if not pass])\" (= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2)))) \"One bug here\" \"(print (<= 4 3 4))\" \"(reminder 3 4) ->3\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" (= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1))))))) \"(print (factorial 2))\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\" \"=====================\" \"Function: list-append\" \"(list-append '() 12) -> (12)\" \"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))\" (= list-append (lambda (a b) (stms (local= output (cons b (quote ()))) (local= i (- (list-length a) 1)) (while (>= i 0) (stms (local= output (cons (list-get a i) output)) (local= i (- i 1)))) output))) \"(print (list-append '(1 2) '(14 15) ))\" \"===============\" \"Function: Range\" \"(range 10)\" \"(range 0 10)\" \"(range 0 10 1)\" (= range (lambda (arg0 . args) (stms (cond ((== args (quote ())) (stms (local= begin 0) (local= end arg0) (local= interval 1) (local= output (quote ())))) ((== 1 (list-length args)) (stms (local= begin arg0) (local= end (car args)) (local= interval 1) (local= output (quote ())))) (1 (stms (local= begin arg0) (local= end (car args)) (local= interval (car (cdr args))) (local= output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval)))) (while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))) output))) \"Test\" \"(print (range 2 100 1))\") "
 VirtualFileSystem["walley_toy"]=TO_RUN
 
 #=========== MATH ==============
@@ -674,8 +673,7 @@ SYMBOLIC_TABLE[0]["len"]="len"
 
 SYMBOLIC_TABLE[0]["atom?"]="atom?"
 SYMBOLIC_TABLE[0]["number?"]="number?"
-SYMBOLIC_TABLE[0]["empty?"]="empty?"
-SYMBOLIC_TABLE[0]["null?"]="null?"
+
 
 
 '''
@@ -1033,19 +1031,6 @@ def interpreter(tree):
             return "0"
         else:
             return "1"
-    # function empty? and null?
-    # if () -> true 1
-    # if not () like (1 2) -> false 0
-    elif tree[0]=="empty?" or tree[0]=="null?":
-        value=interpreter(tree[1])
-        if type(value)==str:
-            return "Error...Function empty? and null? can only be used for list type value"
-        else:
-            if len(value)==0:
-                return "1"
-            else:
-                return "0"
-
 
     elif tree[0]=="print":
         value = interpreter(tree[1])
@@ -1162,7 +1147,30 @@ def interpreter(tree):
         value = interpreter(tree[1])
         toy_runString(VirtualFileSystem[value[1:len(value)-1]])
 
-    
+#   > (eq 'a 'a)
+#   1
+#   > (eq 'a 'b)
+#   0
+#   > (eq '() '())
+#   1
+#   > (eq '(a b c) '(a b c))
+#   0
+    elif tree[0]=="eq":
+        value1 = interpreter(tree[1])
+        value2 = interpreter(tree[2])
+        if type(value1)!=type(value2):
+            return "0"
+        if type(value1)==str:
+            if value1==value2:
+                return "1"
+            else:
+                return "0"
+        else:
+            if value1==[] and value2==[]:
+                return "1"
+            else:
+                return "0"
+
     # point ->
     # (-> y x)
     #

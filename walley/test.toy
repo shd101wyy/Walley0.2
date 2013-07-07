@@ -1,10 +1,9 @@
 (stms
-	"Condition judge > < == != >= <="
-	(= == (lambda (. args)
-		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
-			)
+	(= list-last (lambda (a) (
+		if (null? a) 
+			'nil (if (== 1 (list-length a)) (car a) (list-last (cdr a))))
 		)
 	)
-	(= x 12)
-	(print (== x 12))
+	(print (list-last '(1 2 3 4)))
+
 )

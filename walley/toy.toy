@@ -26,7 +26,9 @@
 		)
 	)
 
-	
+	(= null? (lambda (a)(if (eq a '()) 1 0)))
+	(= empty? null?)
+
 	"Condition judge > < == != >= <="
 	(= == (lambda (. args)
 		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
