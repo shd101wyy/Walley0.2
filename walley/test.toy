@@ -1,5 +1,10 @@
 (stms
-	(= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2))))
+	"Condition judge > < == != >= <="
+	(= == (lambda (. args)
+		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
+			)
+		)
+	)
 	(= x 12)
-    (if (__EQUAL__ x 13) (print 'Damn) (print 'Fck))
+	(print (== x 12))
 )

@@ -1253,8 +1253,8 @@ def interpreter(tree):
                 quote_array=["quote"]
                 quote_array.append([])
                 while i<num_of_user_param:
-                    #Lazy Evalutation
-                    quote_array[1].append(user_param_tree[i])
+                    #Does not support Lazy Evalutation
+                    quote_array[1].append( interpreter( user_param_tree[i] ) )
                     i=i+1
                 temp.append(quote_array)
                 
@@ -1274,6 +1274,8 @@ def interpreter(tree):
 
             i=i+1
             a=a+1
+
+        #print SYMBOLIC_TABLE
 
         return_value = interpreter(function_procedure[2])
         # push SYMBOLIC_TABLE
