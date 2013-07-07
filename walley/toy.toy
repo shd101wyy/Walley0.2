@@ -29,20 +29,21 @@
 	
 	"Condition judge > < == != >= <="
 	(= == (lambda (. args)
-		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
+		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
 			)
 		)
 	)
 	(= < (lambda (. args)
-		(if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (and (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
+		(if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
 			)
 		)
 	)	
 	(= <= (lambda (. args)
-		(if (== 2 (len args)) (or (apply == args) (apply < args)) (and (or (apply == (list (car args) (car (car args)))) (apply < (list (car args) (car (car args))))) (apply <= (cdr args)) )
+		(if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)) )
 			)
 		)
 	)
+
 
 	"greater"
 	(= __GT__ (lambda (a b)(
@@ -52,19 +53,19 @@
 	)
 
 	(= > (lambda (. args) (
-		if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (and (__GT__ (car args) (car (cdr args))) (apply > (cdr args)) )
+		if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)) )
 			)
 		)
 	)
 
 	(= >= (lambda (. args)(
-		if (== 2 (len args)) (or (apply == args) (apply > args)) (and (or (apply == (list (car args) (car (car args)) ) ) (apply > (list (car args) (car (car args))))) (apply >= (cdr args)) )
+		if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)) ) ) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)) )
 			)
 		)
 	)
 
 	(= != (lambda (. args)
-		(if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (and (not (== (car args) (car (cdr args)))) (apply != (cdr args)) )
+		(if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)) )
 			)
 		)
 	)
@@ -119,7 +120,7 @@
 	(= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2))))
 
 	"One bug here"
-	"(print (<= 6 5 4 3 4))"
+	"(print (<= 4 3 4))"
 
 	"(reminder 3 4) ->3"
 	(= reminder (lambda (a b) 
