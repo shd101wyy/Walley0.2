@@ -118,7 +118,8 @@ from __future__ import division
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"Arithmetic Operation\" \"Now only support number, exclude fraction, real, complex\" (= + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (= - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (= * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (= / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) \"Condition judge > < == != >= <=\" (= == (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))))))) (= < (lambda (. args) (if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (= <= (lambda (. args) (if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) \"greater\" (= __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (= > (lambda (. args) (if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (= >= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (= != (lambda (. args) (if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)))))) (= __AND__ (lambda (a b) (if a (if b 1 0) 0))) (= __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (= and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (= or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (= not (lambda (a) (if a 0 1))) \"function if\" \"(if [judge] [run if pass] [run if not pass])\" (= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2)))) \"One bug here\" \"(print (<= 4 3 4))\" \"(reminder 3 4) ->3\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\" \"=====================\" \"Function: list-append\" \"(list-append '() 12) -> (12)\" \"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))\" (= list-append (lambda (a b) (stms (local= output (cons b (quote ()))) (local= i (- (list-length a) 1)) (while (>= i 0) (stms (local= output (cons (list-get a i) output)) (local= i (- i 1)))) output))) \"(print (list-append '(1 2) '(14 15) ))\" \"===============\" \"Function: Range\" \"(range 10)\" \"(range 0 10)\" \"(range 0 10 1)\" (= range (lambda (arg0 . args) (stms (cond ((== args (quote ())) (stms (local= begin 0) (local= end arg0) (local= interval 1) (local= output (quote ())))) ((== 1 (list-length args)) (stms (local= begin arg0) (local= end (car args)) (local= interval 1) (local= output (quote ())))) (1 (stms (local= begin arg0) (local= end (car args)) (local= interval (car (cdr args))) (local= output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval)))) (while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))) output))) \"Test\" \"(print (range 2 100 1))\")"
+TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"Arithmetic Operation\" \"Now only support number, exclude fraction, real, complex\" (= + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (= - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (= * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (= / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) \"Condition judge > < == != >= <=\" (= == (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))))))) (= < (lambda (. args) (if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (= <= (lambda (. args) (if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) \"greater\" (= __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (= > (lambda (. args) (if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (= >= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (= != (lambda (. args) (if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)))))) (= __AND__ (lambda (a b) (if a (if b 1 0) 0))) (= __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (= and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (= or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (= not (lambda (a) (if a 0 1))) \"function if\" \"(if [judge] [run if pass] [run if not pass])\" (= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2)))) \"One bug here\" \"(print (<= 4 3 4))\" \"(reminder 3 4) ->3\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" (= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1))))))) \"(print (factorial 2))\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\" \"=====================\" \"Function: list-append\" \"(list-append '() 12) -> (12)\" \"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))\" (= list-append (lambda (a b) (stms (local= output (cons b (quote ()))) (local= i (- (list-length a) 1)) (while (>= i 0) (stms (local= output (cons (list-get a i) output)) (local= i (- i 1)))) output))) \"(print (list-append '(1 2) '(14 15) ))\" \"===============\" \"Function: Range\" \"(range 10)\" \"(range 0 10)\" \"(range 0 10 1)\" (= range (lambda (arg0 . args) (stms (cond ((== args (quote ())) (stms (local= begin 0) (local= end arg0) (local= interval 1) (local= output (quote ())))) ((== 1 (list-length args)) (stms (local= begin arg0) (local= end (car args)) (local= interval 1) (local= output (quote ())))) (1 (stms (local= begin arg0) (local= end (car args)) (local= interval (car (cdr args))) (local= output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval)))) (while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))) output))) \"Test\" \"(print (range 2 100 1))\") "
+
 VirtualFileSystem["walley_toy"]=TO_RUN
 
 #=========== MATH ==============
@@ -694,6 +695,16 @@ MARCRO_DATABASE={}
 
 
 
+def valueOf(var_name):
+    length=len(SYMBOLIC_TABLE)
+    i=length-1
+    while i>=0:
+        if var_name in SYMBOLIC_TABLE[i].keys():
+            return SYMBOLIC_TABLE[i][var_name]
+        i=i-1
+    print("\nError...\nUndefined value "+tree+"\n")
+    return "nil"
+
 '''
     convert
     [stms [+ a b]]
@@ -1172,6 +1183,13 @@ def interpreter(tree):
     
     # For Lazy Evaluation, I will add __LAZY_VALUE__ property   
     # (__LAZY_VALUE__ [SYMBOLIC_TABLE_index] [var_name] [var_value])
+    # To appoint Lazy Evaluation value, you need to:
+    # Require & sign to inform that the param is lazy evaluation param
+    #   (= if (lambda (condtion, &stm1, &stm2) (
+    #    cond (condtion, stm1) (1 stm2)
+    #        )
+    #    )
+    #)
     # when call var_name value, calculate var_value and then set it to var_name
     # according to SYMBOLIC_TABLE_index
     # call function directly
@@ -1215,8 +1233,11 @@ def interpreter(tree):
         user_param_tree=[]
         a = 1
         while a<len(tree):
+            value = tree[a]
+            if type(value) == str:
+                value = interpreter(value)
             # Does not calculate, use Lazy Evaluation
-            user_param_tree.append(tree[a])
+            user_param_tree.append(value)
             a=a+1
             
         #===== FINISH GETTING USER_PARAM_TREE
@@ -1262,19 +1283,27 @@ def interpreter(tree):
                 #param_tree.append(temp)
                 break
 
-            temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
-            temp.append(function_procedure[1][a])
+            var_name = function_procedure[1][a]
+            # Lazy Evaluation
+            if var_name[0]=="&":
+                var_name = var_name[1:len(var_name)]
+                temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
+                temp.append(var_name)
 
-            #Lazy Evaluation
-            temp.append(user_param_tree[i])
+                #Lazy Evaluation
+                temp.append(user_param_tree[i])
 
-            # ADD TO SYMBOLIC_TABLE
-            SYMBOLIC_TABLE[length_of_symbolic_table-1][function_procedure[1][a]] = temp
+                # ADD TO SYMBOLIC_TABLE
+                SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = temp
+            #This is not Lazy Evaluation
+            else:
+                SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = interpreter(user_param_tree[i])
 
             i=i+1
             a=a+1
 
-        #print SYMBOLIC_TABLE
+        # print SYMBOLIC_TABLE
+        # print "\n"
 
         return_value = interpreter(function_procedure[2])
         # push SYMBOLIC_TABLE

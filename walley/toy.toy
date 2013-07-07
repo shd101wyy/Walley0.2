@@ -117,7 +117,7 @@
 
 	"function if"
     "(if [judge] [run if pass] [run if not pass])"
-	(= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2))))
+	(= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
 	"One bug here"
 	"(print (<= 4 3 4))"
@@ -139,6 +139,9 @@
 	)
 
 	"======================================================================"
+
+	(= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1)))))))
+	"(print (factorial 2))"
 
 	" this is function ^ "
 	(= ^ (lambda (a b)

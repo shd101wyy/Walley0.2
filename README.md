@@ -173,7 +173,13 @@ embeded functions:
 
 
 
-
+===========
+About Lazy Evaluation
+关于惰性求值
+	if 函数的源代码 source code
+	如果 函数参数前加了 &， 则表示该参数为惰性求值，传递参数时不会计算
+	if & is ahead param, then this param is for lazy evaluation...
+	(= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
 
 
