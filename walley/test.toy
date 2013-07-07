@@ -1,5 +1,5 @@
 (stms
 	(= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2))))
 	(= x 12)
-    (if (__EQUAL__ x 12) (print '(Damn it)) (print '(Fck, I don't know)))
+    (if (__EQUAL__ x 13) (print 'Damn) (print 'Fck))
 )

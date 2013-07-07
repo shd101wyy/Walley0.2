@@ -110,14 +110,15 @@
     
     
     '''
-
+# force float division
+from __future__ import division
 
 # This is the virtual file system
 # that hold all modules
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(= x 12)"
+TO_RUN="(stms \"This program is written by Yiyi Wang to test Toy Language\" \"I recommended u to start the program by stating (stms ) function\" \"Arithmetic Operation\" \"Now only support number, exclude fraction, real, complex\" (= + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (= - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (= * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (= / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) \"Condition judge > < == != >= <=\" (= == (lambda (. args) (if (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) (and (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args)))))) (= < (lambda (. args) (if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (and (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (= <= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply < args)) (and (or (apply == (list (car args) (car (car args)))) (apply < (list (car args) (car (car args))))) (apply <= (cdr args)))))) \"greater\" (= __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (= > (lambda (. args) (if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (and (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (= >= (lambda (. args) (if (== 2 (len args)) (or (apply == args) (apply > args)) (and (or (apply == (list (car args) (car (car args)))) (apply > (list (car args) (car (car args))))) (apply >= (cdr args)))))) (= != (lambda (. args) (if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (and (not (== (car args) (car (cdr args)))) (apply != (cdr args)))))) (= __AND__ (lambda (a b) (if a (if b 1 0) 0))) (= __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (= and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (= or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (= not (lambda (a) (if a 0 1))) \"function if\" \"(if [judge] [run if pass] [run if not pass])\" (= if (lambda (condition stm1 stm2) (cond (condition stm1) (1 stm2)))) \"One bug here\" \"(print (<= 6 5 4 3 4))\" \"(reminder 3 4) ->3\" (= reminder (lambda (a b) (if (< a b) a (reminder (- a b) b)))) (= % reminder) \"list? function will return 1 if it is list\" (= list? (lambda (a) (if (atom? a) 0 1))) \"======================================================================\" \" this is function ^ \" (= ^ (lambda (a b) (if (== b 1) a (* a (^ a (- b 1)))))) \"bind ** to ^\" (= ** ^) \"test ** function\" \"(print (** 3 4))\" \"======================================================================\" \"list \" \"list-length\" \"which can be used to get the length of list\" (= list-length (lambda (_list_) (if (list? _list_) (if (null? _list_) 0 (+ 1 (list-length (cdr _list_)))) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) \"test list-length\" \"(print (list-length '(1 2 3)))\" \"(print (list-length 12))\" \"=====================================\" \"list-get\" \"get list at index\" (= list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (== index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) \"test list-get\" \"(print (list-get '(12 2 14) 2))\" \"=====================\" \"Function: list-append\" \"(list-append '() 12) -> (12)\" \"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))\" (= list-append (lambda (a b) (stms (local= output (cons b (quote ()))) (local= i (- (list-length a) 1)) (while (>= i 0) (stms (local= output (cons (list-get a i) output)) (local= i (- i 1)))) output))) \"(print (list-append '(1 2) '(14 15) ))\" \"===============\" \"Function: Range\" \"(range 10)\" \"(range 0 10)\" \"(range 0 10 1)\" (= range (lambda (arg0 . args) (stms (cond ((== args (quote ())) (stms (local= begin 0) (local= end arg0) (local= interval 1) (local= output (quote ())))) ((== 1 (list-length args)) (stms (local= begin arg0) (local= end (car args)) (local= interval 1) (local= output (quote ())))) (1 (stms (local= begin arg0) (local= end (car args)) (local= interval (car (cdr args))) (local= output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval)))) (while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))) output))) \"Test\" \"(print (range 2 100 1))\") "
 
 VirtualFileSystem["walley_toy"]=TO_RUN
 
@@ -646,11 +647,7 @@ SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
 # add embeded function
-#SYMBOLIC_TABLE[0]["+"]="+"
-#SYMBOLIC_TABLE[0]["-"]="-"
-#SYMBOLIC_TABLE[0]["*"]="*"
-#SYMBOLIC_TABLE[0]["/"]="/"
-#SYMBOLIC_TABLE[0]["%"]="%"
+
 SYMBOLIC_TABLE[0]["float"]="float"
 SYMBOLIC_TABLE[0]["fraction"]="fraction"
 
@@ -668,7 +665,6 @@ SYMBOLIC_TABLE[0]["cond"]="cond"
 
 SYMBOLIC_TABLE[0]["print"]="print"
 SYMBOLIC_TABLE[0]["list"]="list"
-SYMBOLIC_TABLE[0]["if"]="if"
 SYMBOLIC_TABLE[0]["stms"]="stms"
 SYMBOLIC_TABLE[0]["eval"]="eval"
 SYMBOLIC_TABLE[0]["let"]="let"
@@ -721,8 +717,10 @@ def interpreter(tree):
     global MARCRO_DATABASE
     
     length=len(tree)
+    if tree=="":
+        return ""
     # (= x 3) x and 3 are just returned
-    if type(tree)==str:
+    if type(tree)==str:        
         if isNumber(tree):
             return tree
         elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
@@ -739,7 +737,7 @@ def interpreter(tree):
                     if type(tree)!=str and len(tree)==4 and tree[0]=="__LAZY_VALUE__":
                         index = tree[1]
                         value = interpreter(tree[3])
-                        SYMBOLIC_TABLE[index][tree[2]] = interpreter(value)
+                        SYMBOLIC_TABLE[index][tree[2]] = value
                         return value
     
                     return tree
@@ -1082,14 +1080,6 @@ def interpreter(tree):
 
         return return_value
 
-    # function if
-    # (if [judge] [run if pass] [run if not pass])
-    elif tree[0]=="if":
-        judge=interpreter(tree[1])
-        if judge=="1":
-            return interpreter(tree[2])
-        else:
-            return interpreter(tree[3])
 
     # function cond
     #
@@ -1116,12 +1106,6 @@ def interpreter(tree):
             
             i=i+1
 
-    # function ...
-    # (= add (lambda (a b) (+ (... 0) (... 1))))
-    # I haven't decided how to implement this function
-    elif tree[0]=="...":
-        pass
-
 
     # function eval
     elif tree[0]=="eval":
@@ -1135,28 +1119,6 @@ def interpreter(tree):
             interpreter(tree[2])
         return ""
 
-
-    # function digit
-    # (0 '(1 2 3)) -> 1
-    # (2 '(1 2 3)) -> 3
-    # (3 '(1 2 3)) -> error
-
-    #elif tree[0].isdigit():
-    #    print "It is digit"
-    #    value = interpreter(tree[1])
-    #
-    #    # (1 '(1 2 3))
-    #    if value[0]=="(" and value[len(value)-1]==")":
-    #        _tree_=parser(lexer(value)[0])
-    #        print _tree_
-    #        print convertArrayToString(_tree_[int(tree[0])])
-    #        return convertArrayToString(_tree_[int(tree[0])])
-    #    # (1 "Hello")
-    #    elif value[0]=="\"" and value[len(value)-1]=="\"":
-    #        value=value[1:len(value)-1]
-    #        return value[int(tree[0])]
-    #    else:
-    #        print "Error...\nDigit only support list and string type param"
 
     # function len
     # (len "Hello") -> 5
@@ -1310,22 +1272,9 @@ def interpreter(tree):
             # ADD TO SYMBOLIC_TABLE
             SYMBOLIC_TABLE[length_of_symbolic_table-1][function_procedure[1][a]] = temp
 
-            #param_tree.append(temp)
-
             i=i+1
             a=a+1
 
-
-        #let_tree.append(param_tree)
-        #let_tree.append(function_procedure[2])
-
-            
-        #print SYMBOLIC_TABLE
-        #print function_procedure[2]
-        #exit(0)
-
-        #print let_tree
-        #exit(0)
         return_value = interpreter(function_procedure[2])
         # push SYMBOLIC_TABLE
         SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)

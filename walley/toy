@@ -18,8 +18,8 @@ if len(sys.argv)==2:
         print "Incomplete Statement"
         exit(0)
     x=parser(x[0])
-    print "\n\nParser---->\n"
-    print x
+    #print "\n\nParser---->\n"
+    #print x
     #print "Parser----> ",
     #print x
     interpreter(x)
@@ -54,6 +54,7 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
             else:
                 output=output+" "
                 i=i+1
+    print "====================\n\n\n"
     print output
 
 
