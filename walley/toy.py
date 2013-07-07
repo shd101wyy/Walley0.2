@@ -1326,8 +1326,11 @@ def interpreter(tree):
 
         #print let_tree
         #exit(0)
-
-        return interpreter(function_procedure[2])
+        return_value = interpreter(function_procedure[2])
+        # push SYMBOLIC_TABLE
+        SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
+        
+        return return_value
         
 
 
