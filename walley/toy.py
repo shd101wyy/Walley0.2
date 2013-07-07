@@ -1234,8 +1234,6 @@ def interpreter(tree):
         a = 1
         while a<len(tree):
             value = tree[a]
-            if type(value) == str:
-                value = interpreter(value)
             # Does not calculate, use Lazy Evaluation
             user_param_tree.append(value)
             a=a+1
