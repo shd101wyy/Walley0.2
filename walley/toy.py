@@ -723,7 +723,6 @@ def interpreter(tree):
     length=len(tree)
     # (= x 3) x and 3 are just returned
     if type(tree)==str:
-        #print "tree---> "+tree
         if isNumber(tree):
             return tree
         elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
@@ -734,7 +733,16 @@ def interpreter(tree):
             i=length-1
             while i>=0:
                 if tree in SYMBOLIC_TABLE[i].keys():
-                    return SYMBOLIC_TABLE[i][tree]
+                    
+                    tree = SYMBOLIC_TABLE[i][tree]
+                    # Deal with Lazy Evaluation
+                    if type(tree)!=str and len(tree)==4 and tree[0]=="__LAZY_VALUE__":
+                        index = tree[1]
+                        value = interpreter(tree[3])
+                        SYMBOLIC_TABLE[index][tree[2]] = interpreter(value)
+                        return value
+    
+                    return tree
                 i=i-1
             print("\nError...\nUndefined value "+tree+"\n")
 
@@ -1200,6 +1208,11 @@ def interpreter(tree):
             output.append(i)
         return interpreter(output)
     
+    
+    # For Lazy Evaluation, I will add __LAZY_VALUE__ property   
+    # (__LAZY_VALUE__ [SYMBOLIC_TABLE_index] [var_name] [var_value])
+    # when call var_name value, calculate var_value and then set it to var_name
+    # according to SYMBOLIC_TABLE_index
     # call function directly
     else:
         function_name=tree[0]
@@ -1226,8 +1239,13 @@ def interpreter(tree):
             return interpreter(tree)
         
 
-        let_tree=["let"]
-        param_tree=[]
+        #let_tree=["let"]
+        #param_tree=[]
+        
+        # ADD NEW SYMBOLIC_TABLE
+        SYMBOLIC_TABLE.append({})
+        length_of_symbolic_table = len(SYMBOLIC_TABLE)
+        
 
         #(add 3 4)
         # user_param_tree -> [3,4]
@@ -1239,6 +1257,8 @@ def interpreter(tree):
             # Does not calculate, use Lazy Evaluation
             user_param_tree.append(tree[a])
             a=a+1
+            
+        #===== FINISH GETTING USER_PARAM_TREE
 
         num_of_function_param = len(function_procedure[1])
         num_of_user_param = len(user_param_tree)
@@ -1266,7 +1286,7 @@ def interpreter(tree):
                 variadic_var_name = function_procedure[1][a+1]
 
                 quote_array = ["quote"]
-                temp=[]
+                temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
                 temp.append(variadic_var_name)
                 quote_array=["quote"]
                 quote_array.append([])
@@ -1275,28 +1295,39 @@ def interpreter(tree):
                     quote_array[1].append(user_param_tree[i])
                     i=i+1
                 temp.append(quote_array)
-                param_tree.append(temp)
+                
+                # ADD TO SYMBOLIC_TABLE
+                SYMBOLIC_TABLE[length_of_symbolic_table-1][variadic_var_name] = temp
+                #param_tree.append(temp)
                 break
 
-            temp=[]
+            temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
             temp.append(function_procedure[1][a])
 
             #Lazy Evaluation
             temp.append(user_param_tree[i])
 
-            param_tree.append(temp)
+            # ADD TO SYMBOLIC_TABLE
+            SYMBOLIC_TABLE[length_of_symbolic_table-1][function_procedure[1][a]] = temp
+
+            #param_tree.append(temp)
 
             i=i+1
             a=a+1
 
 
-        let_tree.append(param_tree)
-        let_tree.append(function_procedure[2])
+        #let_tree.append(param_tree)
+        #let_tree.append(function_procedure[2])
+
+            
+        #print SYMBOLIC_TABLE
+        #print function_procedure[2]
+        #exit(0)
 
         #print let_tree
         #exit(0)
 
-        return interpreter(let_tree)
+        return interpreter(function_procedure[2])
         
 
 
