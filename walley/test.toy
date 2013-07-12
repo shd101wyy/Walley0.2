@@ -1,9 +1,3 @@
 (stms
-	(= list-last (lambda (a) (
-		if (null? a) 
-			'nil (if (== 1 (list-length a)) (car a) (list-last (cdr a))))
-		)
-	)
-	(print (list-last '(1 2 3 4)))
 
 )
