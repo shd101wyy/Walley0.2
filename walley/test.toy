@@ -1,3 +1,8 @@
 (stms
-
+	"# function list"
+    "# (list 1 2 3) ---> (1 2 3)"
+	(= list (lambda (. args) 
+		(if (null? args) '() (cons (car args) (apply list (cdr args))))
+		)
+	)
 )

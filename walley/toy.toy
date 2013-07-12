@@ -2,6 +2,13 @@
 	"This program is written by Yiyi Wang to test Toy Language"
 	"I recommended u to start the program by stating (stms ) function"
 
+	"# function list"
+    "# (list 1 2 3) ---> (1 2 3)"
+	(= list (lambda (. args) 
+		(if (null? args) '() (cons (car args) (apply list (cdr args))))
+		)
+	)
+	
 	"Arithmetic Operation"
 	"Now only support number, exclude fraction, real, complex"
 	(= + (lambda (. args)
