@@ -803,40 +803,29 @@ def interpreter(tree):
                 var_value=interpreter(tree[2])
                 SYMBOLIC_TABLE[0][var_name]=var_value
                 return var_value
-    #else:
-    #    var_name_value=interpreter(tree[1])
-    #    print "var name value ---> ",
-    #    print var_name_value
-    #    # string
-    #    if var_name_value[0]=="\"":
-    #        var_value=var_name_value[1:len(var_name_value)-1]
-    #
-    #        print "var value ---> ",
-    #        print var_value
-    #
-    #        change_to_var_value=interpreter(tree[3])
-    #        if change_to_var_value[0]!="\"":
-    #            print "Error,,,,,"
-    #        change_to_var_value=change_to_var_value[1:len(change_to_var_value)-1]
-    #        var_value[int(tree[2])]=change_to_var_value
-    #        SYMBOLIC_TABLE[0][var_name]=var_value
-    #        return var_value
-    #    # list
-    #    elif var_name_value[0]=="(":
-    #        pass
-    #    else:
-    #        print "Error...\n"
-    #    pass
     
     # local x = 12
     # add to local symbolic table
-    elif tree[0]=="local=":
+    elif tree[0]=="local=" or tree[0]=="define":
         if length!=3:
             print("Error. = need 3 values inside")
         var_name=tree[1]
         var_value=interpreter(tree[2])
         SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
         return var_value
+
+    elif tree[0]=="set!":
+        var_name = tree[1]
+        var_value = interpreter(tree[2])
+        i = len(SYMBOLIC_TABLE)-1
+        while i>=0:
+            if var_name in SYMBOLIC_TABLE[i]:
+                SYMBOLIC_TABLE[i][var_name] = var_value
+                return var_value
+            i=i-1
+        print "Error...\nUndefined var "+var_name
+        return ""
+
     #elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":    
     #    sign=interpreter(tree[0])
         
