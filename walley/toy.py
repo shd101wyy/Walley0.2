@@ -834,10 +834,9 @@ def interpreter(tree):
         if length!=3:
             print("Error. = need 3 values inside")
         var_name=tree[1]
-        
         var_value=interpreter(tree[2])
         SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]=var_value
-    
+        return var_value
     #elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":    
     #    sign=interpreter(tree[0])
         
