@@ -1,7 +1,8 @@
 (stms
 	;This program is written by Yiyi Wang to test Toy Language"
 	;I recommended u to start the program by stating (stms ) function"
-
+	(= display print)
+	(= begin stms)
 	;# function list"
     ;# (list 1 2 3) ---> (1 2 3)"
     ;Has bug when"
