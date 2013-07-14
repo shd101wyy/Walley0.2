@@ -138,7 +138,7 @@
 
 	;function if"
     ;(if [judge] [run if pass] [run if not pass])"
-	(= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
+	(= if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
 	;One bug here"
 	;(print (<= 4 3 4))"
