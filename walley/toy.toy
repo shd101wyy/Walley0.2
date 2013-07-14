@@ -1,18 +1,18 @@
 (stms
-	"This program is written by Yiyi Wang to test Toy Language"
-	"I recommended u to start the program by stating (stms ) function"
+	;This program is written by Yiyi Wang to test Toy Language"
+	;I recommended u to start the program by stating (stms ) function"
 
-	"# function list"
-    "# (list 1 2 3) ---> (1 2 3)"
-    "Has bug when"
-    " (= x 12) (= x (list 1 x))"
+	;# function list"
+    ;# (list 1 2 3) ---> (1 2 3)"
+    ;Has bug when"
+    ; (= x 12) (= x (list 1 x))"
 	(= list (lambda (. args) 
 		(if (null? args) '() (cons (car args) (apply list (cdr args))))
 		)
 	)
 	
-	"Arithmetic Operation"
-	"Now only support number, exclude fraction, real, complex"
+	;Arithmetic Operation"
+	;Now only support number, exclude fraction, real, complex"
 	(= + (lambda (. args)
 		(if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))
 			)
@@ -38,7 +38,7 @@
 	(= null? (lambda (a)(if (eq a '()) 1 0)))
 	(= empty? null?)
 
-	"Condition judge > < == != >= <="
+	;Condition judge > < == != >= <="
 	(= == (lambda (. args)
 		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
 			)
@@ -56,7 +56,7 @@
 	)
 
 
-	"greater"
+	;greater"
 	(= __GT__ (lambda (a b)(
 		if (apply <= (list a b)) 0 1
 			)
@@ -126,8 +126,8 @@
 	)
 
 	(= nil 0)
-	"function while"
-    "(while (< i 10) (= i (+ i 1)))"
+	;function while"
+    ;(while (< i 10) (= i (+ i 1)))"
 	(= while (lambda (&judge &stm) (
 		cond (judge (stms stm (while judge stm))) (1 nil)
 			)
@@ -135,14 +135,14 @@
 	)
 
 
-	"function if"
-    "(if [judge] [run if pass] [run if not pass])"
+	;function if"
+    ;(if [judge] [run if pass] [run if not pass])"
 	(= if (lambda (condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
-	"One bug here"
-	"(print (<= 4 3 4))"
+	;One bug here"
+	;(print (<= 4 3 4))"
 
-	"(reminder 3 4) ->3"
+	;(reminder 3 4) ->3"
 	(= reminder (lambda (a b) 
 			(
 				if (< a b) a (reminder (- a b) b)
@@ -152,18 +152,18 @@
 	(= % reminder)
 
 
-	"list? function will return 1 if it is list"
+	;list? function will return 1 if it is list"
 	(= list? (lambda (a)
 			(if (atom? a) 0 1)
 		)
 	)
 
-	"======================================================================"
+	;======================================================================"
 
 	(= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1)))))))
-	"(print (factorial 2))"
+	;(print (factorial 2))"
 
-	" this is function ^ "
+	; this is function ^ "
 	(= ^ (lambda (a b)
 			(if (== b 1) a
 				(* a (^ a (- b 1)))
@@ -171,14 +171,14 @@
 		)
 	)
 	
-	"bind ** to ^"
+	;bind ** to ^"
 	(= ** ^)
-	"test ** function"
-	"(print (** 3 4))"
+	;test ** function"
+	;(print (** 3 4))"
 
-	"======================================================================"
-	"list "
-		"get the last element of __list__"
+	;======================================================================"
+	;list "
+		;get the last element of __list__"
 		(= last (lambda (__list__) 
 			(if (null? __list__ ) (print "Error...Cannot get last atom of empty list")
 				(if (null? (cdr __list__ )) 
@@ -188,8 +188,8 @@
 				)
 			)
 		)
-		"list-length"
-		"which can be used to get the length of list"
+		;list-length"
+		;which can be used to get the length of list"
 		(= list-length (lambda (_list_)
 			(if (list? _list_)
 				(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
@@ -197,14 +197,15 @@
 			)
 		  )
 		)
+		(= len list-length)
 
-		"test list-length"
-		"(print (list-length '(1 2 3)))"
-		"(print (list-length 12))"
+		;test list-length"
+		;(print (list-length '(1 2 3)))"
+		;(print (list-length 12))"
 
-		"====================================="
-		"list-get"
-		"get list at index"
+		;====================================="
+		;list-get"
+		;get list at index"
 		(= list-get (lambda (_list_ index)
 				(if (>= index (list-length _list_))
 					(print "Error...Index out of range")
@@ -215,12 +216,12 @@
 				)
 			)
 		)
-		"test list-get"
-		"(print (list-get '(12 2 14) 2))"
-	"====================="
-	"Function: list-append"
-	"(list-append '() 12) -> (12)"
-	"(list-append '(1 2) '(14 15)) -> (1 2 (14 15))"
+		;test list-get"
+		;(print (list-get '(12 2 14) 2))"
+	;====================="
+	;Function: list-append"
+	;(list-append '() 12) -> (12)"
+	;(list-append '(1 2) '(14 15)) -> (1 2 (14 15))"
 	(= list-append (lambda (a b)
 			(stms
 				(local= output (cons b '()))
@@ -235,13 +236,13 @@
 			)
 		)
 	)
-	"(print (list-append '(1 2) '(14 15) ))"
+	;(print (list-append '(1 2) '(14 15) ))"
 
-	"==============="
-	"Function: Range"
-	"(range 10)"
-	"(range 0 10)"
-	"(range 0 10 1)"
+	;==============="
+	;Function: Range"
+	;(range 10)"
+	;(range 0 10)"
+	;(range 0 10 1)"
 	(= range (lambda (arg0 . args) (stms
 				(cond 
 					((== args '())
@@ -279,8 +280,8 @@
 			)
 		)
 	)
-	"Test"
-	"(print (range 2 100 1))"
+	;Test"
+	;(print (range 2 100 1))"
 
 
 
