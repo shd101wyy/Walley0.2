@@ -2,13 +2,13 @@
 (begin
 	(define abs (lambda (a) 
 		(cond 
-			((__LT__ a 0) (__MINUS__ 0 a)) 
+			((< a 0) (- 0 a)) 
 			(1 a)
 			)
 		)
 	)
 	; test absolute
-	(display (abs -12))
+	;(display (abs -12))
 
 	; sqrt
 	(define sqrt-iter (lambda (guess x)
@@ -19,19 +19,19 @@
 	)
 
 	(define improve (lambda (guess x)
-  		(average guess (__DIV__ x guess)))		
+  		(average guess (/ x guess)))		
 	)
 
 	(define average (lambda (x y)
-  		(__DIV__ (__ADD__ x y) 2)))
+  		(/ (+ x y) 2)))
 
 	(define good-enough? (lambda (guess x)
-  		(__LT__ (abs (__MINUS__ (__MULT__ guess guess) x)) 0.001)))
+  		(< (abs (- (* guess guess) x)) 0.001)))
 
 	(define sqrt (lambda (x)
-  		(sqrt-iter (/ x 2) x)))
+  		(sqrt-iter (/ x 2.0) x)))
 
-	(display (sqrt 5))
+	(display (sqrt 2))
 )
 
 
