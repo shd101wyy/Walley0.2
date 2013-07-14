@@ -691,6 +691,9 @@ SYMBOLIC_TABLE[0]["__LT__"]="__LT__"
 MARCRO_DATABASE={}
 
 
+IS_LOADING_MODULE = False
+
+
 
 def valueOf(var_name):
     length=len(SYMBOLIC_TABLE)
@@ -719,9 +722,18 @@ def convertArrayToString(array):
             output=output+convertArrayToString(i)
     return output.strip()+")"
 
+# convert string to Array
+# "Hi" -> ["H","i"]
+def convertStringToArray(input_str):
+    output=[]
+    for i in input_str:
+        output.append(i)
+    return output
+
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global MARCRO_DATABASE
+    global IS_LOADING_MODULE
     
     length=len(tree)
     if tree=="":
@@ -730,8 +742,11 @@ def interpreter(tree):
     if type(tree)==str:        
         if isNumber(tree):
             return tree
+        # string
         elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
-            return tree
+            if IS_LOADING_MODULE:
+                return tree[1:len(tree)-1]
+            return convertStringToArray(tree[1:len(tree)-1])
         else:
             
             length=len(SYMBOLIC_TABLE)
@@ -1119,19 +1134,22 @@ def interpreter(tree):
     
     # function denominator
     # get denominator of number
-    elif tree[0]=="denominator":
-        value = interpreter(tree[1])
-        return denominator_of_fraction(value)
+    #elif tree[0]=="denominator":
+    #    value = interpreter(tree[1])
+    #    return denominator_of_fraction(value)
     # function numerator
     # get numerator of number
-    elif tree[0]=="numerator":
-        value = interpreter(tree[1])
-        return numerator_of_fraction(value)
+    #elif tree[0]=="numerator":
+    #    value = interpreter(tree[1])
+    #    return numerator_of_fraction(value)
 
     # load module (file) from virtual file system
+    # (load "walley_toy")
     elif tree[0]=="load":
+        IS_LOADING_MODULE = True
         value = interpreter(tree[1])
-        toy_runString(VirtualFileSystem[value[1:len(value)-1]])
+        toy_runString(VirtualFileSystem[value])
+        IS_LOADING_MODULE = False
 
 #   > (eq 'a 'a)
 #   1
