@@ -1175,6 +1175,11 @@ def interpreter(tree):
             else:
                 return "0"
 
+    # (symbol->list 'Hello)  -> (H e l l o)
+    elif tree[0]=="symbol->list":
+        value = interpreter(tree[1])
+        return convertStringToArray(value)
+
     # point ->
     # (-> y x)
     #
