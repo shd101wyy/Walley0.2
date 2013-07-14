@@ -4,6 +4,8 @@
 
 	"# function list"
     "# (list 1 2 3) ---> (1 2 3)"
+    "Has bug when"
+    " (= x 12) (= x (list 1 x))"
 	(= list (lambda (. args) 
 		(if (null? args) '() (cons (car args) (apply list (cdr args))))
 		)
@@ -176,6 +178,16 @@
 
 	"======================================================================"
 	"list "
+		"get the last element of __list__"
+		(= last (lambda (__list__) 
+			(if (null? __list__ ) (print "Error...Cannot get last atom of empty list")
+				(if (null? (cdr __list__ )) 
+						(car __list__ )  
+						(last (cdr __list__ ))
+					)
+				)
+			)
+		)
 		"list-length"
 		"which can be used to get the length of list"
 		(= list-length (lambda (_list_)

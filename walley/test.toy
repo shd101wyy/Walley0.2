@@ -1,8 +1,20 @@
 (stms
-	"# function list"
-    "# (list 1 2 3) ---> (1 2 3)"
-	(= list (lambda (. args) 
-		(if (null? args) '() (cons (car args) (apply list (cdr args))))
+	(= last (lambda (__list__) 
+		(if (null? __list__ ) (print "Error...Cannot get last atom of empty list")
+			(if (null? (cdr __list__ )) 
+					(car __list__ )  
+					(last (cdr __list__ ))
+				)
+			)
 		)
 	)
+	(= reverse (lambda (__list__) 
+		(if (null? __list__) '() 
+			
+
+			)
+		)
+	)
+	(print (last '(1 22 3 412)))
+	(print "End")
 )

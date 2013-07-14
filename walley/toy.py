@@ -1280,7 +1280,7 @@ def interpreter(tree):
             if var_name[0]=="&":
                 var_name = var_name[1:len(var_name)]                
                 # solve lazy evaluation recursion bug
-                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[length_of_symbolic_table-2]):
+                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[length_of_symbolic_table-2]) and length_of_symbolic_table>2:
                     SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = SYMBOLIC_TABLE[length_of_symbolic_table-2][var_name]
                     i=i+1
                     a=a+1
