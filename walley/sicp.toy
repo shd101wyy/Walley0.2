@@ -2,7 +2,7 @@
 (begin
 	(define abs (lambda (a) 
 		(cond 
-			((< a 0) (- 0 a)) 
+			((__LT__ a 0) (__MINUS__ 0 a)) 
 			(1 a)
 			)
 		)
@@ -19,19 +19,19 @@
 	)
 
 	(define improve (lambda (guess x)
-  		(average guess (/ x guess)))		
+  		(average guess (__DIV__ x guess)))		
 	)
 
 	(define average (lambda (x y)
-  		(/ (+ x y) 2)))
+  		(__DIV__ (__ADD__ x y) 2)))
 
 	(define good-enough? (lambda (guess x)
-  		(< (abs (- (* guess guess) x)) 0.001)))
+  		(__LT__ (abs (__MINUS__ (__MULT__ guess guess) x)) 0.001)))
 
 	(define sqrt (lambda (x)
   		(sqrt-iter 1.0 x)))
 
-	(display (sqrt 2))
+	(display (sqrt 4))
 )
 
 

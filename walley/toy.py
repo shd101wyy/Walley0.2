@@ -752,7 +752,6 @@ def interpreter(tree):
                 return tree[1:len(tree)-1]
             return convertStringToArray(tree[1:len(tree)-1])
         else:
-            
             length=len(SYMBOLIC_TABLE)
             i=length-1
             while i>=0:
@@ -768,7 +767,7 @@ def interpreter(tree):
                         # to solve bug in recursion function
                         # SYMBOLIC_TABLE[index][tree[2]] = value
                         return value
-    
+
                     return tree
                 i=i-1
             print("\nError...\nUndefined value "+tree+"\n")
@@ -1232,8 +1231,7 @@ def interpreter(tree):
         #param_tree=[]
         
         # ADD NEW SYMBOLIC_TABLE
-        SYMBOLIC_TABLE.append({})
-        length_of_symbolic_table = len(SYMBOLIC_TABLE)
+        LOCAL_SYMBOLIC_TABLE={}
         
 
         #(add 3 4)
@@ -1287,7 +1285,7 @@ def interpreter(tree):
                 temp.append(quote_array)
                 
                 # ADD TO SYMBOLIC_TABLE
-                SYMBOLIC_TABLE[length_of_symbolic_table-1][variadic_var_name] = temp
+                LOCAL_SYMBOLIC_TABLE[variadic_var_name] = temp
                 #param_tree.append(temp)
                 break
 
@@ -1296,8 +1294,8 @@ def interpreter(tree):
             if var_name[0]=="&":
                 var_name = var_name[1:len(var_name)]                
                 # solve lazy evaluation recursion bug
-                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[length_of_symbolic_table-2]) and length_of_symbolic_table>2:
-                    SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = SYMBOLIC_TABLE[length_of_symbolic_table-2][var_name]
+                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1]) and length_of_symbolic_table>1:
+                    LOCAL_SYMBOLIC_TABLE[var_name] = SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]
                     i=i+1
                     a=a+1
                     continue
@@ -1309,13 +1307,23 @@ def interpreter(tree):
                 temp.append(user_param_tree[i])
 
                 # ADD TO SYMBOLIC_TABLE
-                SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = temp
+                LOCAL_SYMBOLIC_TABLE[var_name] = temp
             #This is not Lazy Evaluation
             else:
-                SYMBOLIC_TABLE[length_of_symbolic_table-1][var_name] = interpreter(user_param_tree[i])
+                ### SUCH A BIG BUG
+                value = interpreter(user_param_tree[i])
+                ### SUCH A BIG BUG
+                ### I HAVE TO CALCULATE VALUE AT FIRST
+                ### CUZ DICTIONARY WILL INIT VAR_NAME AT FIRST
+                ### WHICH MAY CAUSE BUG
+                LOCAL_SYMBOLIC_TABLE[var_name] = value
 
             i=i+1
             a=a+1
+
+        # PUSH LOCAL SYMBOLIC TABLE TO SYMBOLIC_TABLE
+        SYMBOLIC_TABLE.append(LOCAL_SYMBOLIC_TABLE)
+
 
         # print SYMBOLIC_TABLE
         # print "\n"
