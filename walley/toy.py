@@ -633,9 +633,9 @@ def parser(arr):
     return output
 
 
-def pushSymbolicTable(SYMBOLIC_TABLE):
-    SYMBOLIC_TABLE=SYMBOLIC_TABLE[0:len(SYMBOLIC_TABLE)-1]
-    return SYMBOLIC_TABLE
+#def pushSymbolicTable(SYMBOLIC_TABLE):
+#    SYMBOLIC_TABLE=SYMBOLIC_TABLE[0:len(SYMBOLIC_TABLE)-1]
+#    return SYMBOLIC_TABLE
 '''
     var:
     function
@@ -1083,8 +1083,8 @@ def interpreter(tree):
         return_value=interpreter(stm)
 
         # push SYMBOLIC_TABLE
-        SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
-
+        #SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
+        del(SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1])
         return return_value
 
 
@@ -1333,7 +1333,8 @@ def interpreter(tree):
 
         return_value = interpreter(function_procedure[2])
         # push SYMBOLIC_TABLE
-        SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
+        # SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
+        del(SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1])
         
         return return_value
         
