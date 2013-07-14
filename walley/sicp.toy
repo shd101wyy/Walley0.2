@@ -29,9 +29,9 @@
   		(__LT__ (abs (__MINUS__ (__MULT__ guess guess) x)) 0.001)))
 
 	(define sqrt (lambda (x)
-  		(sqrt-iter 1.0 x)))
+  		(sqrt-iter (/ x 2) x)))
 
-	(display (sqrt 4))
+	(display (sqrt 5))
 )
 
 

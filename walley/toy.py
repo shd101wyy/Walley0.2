@@ -1274,7 +1274,7 @@ def interpreter(tree):
                 variadic_var_name = function_procedure[1][a+1]
 
                 quote_array = ["quote"]
-                temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
+                temp=["__LAZY_VALUE__",len(SYMBOLIC_TABLE)]
                 temp.append(variadic_var_name)
                 quote_array=["quote"]
                 quote_array.append([])
@@ -1294,13 +1294,13 @@ def interpreter(tree):
             if var_name[0]=="&":
                 var_name = var_name[1:len(var_name)]                
                 # solve lazy evaluation recursion bug
-                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1]) and length_of_symbolic_table>1:
+                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1]) and len(SYMBOLIC_TABLE)>1:
                     LOCAL_SYMBOLIC_TABLE[var_name] = SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]
                     i=i+1
                     a=a+1
                     continue
 
-                temp=["__LAZY_VALUE__",length_of_symbolic_table-1]
+                temp=["__LAZY_VALUE__",len(SYMBOLIC_TABLE)]
                 temp.append(var_name)
 
                 #Lazy Evaluation
