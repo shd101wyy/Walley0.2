@@ -144,14 +144,14 @@
 	;One bug here"
 	;(print (<= 4 3 4))"
 
-	;(reminder 3 4) ->3"
-	(define reminder (lambda (a b) 
+	;(remainder 3 4) ->3"
+	(define remainder (lambda (a b) 
 			(
-				if (< a b) a (reminder (- a b) b)
+				if (< a b) a (remainder (- a b) b)
 			)
 		)
 	)
-	(define % reminder)
+	(define % remainder)
 
 
 	;list? function will return 1 if it is list"
@@ -162,21 +162,6 @@
 
 	;======================================================================"
 
-	(define factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1)))))))
-	;(print (factorial 2))"
-
-	; this is function ^ "
-	(define ^ (lambda (a b)
-			(if (= b 1) a
-				(* a (^ a (- b 1)))
-			)
-		)
-	)
-	
-	;bind ** to ^"
-	(define ** ^)
-	;test ** function"
-	;(print (** 3 4))"
 
 
 	(define +1 (lambda (x) (+ x 1)))
@@ -325,7 +310,58 @@
 
 
 
+	; factorial
+	(define factorial (lambda (x)
+		(define factorial_iter (lambda (outcome count)
+		 	(if (== count 1) outcome (factorial_iter (* outcome (- count 1)) (- count 1)))
+			;(cond ((== count 1) outcome) (1 (factorial_iter (* outcome (- count 1)) (- count 1))))
+			)
+		)
+		(factorial_iter x x)
+		))
+	;(display (factorial 6))
 
+	; expt
+	; only support 2^3 like 3 must be > 0
+	(define expt (lambda (a b)
+		(define expt_inter (lambda (result count)
+			(if (== count 1) result (expt_inter (* result a) (- count 1)))
+			) 
+		)
+		(if (== b 0) 1 (expt_inter a b)))
+	)
+	;(display (expt 3 2))
+	(define ^ expt)
+	(define ** expt)
+
+	; sicp Exercise 1.15
+	; sin
+	; 允许的sin误差范围
+	(define __SIN_ACCURACY__ 0.01)
+	(define cube (lambda (x) (* x x x)))
+	(define p (lambda (x) (- (* 3 x) (* 4 (cube x)))))
+	(define sine (lambda (angle)
+		(if (not (> (abs angle) __SIN_ACCURACY__))
+	        angle
+			(p (sine (/ angle 3.0))))))
+	; (display (sine 12))
+	(define sin sine)
+
+	(define pi 3.141592653589793)
+	;		sin  cos
+	;	 tan		 cot
+	; 		sec   csc
+	; cos(x) = sin(x+pi/2)
+	(define cos (lambda (x) (sin (+ x (/ pi 2)))))
+	(define sec (lambda (x) (/ 1 (cos x))))
+	(define csc (lambda (x) (/ 1 (sin x))))
+	(define tan (lambda (x) (/ (sin x) (cos x))))
+	(define cot (lambda (x) (/ 1 (tan x))))
+	; I didnt use Taylor Series when calculating sin cos tan cot sec csc
+
+	; check whether number is even
+	(define even? (lambda (x) (if (= (% x 2) 0) 1 0) ))
+	(define odd? (lambda (x) (if (even? x) 0 1) ))
 
 
 

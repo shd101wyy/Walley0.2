@@ -45,7 +45,28 @@
 			(p (sine (/ angle 3.0))))))
 	; (display (sine 12))
 	(define sin sine)
-	
+
+	(define pi 3.141592653589793)
+	;		sin  cos
+	;	 tan		 cot
+	; 		sec   csc
+	; cos(x) = sin(x+pi/2)
+	(define cos (lambda (x) (sin (+ x (/ pi 2)))))
+	(define sec (lambda (x) (/ 1 (cos x))))
+	(define csc (lambda (x) (/ 1 (sin x))))
+	(define tan (lambda (x) (/ (sin x) (cos x))))
+	(define cot (lambda (x) (/ 1 (tan x))))
+	; I didnt use Taylor Series when calculating sin cos tan cot sec csc
+
+	; check whether number is even
+	(define even? (lambda (x) (if (= (% x 2) 0) 1 0) ))
+	(define odd? (lambda (x) (if (even? x) 0 1) ))
+
+	; GCD
+	; General Common Divisor
+	(define gcd (lambda (a b)
+  		(if (= b 0) a (gcd b (remainder a b)))))
+	(display (gcd 30 20))
 
 )
 
