@@ -11,6 +11,8 @@
 	;(display (abs -12))
 
 	; sqrt
+	; 允许的误差数
+	(define __SQRT_ACCURATE__ 0.001)
 	(define sqrt-iter (lambda (guess x)
   		(cond ((good-enough? guess x) guess)
       		  (1 (sqrt-iter (improve guess x) x))
@@ -26,12 +28,11 @@
   		(/ (+ x y) 2)))
 
 	(define good-enough? (lambda (guess x)
-  		(< (abs (- (* guess guess) x)) 0.001)))
+  		(< (abs (- (* guess guess) x)) __SQRT_ACCURATE__)))
 
 	(define sqrt (lambda (x)
   		(sqrt-iter 1.0 x)))
 
-	(display (sqrt 2))
 )
 
 
