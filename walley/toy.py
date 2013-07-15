@@ -473,6 +473,8 @@ def isNumber(element):
         # check fraction
         # check fraction
         i=0
+        if element[0]=="-":
+            i=i+1
         count=0
         while i<len(element):
             if element[i].isdigit()==False:
