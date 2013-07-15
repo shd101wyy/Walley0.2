@@ -1,6 +1,10 @@
-x=[1,2,3]
-y=[1,2,3]
-if x==y:
-    print "equal"
-else:
-    print "not equal"
+# support 3 3.0 3.0e-12
+# three kind of value
+def isNumber(element):
+	try:
+	    float(element)
+	    return True
+	except ValueError:
+	    #print "Not a float"
+	    return False
+print isNumber("Hello")

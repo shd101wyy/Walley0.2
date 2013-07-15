@@ -29,7 +29,7 @@
   		(< (abs (- (* guess guess) x)) 0.001)))
 
 	(define sqrt (lambda (x)
-  		(sqrt-iter (/ x 2.0) x)))
+  		(sqrt-iter 1.0 x)))
 
 	(display (sqrt 2))
 )

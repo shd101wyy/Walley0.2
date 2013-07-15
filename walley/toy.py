@@ -732,6 +732,16 @@ def convertStringToArray(input_str):
         output.append(i)
     return output
 
+# support 3 3.0 3.0e-12
+# three kind of value
+def isNumber(element):
+    try:
+        float(element)
+        return True
+    except ValueError:
+        #print "Not a float"
+        return False
+
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global MARCRO_DATABASE
