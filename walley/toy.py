@@ -395,6 +395,8 @@ def convertStringToArray(input_str):
 # three kind of value
 # does not support fraction
 def isNumber(element):
+    if type(element)!=str:
+        return False
     try:
         float(element)
         return True
@@ -559,6 +561,11 @@ def interpreter(tree):
         if isNumber(value2):
             value2=eval(value2)
 
+        if type(value1)==str and  value1[0]=="\"":
+            value1 = convertStringToArray(value1[1:len(value1)-1])
+        if type(value2)==str and value2[0]=="\"":
+            value2 = convertStringToArray(value2[1:len(value2)-1])
+
         if value1==value2:
             return "1"
         else:
@@ -571,6 +578,11 @@ def interpreter(tree):
         value2=interpreter(tree[2])
         if isNumber(value2):
             value2=eval(value2)
+
+        if type(value1)==str and  value1[0]=="\"":
+            value1 = convertStringToArray(value1[1:len(value1)-1])
+        if type(value2)==str and value2[0]=="\"":
+            value2 = convertStringToArray(value2[1:len(value2)-1])
 
         if value1<value2:
             return "1"
@@ -873,11 +885,10 @@ def interpreter(tree):
     elif tree[0]=="eq":
         value1 = interpreter(tree[1])
         value2 = interpreter(tree[2])
-        
-        if value1=="\"\"" and value2==[]:
-            return "1"
-        if value2=="\"\"" and value1==[]:
-            return "1"
+        if type(value1)==str and  value1[0]=="\"":
+            value1 = convertStringToArray(value1[1:len(value1)-1])
+        if type(value2)==str and value2[0]=="\"":
+            value2 = convertStringToArray(value2[1:len(value2)-1])
 
         if type(value1)!=type(value2):
             return "0"

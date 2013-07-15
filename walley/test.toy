@@ -1,20 +1,17 @@
-(stms
-	(= last (lambda (__list__) 
-		(if (null? __list__ ) (print "Error...Cannot get last atom of empty list")
-			(if (null? (cdr __list__ )) 
-					(car __list__ )  
-					(last (cdr __list__ ))
+(begin
+	(define toy_eval (lambda (argument)
+		(if (null? argument) nil 
+			(let 
+				(
+					; (+ 3 4) -> +
+					; get function name
+					(function_name (car argument)) 
+					; (+ 3 4) -> (3 4)
+					; get function parameters
+					(function_params (cdr argument))
 				)
+				(apply function_name function_params)
 			)
-		)
-	)
-	(= reverse (lambda (__list__) 
-		(if (null? __list__) '() 
-			
-
-			)
-		)
-	)
-	(print (last '(1 22 3 412)))
-	(print "End")
+		)))
+	(display (toy_eval '(+ 3 4)))
 )
