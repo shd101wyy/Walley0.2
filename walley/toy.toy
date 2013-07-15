@@ -368,15 +368,75 @@
 	(define odd? (lambda (x) (if (even? x) 0 1) ))
 
 
+	; GCD
+	; General Common Divisor
+	(define gcd (lambda (a b)
+  		(if (= b 0) a (gcd b (remainder a b)))))
+	;(display (gcd 30 20))
 
+	; Newton's method... Deriv
+	(define deriv (lambda (f x dx) 
+		(/ (- (f (+ x dx)) (f x) ) 
+			dx)
+		))
+	; get derivative of 2*x when x=2
+	;(display (deriv (lambda (x) (* 2 x)) 5 0.000001))
+	; x^2 when x=5
+	;(display (deriv (lambda (x) (^ x 2)) 5 0.000001))
 
+	; 2.1.1
+	; function (make-rat numerator denominator)	; construct fraction
+	; function (numer x)      					; return numerator of x
+	; function (denom x)						; return denominator of x
 
+	; a/b+c/d = (a*d+c*b)/b*d
+	(define add-rat (lambda (x y) 
+		(make-rat 
+			(+ 
+				(* (numer x) (denom y))  
+				(* (numer y) (denom x))
+			)
+			(* (denom x) (denom y)) )
+		))
+	(define sub-rat (lambda (x y) 
+		(make-rat
+			(- 
+				(* (numer x) (denom y))  
+				(* (numer y) (denom x))
+			)
+			(* (denom x) (denom y)) )
+		))
 
-
-
-
-
-
-
-
+	; (a/b)*(c/d) = (a*c) / (b*d)
+	(define mul-rat (lambda (x y) 
+		(make-rat
+			(* (numer x) (numer y)) 
+			(* (denom x) (denom y)) 
+			)
+		))
+	; (a/b)/(c/d) -> (a*d)/(b*c)
+	(define div-rat (lambda (x y)
+		(make-rat
+			(* (numer x) (denom y))
+			(* (denom x) (numer y))
+			)
+		))
+	; a/b c/d
+	(define equal-rat? (lambda (x y)
+		(= 
+			(* (numer x) (denom y))
+			(* (denom x) (numer y))
+			)
+		))
+	(define make-rat (lambda (n d) 
+		(let ((g (gcd n d))) (cons (/ n g) (/ d g)))
+		))
+	(define numer (lambda (x) (car x)))
+	(define denom (lambda (x) (cdr x)))
+	(define print-rat (lambda (x)
+		(display "\n")
+		(display (numer x))
+		(display "/")
+		(display (denom x))
+		))
 )
