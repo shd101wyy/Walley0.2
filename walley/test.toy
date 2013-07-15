@@ -82,7 +82,7 @@
 	(display (atom->list 'Hello))
 
 
-
+	; ================== MATH =================
 	; check whether char is digit
 	(define charIsDigit (lambda (char)
 		(if (or (eq char 0) (eq char 1) (eq char 2) (eq char 3) (eq char 4) (eq char 5) (eq char 6) (eq char 7) (eq char 8)  (eq char 9) )
@@ -125,12 +125,36 @@
 			))
 		(isFloatTest input 0)
 		))
+
+	; test whether input is fraction
+	; requre quote
+	; (isFraction '1/2 )->1
+	; (isFraction 1/2) will occur error
+	(define isFraction (lambda (input)
+		(define isFractionTest (lambda (input count_of_slash)
+			(if (null? input)
+				(if (eq count_of_slash 1) 1 0)
+				(if (charIsDigit (car input)) (isFractionTest (cdr input) count_of_slash)
+					(if (eq (car input) '/)
+						(isFractionTest (cdr input) (+ count_of_slash 1))
+						0
+						)
+				    )
+				)
+			))
+		(isFractionTest input 0)
+
+		))
+
+	(define numerator_of_atom (lambda (fraction)
+		
+		))
+
 	(display "\nTest")
-	(display '.)
-	(display (charIsDigit '.))
-	(display (isInteger 12))
+	(display (isInteger 12.0))
 	(display (null? 12.0))
 	(display (isFloat 12))
+	(display (isFraction '3/2))
 
 
 

@@ -906,6 +906,18 @@ def interpreter(tree):
             else:
                 return "0"
 
+    # cam be used to convert one-dimensional list
+    elif tree[0]=="list->atom":
+        output=""
+        value = interpreter(tree[1])
+        i=0
+        while i<len(value):
+            append_value = value[i]
+            if type(append_value)!=str:
+                append_value = convertArrayToString(append_value)
+            output = output + append_value
+            i=i+1
+        return output
     # (symbol->list 'Hello)  -> (H e l l o)
     elif tree[0]=="symbol->list":
         value = interpreter(tree[1])
