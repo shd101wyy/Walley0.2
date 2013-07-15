@@ -81,6 +81,12 @@
 		))
 	(display (atom->list 'Hello))
 
+	(define atom-length (lambda (_atom_)
+		(define atom-length-iter (lambda (_atom_ count) 
+			(if (null? _atom_) count (atom-length-iter (cdr _atom_) (+ count 1)))
+			))
+		(atom-length-iter _atom_ 0)
+		))
 
 	; ================== MATH =================
 	; check whether char is digit
@@ -146,20 +152,50 @@
 
 		))
 
-	(define numerator_of_atom (lambda (fraction)
-		
+	; support 1/3 3 3.0
+	; integer float fraction
+	; does not support complex now
+	(define number? (lambda (num)
+		(or (isFraction num) (isInteger num) (isFloat num))
+	))
+
+
+	(define convertToFraction (lambda (fraction)
+		(let (
+			(index (atom-find fraction '/))
+			(ahead (list->atom (atom-slice fraction 0 index)))
+			(back (list->atom (atom-slice fraction (+ index 1) (atom-length fraction))))
+			)
+			(cons ahead back)
+			)
 		))
+	
 
 	(display "\nTest")
-	(display (isInteger 12.0))
-	(display (null? 12.0))
-	(display (isFloat 12))
-	(display (isFraction '3/2))
+	;(display (isInteger 12.0))
+	;(display (null? 12.0))
+	;(display (isFloat 12))
+	;(display (isFraction '3/2))
+	;(display (convertToFraction '36/24))
+	(display (number? '1/3))
+	(display (isFraction '1/3))
 
+	; (math_calculate '(+ 3 (* 3 4)))
+	(define math_calculate (lambda (argument)
+		
+		)
+	)
+	(define add (lambda (x y)
+		(let (
+			(x_fraction (convertToFraction x))
+			(y_fraction (convertToFraction y))
+			)
 
+			(add-rat x_fraction y_fraction)	
+		)
+		))
 
-
-
+	;(display (add '1/3 '3/4))
 
 
 

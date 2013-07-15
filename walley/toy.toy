@@ -46,6 +46,7 @@
 		)
 	)
 	(define == =)
+	(define equal =)
 	(define < (lambda (. args)
 		(if (= 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
 			)
@@ -127,7 +128,7 @@
 		)
 	)
 
-	(define nil 0)
+	(define nil '())
 	;function while"
     ;(while (< i 10) (= i (+ i 1)))"
 	(define while (lambda (&judge &stm) (
@@ -162,6 +163,76 @@
 
 	;======================================================================"
 
+	; ================== MATH =================
+	; check whether char is digit
+	(define charIsDigit (lambda (char)
+		(if (or (eq char 0) (eq char 1) (eq char 2) (eq char 3) (eq char 4) (eq char 5) (eq char 6) (eq char 7) (eq char 8)  (eq char 9) )
+			1
+			0
+			)
+		))
+
+	; check whether input is integer
+	; (isInteger 123) -> 1
+	; (isInteger 12.0) -> 0
+	; (isInteger 12e3) -> 0 
+	(define isInteger (lambda (input)
+		(if (null? input) 
+			1
+			(if (charIsDigit (car input))
+				(isInteger (cdr input))
+				0
+				)
+			)
+		))
+	(define isFloat (lambda (input)
+		(define isFloatTest (lambda (input count_of_dot_and_e)
+			(if (null? input)
+				(if (eq count_of_dot_and_e 1) 1 0)
+				(if (> count_of_dot_and_e 1) 0 
+					(if (charIsDigit (car input))
+						(isFloatTest (cdr input) count_of_dot_and_e)
+						(if (or 
+								(eq (car input) '.)
+								(eq (car input) 'e)
+							)
+							(isFloatTest (cdr input) (+ count_of_dot_and_e 1))
+							0
+						)
+						)
+					)
+				)
+
+			))
+		(isFloatTest input 0)
+		))
+
+	; test whether input is fraction
+	; requre quote
+	; (isFraction '1/2 )->1
+	; (isFraction 1/2) will occur error
+	(define isFraction (lambda (input)
+		(define isFractionTest (lambda (input count_of_slash)
+			(if (null? input)
+				(if (eq count_of_slash 1) 1 0)
+				(if (charIsDigit (car input)) (isFractionTest (cdr input) count_of_slash)
+					(if (eq (car input) '/)
+						(isFractionTest (cdr input) (+ count_of_slash 1))
+						0
+						)
+				    )
+				)
+			))
+		(isFractionTest input 0)
+
+		))
+
+	; support 1/3 3 3.0
+	; integer float fraction
+	; does not support complex now
+	(define number? (lambda (num)
+		(or (isFraction num) (isInteger num) (isFloat num))
+	))
 
 
 	(define +1 (lambda (x) (+ x 1)))
@@ -221,24 +292,28 @@
 		)
 		;test list-get"
 		;(print (list-get '(12 2 14) 2))"
+
+	; check whether item in _list_
+	; (list-membet 'a '(a b c)) -> 1
+	(define list-member (lambda (item _list_)
+		(if (null? _list_) 0 
+			(if (eq (car _list_) item)
+				1
+				(list-member item (cdr _list_))
+				)
+			)
+		))
 	;====================="
 	;Function: list-append"
 	;(list-append '() 12) -> (12)"
 	;(list-append '(1 2) '(14 15)) -> (1 2 (14 15))"
-	(define list-append (lambda (a b)
-			(stms
-				(define output (cons b '()))
-				(define i (- (list-length a) 1))
-				(while (>= i 0)
-					(stms
-						(set! output (cons (list-get a i) output))
-						(set! i (- i 1))
-					)
-				)
-				output
+	; (list-append '(1 2 3) 12) -> (1 2 3 12)
+	(define list-append (lambda (_list_ append_element)
+		(if (null? _list_)
+			(cons append_element nil)
+			(cons (car _list_) (list-append (cdr _list_) append_element) )
 			)
-		)
-	)
+		))
 	;(print (list-append '(1 2) '(14 15) ))"
 
 	;==============="
@@ -339,6 +414,13 @@
 			))
 		(list-reverse (atom->list-iter atom '()))
 		))
+
+	(define atom-length (lambda (_atom_)
+		(define atom-length-iter (lambda (_atom_ count) 
+			(if (null? _atom_) count (atom-length-iter (cdr _atom_) (+ count 1)))
+			))
+		(atom-length-iter _atom_ 0)
+	))
 
 	;==============================================
 	;==============================================
@@ -502,4 +584,12 @@
 		(display "/")
 		(display (denom x))
 		))
+
+	; map a list
+	(define map (lambda (process _list_)
+	(if (null? _list_) 
+		nil
+		(cons (process (car _list_)) (map process (cdr _list_)) )
+		)
+	))
 )

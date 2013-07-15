@@ -136,14 +136,76 @@
 		(display (denom x))
 		))
 
-	(display (gcd 6 9))
-	(define one-half (make-rat 1 2))
-	(print-rat one-half)
-	(define one-third (make-rat 1 3))
-	(print-rat (add-rat one-half one-third))
-	(print-rat (mul-rat one-half one-third))
-	(print-rat (add-rat one-third one-third))
-	(display (equal-rat? one-third one-half))
+	;(display (gcd 6 9))
+	;(define one-half (make-rat 1 2))
+	;(print-rat one-half)
+	;(define one-third (make-rat 1 3))
+	;(print-rat (add-rat one-half one-third))
+	;(print-rat (mul-rat one-half one-third))
+	;(print-rat (add-rat one-third one-third))
+	;(display (equal-rat? one-third one-half))
+	(define nil '())
+	(define map (lambda (process _list_)
+		(if (null? _list_) 
+			nil
+			(cons (process (car _list_)) (map process (cdr _list_)) )
+			)
+		))
+
+	; (list-append '(1 2 3) 12) -> (1 2 3 12)
+	(define list-append (lambda (_list_ append_element)
+		(if (null? _list_)
+			(cons append_element nil)
+			(cons (car _list_) (list-append (cdr _list_) append_element) )
+			)
+		))
+
+	; check whether item in _list_
+	; (list-membet 'a '(a b c)) -> 1
+	(define list-member (lambda (item _list_)
+		(if (null? _list_) 0 
+			(if (eq (car _list_) item)
+				1
+				(list-member item (cdr _list_))
+				)
+			)
+		))
+
+	; 2.3.2 SYMBOLIC Differentiation
+	(define diff (lambda (expr var)
+		(cond
+			; d 12 / d x -> 0
+			((number? var) 0)
+			; d x / d x -> 1
+			((variable? var)
+				(if (same-variable? var expr) 1 0))
+			;
+			((sum? exp)
+	        (make-sum (deriv (addend exp) var)
+	                  (deriv (augend exp) var)))
+	        ((product? exp)
+	         (make-sum
+           		(make-product (multiplier exp)
+                	(deriv (multiplicand exp) var))
+           		(make-product (deriv (multiplier exp) var)
+                    (multiplicand exp))))
+
+	        (1 (print "Error"))
+			)
+		))
+
+	(define variable? atom?)
+	(define same-variable? (lambda (v1 v2)
+		(and (variale? v1) (variable? v2) (eq v1 v2))
+		))
+	(define make-sum (lambda (a1 a2)
+		(list '+ a1 a2)
+		))
+	(define make-product (lambda (a1 a2)
+		(list '* a1 a2)
+		))
+
+
 )
 
 
