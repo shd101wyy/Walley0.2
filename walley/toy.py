@@ -836,13 +836,53 @@ def interpreter(tree):
     #    return append_str
     
     elif tree[0]=="__ADD__":
-        return str(eval(interpreter(tree[1])+"+"+interpreter(tree[2])))
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        is_floating = True
+        if value1.isdigit() and value2.isdigit():
+            is_floating = False
+        result = str(eval(value1+"+"+value2)) 
+        if is_floating == False:
+            result = str(int(result))
+        return result
     elif tree[0]=="__MINUS__":
-        return str(eval(interpreter(tree[1])+"-"+interpreter(tree[2])))
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        is_floating = True
+        if value1.isdigit() and value2.isdigit():
+            is_floating = False
+        result = str(eval(value1+"-"+value2)) 
+        if is_floating == False:
+            result = str(int(result))
+        return result
     elif tree[0]=="__MULT__":
-        return str(eval(interpreter(tree[1])+"*"+interpreter(tree[2])))
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        is_floating = True
+        if value1.isdigit() and value2.isdigit():
+            is_floating = False
+        result = str(eval(value1+"*"+value2)) 
+        if is_floating == False:
+            result = str(int(result))
+        return result
     elif tree[0]=="__DIV__":
-        return str(eval(interpreter(tree[1])+"/"+interpreter(tree[2])))
+        value1=interpreter(tree[1])
+        value2=interpreter(tree[2])
+        is_floating = True
+        if value1.isdigit() and value2.isdigit():
+            is_floating = False
+        result = str(eval(value1+"/"+value2)) 
+        # remove . and 0 after
+        if  is_floating == False:
+            i = len(result)-1
+            while i>=0:
+                if result[i]!="0":
+                    break
+                i=i-1
+            if result[i]!=".":
+                i=i+1
+            return result[0:i]
+        return result
 
     elif tree[0]=="float":
         return fraction_to_double(interpreter(tree[1]))
