@@ -166,6 +166,7 @@
 
 	(define +1 (lambda (x) (+ x 1)))
 
+	;============== List ==========================
 	;======================================================================"
 	;list "
 		;get the last element of __list__"
@@ -178,6 +179,15 @@
 				)
 			)
 		)
+		; get the reverse of list
+		; (list-reverse '(1 2 3)) -> (3 2 1)
+		(define list-reverse (lambda (_list_)
+			(define list-reverse (lambda (_list_ result)
+				(if (null? _list_) result (list-reverse (cdr _list_) (cons (car _list_) result) ))
+				))
+			(list-reverse _list_ '())
+		))
+
 		;list-length"
 		;which can be used to get the length of list"
 		(define list-length (lambda (_list_)
@@ -276,6 +286,59 @@
 	;Test"
 	;(print (range 2 100 1))"
 
+	;============== ATOM ==========================
+	; this function can be used to find specific part from atom
+	; (atom-find 'Hello 'el) -> 1
+	(define atom-find (lambda (_atom_ find_string)
+		; Hello He -> 1
+		; Hello Ha -> 0
+		(define atom-find-test (lambda (_atom_ find_string)
+			(if (null? find_string) 1 
+				(if (not (eq (car _atom_) (car find_string) ))  
+					0
+					(atom-find-test (cdr _atom_) (cdr find_string))
+					)
+				)
+			))
+		(define atom-find-iter (lambda (_atom_  count)
+			(if (null? _atom_) 
+				-1 
+				(if (atom-find-test _atom_ find_string)
+					count
+					(atom-find-iter (cdr _atom_) (+ count 1))
+					)
+				 )
+			))
+		(atom-find-iter _atom_ 0)
+		))
+
+	(define atom-slice (lambda (_atom_ start end)
+		; get _atom_[ start : length of _atom_ ]
+		(define atom-slice-ahead (lambda (result count)
+			(if (eq count start) result (atom-slice-ahead (cdr result) (+ count 1)))
+			))
+		(define atom-slice-back (lambda (_atom_ result count)
+			(if (eq count end) result (atom-slice-back (cdr _atom_) (cons (car _atom_) result) (+ count 1)))
+			))
+
+		(let 
+			(
+				(ahead (atom-slice-ahead _atom_ 0))
+				(after (atom-slice-back ahead '() start))
+			)
+				(list-reverse after)
+			) 
+
+		))
+
+	; convert atom to list
+	; (atom->list 'Hello)  -> (H e l l o)
+	(define atom->list (lambda (atom)
+		(define atom->list-iter (lambda (atom result)
+			(if (null? atom) result (atom->list-iter (cdr atom) (cons (car atom) result)))
+			))
+		(list-reverse (atom->list-iter atom '()))
+		))
 
 	;==============================================
 	;==============================================

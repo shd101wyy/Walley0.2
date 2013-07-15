@@ -620,6 +620,7 @@ def interpreter(tree):
     
     # function car
     # (car '(1 2 3)) -> 1
+    # (car 'Hello) -> H
     elif tree[0]=="car":
         #print "it is car"
         value=interpreter(tree[1])
@@ -631,6 +632,8 @@ def interpreter(tree):
 
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
+    # (cdr 'Hello) -> ello
+    # (cdr 'H) -> ()
     elif tree[0]=="cdr":
         #print "it is cdr"
         value=interpreter(tree[1])
@@ -645,7 +648,7 @@ def interpreter(tree):
         elif len(value)==1:
             return []
         # pair
-        elif len(value)==3 and value[1]==".":
+        elif type(value)!=str and len(value)==3 and value[1]==".":
             return value[2]
         else:
             return value[1:len(value)]
