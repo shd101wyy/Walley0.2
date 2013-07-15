@@ -1312,7 +1312,7 @@ def interpreter(tree):
                 var_name = var_name[1:len(var_name)]                
                 # solve lazy evaluation recursion bug
                 if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1]) and len(SYMBOLIC_TABLE)>1:
-                    LOCAL_SYMBOLIC_TABLE[var_name] = SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][var_name]
+                    LOCAL_SYMBOLIC_TABLE[var_name] = SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][user_param_tree[i]]
                     i=i+1
                     a=a+1
                     continue

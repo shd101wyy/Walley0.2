@@ -10,33 +10,16 @@
 	; test absolute
 	;(display (abs -12))
 
-	; sqrt
-	; 允许的误差数
-	(define __SQRT_ACCURATE__ 0.001)
-
-
-	(define sqrt (lambda (x)
-		(define sqrt-iter (lambda (guess x)
-	  		(cond ((good-enough? guess x) guess)
-	      		  (1 (sqrt-iter (improve guess x) x))
-				)
-	  		)
+	; factorial
+	(define factorial (lambda (x)
+		(define factorial_iter (lambda (outcome count)
+		 	(if (== count 1) outcome (factorial_iter (* outcome (- count 1)) (- count 1)))
+			;(cond ((== count 1) outcome) (1 (factorial_iter (* outcome (- count 1)) (- count 1))))
+			)
 		)
-
-		(define improve (lambda (guess x)
-	  		(average guess (/ x guess)))		
-		)
-
-		(define average (lambda (x y)
-	  		(/ (+ x y) 2)))
-
-		(define good-enough? (lambda (guess x)
-	  		(< (abs (- (* guess guess) x)) __SQRT_ACCURATE__)))
-
-  		(sqrt-iter 1.0 x)))
-
-	(display (sqrt 12))
-
+		(factorial_iter x x)
+		))
+	(display (factorial 10))
 )
 
 
