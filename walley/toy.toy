@@ -1,88 +1,89 @@
 (stms
 	;This program is written by Yiyi Wang to test Toy Language"
 	;I recommended u to start the program by stating (stms ) function"
-	(= display print)
-	(= begin stms)
+	(define display print)
+	(define begin stms)
 	;# function list"
     ;# (list 1 2 3) ---> (1 2 3)"
     ;Has bug when"
-    ; (= x 12) (= x (list 1 x))"
-	(= list (lambda (. args) 
+    ; (define x 12) (define x (list 1 x))"
+	(define list (lambda (. args) 
 		(if (null? args) '() (cons (car args) (apply list (cdr args))))
 		)
 	)
 	
 	;Arithmetic Operation"
 	;Now only support number, exclude fraction, real, complex"
-	(= + (lambda (. args)
+	(define + (lambda (. args)
 		(if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))
 			)
 		)
 	)
-	(= - (lambda (. args)
+	(define - (lambda (. args)
 		(if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))
 			)
 		)
 	)
 
-	(= * (lambda (. args)
+	(define * (lambda (. args)
 		(if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))
 			)
 		)
 	)
-	(= / (lambda (. args)
+	(define / (lambda (. args)
 		(if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))
 			)
 		)
 	)
 
-	(= null? (lambda (a)(if (eq a '()) 1 0)))
-	(= empty? null?)
+	(define null? (lambda (a)(if (eq a '()) 1 0)))
+	(define empty? null?)
 
-	;Condition judge > < == != >= <="
-	(= == (lambda (. args)
-		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply == (cdr args))) )
+	;Condition judge > < =(==) != >= <=" 
+	(define = (lambda (. args)
+		(cond ( (__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args))) ) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply = (cdr args))) )
 			)
 		)
 	)
-	(= < (lambda (. args)
-		(if (== 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
+	(define == =)
+	(define < (lambda (. args)
+		(if (= 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
 			)
 		)
 	)	
-	(= <= (lambda (. args)
-		(if (== 2 (len args)) (__OR__ (apply == args) (apply < args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)) )
+	(define <= (lambda (. args)
+		(if (= 2 (len args)) (__OR__ (apply = args) (apply < args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)) )
 			)
 		)
 	)
 
 
 	;greater"
-	(= __GT__ (lambda (a b)(
+	(define __GT__ (lambda (a b)(
 		if (apply <= (list a b)) 0 1
 			)
 		)
 	)
 
-	(= > (lambda (. args) (
-		if (== 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)) )
+	(define > (lambda (. args) (
+		if (= 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)) )
 			)
 		)
 	)
 
-	(= >= (lambda (. args)(
-		if (== 2 (len args)) (or (apply == args) (apply > args)) (__AND__ (__OR__ (apply == (list (car args) (car (cdr args)) ) ) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)) )
+	(define >= (lambda (. args)(
+		if (= 2 (len args)) (or (apply = args) (apply > args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)) ) ) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)) )
 			)
 		)
 	)
 
-	(= != (lambda (. args)
-		(if (== 2 (len args)) (not (== (car args) (car (cdr args)))) (__AND__ (not (== (car args) (car (cdr args)))) (apply != (cdr args)) )
+	(define != (lambda (. args)
+		(if (= 2 (len args)) (not (= (car args) (car (cdr args)))) (__AND__ (not (= (car args) (car (cdr args)))) (apply != (cdr args)) )
 			)
 		)
 	)
 
-	(= __AND__ (lambda (a b)
+	(define __AND__ (lambda (a b)
 		(if a 
 			(if b 
 				1
@@ -93,7 +94,7 @@
 		)
 	)
 
-	(= __OR__ (lambda (a b)
+	(define __OR__ (lambda (a b)
 		(if a 
 			1
 			(if b
@@ -105,7 +106,7 @@
 		)
 		
 	)
-	(= and (lambda (. args) (
+	(define and (lambda (. args) (
 		if (null? args)
 			1
 			(__AND__ (car args) (apply and (cdr args)))
@@ -113,7 +114,7 @@
 		)
 	)
 
-	(= or (lambda (. args) (
+	(define or (lambda (. args) (
 		if (null? args)
 			0
 			(__OR__ (car args) (apply or (cdr args)))
@@ -121,15 +122,15 @@
 		)
 	)
 
-	(= not (lambda (a) 
+	(define not (lambda (a) 
 			(if a 0 1)
 		)
 	)
 
-	(= nil 0)
+	(define nil 0)
 	;function while"
     ;(while (< i 10) (= i (+ i 1)))"
-	(= while (lambda (&judge &stm) (
+	(define while (lambda (&judge &stm) (
 		cond (judge (stms stm (while judge stm))) (1 nil)
 			)
 		)
@@ -138,52 +139,52 @@
 
 	;function if"
     ;(if [judge] [run if pass] [run if not pass])"
-	(= if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
+	(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
 	;One bug here"
 	;(print (<= 4 3 4))"
 
 	;(reminder 3 4) ->3"
-	(= reminder (lambda (a b) 
+	(define reminder (lambda (a b) 
 			(
 				if (< a b) a (reminder (- a b) b)
 			)
 		)
 	)
-	(= % reminder)
+	(define % reminder)
 
 
 	;list? function will return 1 if it is list"
-	(= list? (lambda (a)
+	(define list? (lambda (a)
 			(if (atom? a) 0 1)
 		)
 	)
 
 	;======================================================================"
 
-	(= factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1)))))))
+	(define factorial (lambda (a) (cond ((__EQUAL__ 1 a) 1) (1 (__MULT__ a (factorial (__MINUS__ a 1)))))))
 	;(print (factorial 2))"
 
 	; this is function ^ "
-	(= ^ (lambda (a b)
-			(if (== b 1) a
+	(define ^ (lambda (a b)
+			(if (= b 1) a
 				(* a (^ a (- b 1)))
 			)
 		)
 	)
 	
 	;bind ** to ^"
-	(= ** ^)
+	(define ** ^)
 	;test ** function"
 	;(print (** 3 4))"
 
 
-	(= +1 (lambda (x) (+ x 1)))
+	(define +1 (lambda (x) (+ x 1)))
 
 	;======================================================================"
 	;list "
 		;get the last element of __list__"
-		(= last (lambda (__list__) 
+		(define last (lambda (__list__) 
 			(if (null? __list__ ) (print "Error...Cannot get last atom of empty list")
 				(if (null? (cdr __list__ )) 
 						(car __list__ )  
@@ -194,14 +195,14 @@
 		)
 		;list-length"
 		;which can be used to get the length of list"
-		(= list-length (lambda (_list_)
+		(define list-length (lambda (_list_)
 			(if (list? _list_)
 				(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
 				(print "Error...Function list-length can not be used to get length of non-list type value")
 			)
 		  )
 		)
-		(= len list-length)
+		(define len list-length)
 
 		;test list-length"
 		;(print (list-length '(1 2 3)))"
@@ -210,10 +211,10 @@
 		;====================================="
 		;list-get"
 		;get list at index"
-		(= list-get (lambda (_list_ index)
+		(define list-get (lambda (_list_ index)
 				(if (>= index (list-length _list_))
 					(print "Error...Index out of range")
-					(if (== index 0)
+					(if (= index 0)
 						(car _list_)
 						(list-get (cdr _list_) (- index 1))
 					)
@@ -226,14 +227,14 @@
 	;Function: list-append"
 	;(list-append '() 12) -> (12)"
 	;(list-append '(1 2) '(14 15)) -> (1 2 (14 15))"
-	(= list-append (lambda (a b)
+	(define list-append (lambda (a b)
 			(stms
-				(local= output (cons b '()))
-				(local= i (- (list-length a) 1))
+				(define output (cons b '()))
+				(define i (- (list-length a) 1))
 				(while (>= i 0)
 					(stms
-						(local= output (cons (list-get a i) output))
-						(local= i (- i 1))
+						(set! output (cons (list-get a i) output))
+						(set! i (- i 1))
 					)
 				)
 				output
@@ -247,38 +248,38 @@
 	;(range 10)"
 	;(range 0 10)"
 	;(range 0 10 1)"
-	(= range (lambda (arg0 . args) (stms
+	(define range (lambda (arg0 . args) (stms
 				(cond 
-					((== args '())
+					((= args '())
 						(stms 
-							(local= begin 0)
-							(local= end arg0)
-							(local= interval 1)
-							(local= output '())
+							(define begin 0)
+							(define end arg0)
+							(define interval 1)
+							(define output '())
 						)
 					)
-					((== 1 (list-length args))
+					((= 1 (list-length args))
 						(stms 
-							(local= begin arg0)
-							(local= end (car args))
-							(local= interval 1)
-							(local= output '())
+							(define begin arg0)
+							(define end (car args))
+							(define interval 1)
+							(define output '())
 						)
 					)
 					(1 
 						(stms 
-							(local= begin arg0)
-							(local= end (car args))
-							(local= interval (car (cdr args)))
-							(local= output '())
+							(define begin arg0)
+							(define end (car args))
+							(define interval (car (cdr args)))
+							(define output '())
 
 						)
 					) 
 
 				)
 				(if (> interval 0 ) 
-					(while (< begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))
-					(while (> begin end) (stms (local= output (list-append output begin)) (local= begin (+ begin interval))))
+					(while (< begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval))))
+					(while (> begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval))))
 				)
 				output
 			)

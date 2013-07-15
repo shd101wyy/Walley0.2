@@ -10,6 +10,7 @@
 	; test absolute
 	;(display (abs -12))
 
+	(define == =)
 	; factorial
 	(define factorial (lambda (x)
 		(define factorial_iter (lambda (outcome count)
@@ -19,7 +20,33 @@
 		)
 		(factorial_iter x x)
 		))
-	(display (factorial 10))
+	;(display (factorial 6))
+
+	; expt
+	; only support 2^3 like 3 must be > 0
+	(define expt (lambda (a b)
+		(define expt_inter (lambda (result count)
+			(if (== count 1) result (expt_inter (* result a) (- count 1)))
+			) 
+		)
+		(if (== b 0) 1 (expt_inter a b)))
+	)
+	;(display (expt 3 2))
+
+	; sicp Exercise 1.15
+	; sin
+	; 允许的sin误差范围
+	(define __SIN_ACCURACY__ 0.01)
+	(define cube (lambda (x) (* x x x)))
+	(define p (lambda (x) (- (* 3 x) (* 4 (cube x)))))
+	(define sine (lambda (angle)
+		(if (not (> (abs angle) __SIN_ACCURACY__))
+	        angle
+			(p (sine (/ angle 3.0))))))
+	; (display (sine 12))
+	(define sin sine)
+	
+
 )
 
 
