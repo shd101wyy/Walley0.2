@@ -704,9 +704,6 @@ SYMBOLIC_TABLE[0]["__LT__"]="__LT__"
 MARCRO_DATABASE={}
 
 
-# check whether it is loading module
-IS_LOADING_MODULE = False
-
 
 '''
     convert
@@ -747,7 +744,6 @@ def isNumber(element):
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global MARCRO_DATABASE
-    global IS_LOADING_MODULE
     
     length=len(tree)
     if length == 0:
@@ -760,9 +756,7 @@ def interpreter(tree):
             return tree
         # string
         elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
-            if IS_LOADING_MODULE:
-                return tree[1:len(tree)-1]
-            return convertStringToArray(tree[1:len(tree)-1])
+            return tree
         else:
             length=len(SYMBOLIC_TABLE)
             i=length-1
@@ -916,24 +910,22 @@ def interpreter(tree):
     elif tree[0]=="car":
         #print "it is car"
         value=interpreter(tree[1])
+        # string
+        if value[0]=="\"":
+            return value[0:2]+"\""
         #print value
         return value[0]
-
-    #if value[0]!="(" or value[len(value)-1]!=")":
-    #    print "Error...\nFunction 'car' only support list like (1 2 3)\nNot like "+value
-    #else:
-
-    #    _tree_=parser(lexer(value)[0])
-    #    if type(_tree_[0])==str:
-    #        return _tree_[0]
-    #    else:
-    #        return interpreter(_tree_[0])
 
     # function cdr
     # (cdr '(1 2 3)) -> (2 3)
     elif tree[0]=="cdr":
         #print "it is cdr"
         value=interpreter(tree[1])
+
+        # string
+        if value[0]=="\"":
+            return "\""+value[2:len(value)]
+
         #print value
         if len(value)==0:
             print("Error\nFunction 'cdr' cannot be used on empty list")
@@ -959,11 +951,26 @@ def interpreter(tree):
     
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
+    # (cons "Hi" "Hello") -> "HiHello"
+    # (cons 12 "Hello") -> "12Hello"
+    # (cons '(1 2) "Hello") -> "(1 2)Hello"
     elif tree[0]=="cons":
         #print "it is cons"
         value1=interpreter(tree[1])
         value2=interpreter(tree[2])
+
         if type(value2)==str:
+
+            # cons string
+            if value2[0]=="\"":
+                # (cons "H" "e") -> "He"
+                if value1[0]=="\"":
+                    return value1[0:len(value1)-1]+value2[1:len(value2)]
+                elif type(value1)!=str:
+                    return "\""+convertArrayToString(value1)+value2[1:len(value2)]
+                else:
+                    return "\""+value1+value2[1:len(value2)]
+
             # add pair support
             #print("Error...\nFunction 'cons' only support (cons [value] [list])\n")
             output=[]
@@ -1048,6 +1055,9 @@ def interpreter(tree):
         if type(value)!=str:
             return "0"
         else:
+            # string is list not atom
+            if value[0]=="\"":
+                return "0"
             return "1"
 
     elif tree[0]=="print":
@@ -1141,25 +1151,12 @@ def interpreter(tree):
         else:
             print("Error...\nFunction len only support list and string type param")
 
-    
-    # function denominator
-    # get denominator of number
-    #elif tree[0]=="denominator":
-    #    value = interpreter(tree[1])
-    #    return denominator_of_fraction(value)
-    # function numerator
-    # get numerator of number
-    #elif tree[0]=="numerator":
-    #    value = interpreter(tree[1])
-    #    return numerator_of_fraction(value)
 
     # load module (file) from virtual file system
     # (load "walley_toy")
     elif tree[0]=="load":
-        IS_LOADING_MODULE = True
         value = interpreter(tree[1])
-        toy_runString(VirtualFileSystem[value])
-        IS_LOADING_MODULE = False
+        toy_runString(VirtualFileSystem[value[1:len(value)-1]])
 
 #   > (eq 'a 'a)
 #   1
@@ -1169,9 +1166,18 @@ def interpreter(tree):
 #   1
 #   > (eq '(a b c) '(a b c))
 #   0
+#   > (eq '() "")       ; "" is ()
+#   1
+
     elif tree[0]=="eq":
         value1 = interpreter(tree[1])
         value2 = interpreter(tree[2])
+        
+        if value1=="\"\"" and value2==[]:
+            return "1"
+        if value2=="\"\"" and value1==[]:
+            return "1"
+
         if type(value1)!=type(value2):
             return "0"
         if type(value1)==str:
