@@ -181,8 +181,11 @@
 		;list-length"
 		;which can be used to get the length of list"
 		(define list-length (lambda (_list_)
+			(define list-length-iter (lambda (_list_ count) 
+				(if (null? _list_) count (list-length-iter (cdr _list_) (+ count 1))) 
+				))
 			(if (list? _list_)
-				(if (null? _list_) 0 (+ 1 (list-length (cdr _list_))))
+				(list-length-iter _list_ 0)
 				(print "Error...Function list-length can not be used to get length of non-list type value")
 			)
 		  )
