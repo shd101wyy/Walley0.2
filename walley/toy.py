@@ -994,7 +994,13 @@ def interpreter(tree):
         #print "It is lambda"
         
         param_tree = parser(lexer(tree[1])[0])
-        stm_tree = parser(lexer(tree[2])[0])
+
+        stm_tree=["begin"]
+        i=2
+        while i<len(tree):
+            stm_tree.append(parser(lexer(tree[i])[0]))
+            i=i+1
+
         function_array = ["<procedure"]
         function_array.append(param_tree)
         function_array.append(stm_tree)

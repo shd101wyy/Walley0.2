@@ -13,25 +13,29 @@
 	; sqrt
 	; 允许的误差数
 	(define __SQRT_ACCURATE__ 0.001)
-	(define sqrt-iter (lambda (guess x)
-  		(cond ((good-enough? guess x) guess)
-      		  (1 (sqrt-iter (improve guess x) x))
-			)
-  		)
-	)
 
-	(define improve (lambda (guess x)
-  		(average guess (/ x guess)))		
-	)
-
-	(define average (lambda (x y)
-  		(/ (+ x y) 2)))
-
-	(define good-enough? (lambda (guess x)
-  		(< (abs (- (* guess guess) x)) __SQRT_ACCURATE__)))
 
 	(define sqrt (lambda (x)
+		(define sqrt-iter (lambda (guess x)
+	  		(cond ((good-enough? guess x) guess)
+	      		  (1 (sqrt-iter (improve guess x) x))
+				)
+	  		)
+		)
+
+		(define improve (lambda (guess x)
+	  		(average guess (/ x guess)))		
+		)
+
+		(define average (lambda (x y)
+	  		(/ (+ x y) 2)))
+
+		(define good-enough? (lambda (guess x)
+	  		(< (abs (- (* guess guess) x)) __SQRT_ACCURATE__)))
+
   		(sqrt-iter 1.0 x)))
+
+	(display (sqrt 12))
 
 )
 
