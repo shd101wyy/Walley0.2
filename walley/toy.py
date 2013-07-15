@@ -115,12 +115,82 @@ from __future__ import division
 import sys
 sys.setrecursionlimit(10000)
 
+#================== Fraction Support ===================
+# general common divisor
+def gcd(n,d):
+    if d==0:
+        return n
+    return gcd(d, n%d)
+def make_rat(n,d):
+    g = gcd(n,d)    # gcd
+    return [int(n/g),int(d/g)]
+def numer(fraction):
+    return fraction[0]
+def denom(fraction):
+    return fraction[1]
+def add_rat (x,y):
+    return make_rat( numer(x)*denom(y)+numer(y)*denom(x) , denom(x)*denom(y))
+def sub_rat (x,y):
+    return make_rat( numer(x)*denom(y)-numer(y)*denom(x) , denom(x)*denom(y))
+def mul_rat (x,y):
+    return make_rat(numer(x)*numer(y), denom(x)*denom(y))
+def div_rat (x,y):
+    return make_rat(numer(x)*denom(y),denom(x)*numer(y))
+def equal_rat (x,y):
+    return numer(x)*denom(y) == denom(x)*numer(y)
+def print_rat(x):
+    print str(numer(x))+"/"+str(denom(x))
+def rat_to_string(x):
+    if denom(x)==1:
+        return str(numer(x))
+    return str(numer(x))+"/"+str(denom(x))
+# [n,d]
+def numerator_and_denominator_of_string(x):
+    index = x.find("/")
+    if index==-1:
+        return [int(x),1]
+    else:
+        return [int(x[0:index]), int(x[index+1:len(x)])]
+def charIsDigit(char):
+    return char=="0" or char=="1" or char=="2" or char=="3" or char=="4" or char=="5" or char=="6" or char=="7" or char=="8" or char=="9"
+def stringIsFloat(string):
+    i=0
+    count_of_dot=0
+    count_of_e=0
+    while i<len(string):
+        if charIsDigit(string[i])==False:
+            if string[i]==".":
+                count_of_dot=count_of_dot+1
+            elif string[i]=="e":
+                count_of_e=count_of_e+1
+            else:
+                return False
+        i=i+1
+    if count_of_e==1 or count_of_dot==1:
+        return True
+    return False
+def math_operation(x,y,sign):
+    if stringIsFloat(x) or stringIsFloat(y):
+        return str(eval(x+sign+y))
+    f1 = numerator_and_denominator_of_string(x)
+    f2 = numerator_and_denominator_of_string(y)
+    if sign=="+":
+        return rat_to_string(add_rat(f1,f2))
+    elif sign=="-":
+        return rat_to_string(sub_rat(f1,f2))
+    elif sign=="*":
+        return rat_to_string(mul_rat(f1,f2))
+    else:
+        return rat_to_string(div_rat(f1,f2))
+
+#===================
+#===================
 # This is the virtual file system
 # that hold all modules
 VirtualFileSystem={}
 
 # the script that is required to run before starting the toy program
-TO_RUN="(stms (define display print) (define begin stms) (define list (lambda (. args) (if (null? args) (quote ()) (cons (car args) (apply list (cdr args)))))) (define + (lambda (. args) (if (null? args) 0 (__ADD__ (car args) (apply + (cdr args)))))) (define - (lambda (. args) (if (null? args) 0 (__MINUS__ (car args) (apply - (cdr args)))))) (define * (lambda (. args) (if (null? args) 1 (__MULT__ (car args) (apply * (cdr args)))))) (define / (lambda (. args) (if (null? args) 1 (__DIV__ (car args) (apply / (cdr args)))))) (define null? (lambda (a) (if (eq a (quote ())) 1 0))) (define empty? null?) (define = (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply = (cdr args))))))) (define == =) (define equal =) (define < (lambda (. args) (if (= 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (define <= (lambda (. args) (if (= 2 (len args)) (__OR__ (apply = args) (apply < args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) (define __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (define > (lambda (. args) (if (= 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (define >= (lambda (. args) (if (= 2 (len args)) (or (apply = args) (apply > args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (define != (lambda (. args) (if (= 2 (len args)) (not (= (car args) (car (cdr args)))) (__AND__ (not (= (car args) (car (cdr args)))) (apply != (cdr args)))))) (define __AND__ (lambda (a b) (if a (if b 1 0) 0))) (define __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (define and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (define or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (define not (lambda (a) (if a 0 1))) (define nil (quote ())) (define while (lambda (&judge &stm) (cond (judge (stms stm (while judge stm))) (1 nil)))) (define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2)))) (define remainder (lambda (a b) (if (< a b) a (remainder (- a b) b)))) (define % remainder) (define list? (lambda (a) (if (atom? a) 0 1))) (define charIsDigit (lambda (char) (if (or (eq char 0) (eq char 1) (eq char 2) (eq char 3) (eq char 4) (eq char 5) (eq char 6) (eq char 7) (eq char 8) (eq char 9)) 1 0))) (define isInteger (lambda (input) (if (null? input) 1 (if (charIsDigit (car input)) (isInteger (cdr input)) 0)))) (define isFloat (lambda (input) (define isFloatTest (lambda (input count_of_dot_and_e) (if (null? input) (if (eq count_of_dot_and_e 1) 1 0) (if (> count_of_dot_and_e 1) 0 (if (charIsDigit (car input)) (isFloatTest (cdr input) count_of_dot_and_e) (if (or (eq (car input) (quote .)) (eq (car input) (quote e))) (isFloatTest (cdr input) (+ count_of_dot_and_e 1)) 0)))))) (isFloatTest input 0))) (define isFraction (lambda (input) (define isFractionTest (lambda (input count_of_slash) (if (null? input) (if (eq count_of_slash 1) 1 0) (if (charIsDigit (car input)) (isFractionTest (cdr input) count_of_slash) (if (eq (car input) (quote /)) (isFractionTest (cdr input) (+ count_of_slash 1)) 0))))) (isFractionTest input 0))) (define +1 (lambda (x) (+ x 1))) (define last (lambda (__list__) (if (null? __list__) (print \"Error...Cannot get last atom of empty list\") (if (null? (cdr __list__)) (car __list__) (last (cdr __list__)))))) (define list-reverse (lambda (_list_) (define list-reverse (lambda (_list_ result) (if (null? _list_) result (list-reverse (cdr _list_) (cons (car _list_) result))))) (list-reverse _list_ (quote ())))) (define list-length (lambda (_list_) (define list-length-iter (lambda (_list_ count) (if (null? _list_) count (list-length-iter (cdr _list_) (+ count 1))))) (if (list? _list_) (list-length-iter _list_ 0) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) (define len list-length) (define list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (= index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) (define list-member (lambda (item _list_) (if (null? _list_) 0 (if (eq (car _list_) item) 1 (list-member item (cdr _list_)))))) (define list-append (lambda (_list_ append_element) (if (null? _list_) (cons append_element nil) (cons (car _list_) (list-append (cdr _list_) append_element))))) (define range (lambda (arg0 . args) (stms (cond ((= args (quote ())) (stms (define begin 0) (define end arg0) (define interval 1) (define output (quote ())))) ((= 1 (list-length args)) (stms (define begin arg0) (define end (car args)) (define interval 1) (define output (quote ())))) (1 (stms (define begin arg0) (define end (car args)) (define interval (car (cdr args))) (define output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval)))) (while (> begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval))))) output))) (define atom-find (lambda (_atom_ find_string) (define atom-find-test (lambda (_atom_ find_string) (if (null? find_string) 1 (if (not (eq (car _atom_) (car find_string))) 0 (atom-find-test (cdr _atom_) (cdr find_string)))))) (define atom-find-iter (lambda (_atom_ count) (if (null? _atom_) -1 (if (atom-find-test _atom_ find_string) count (atom-find-iter (cdr _atom_) (+ count 1)))))) (atom-find-iter _atom_ 0))) (define atom-slice (lambda (_atom_ start end) (define atom-slice-ahead (lambda (result count) (if (eq count start) result (atom-slice-ahead (cdr result) (+ count 1))))) (define atom-slice-back (lambda (_atom_ result count) (if (eq count end) result (atom-slice-back (cdr _atom_) (cons (car _atom_) result) (+ count 1))))) (let ((ahead (atom-slice-ahead _atom_ 0)) (after (atom-slice-back ahead (quote ()) start))) (list-reverse after)))) (define atom->list (lambda (atom) (define atom->list-iter (lambda (atom result) (if (null? atom) result (atom->list-iter (cdr atom) (cons (car atom) result))))) (list-reverse (atom->list-iter atom (quote ()))))) (define atom-length (lambda (_atom_) (define atom-length-iter (lambda (_atom_ count) (if (null? _atom_) count (atom-length-iter (cdr _atom_) (+ count 1))))) (atom-length-iter _atom_ 0))) (define abs (lambda (a) (cond ((< a 0) (- 0 a)) (1 a)))) (define __SQRT_ACCURATE__ 0.001) (define sqrt (lambda (x) (define sqrt-iter (lambda (guess) (cond ((good-enough? guess) guess) (1 (sqrt-iter (improve guess)))))) (define improve (lambda (guess) (average guess (/ x guess)))) (define average (lambda (x y) (/ (+ x y) 2))) (define good-enough? (lambda (guess) (< (abs (- (* guess guess) x)) __SQRT_ACCURATE__))) (sqrt-iter __SQRT_ACCURATE__))) (define factorial (lambda (x) (define factorial_iter (lambda (outcome count) (if (== count 1) outcome (factorial_iter (* outcome (- count 1)) (- count 1))))) (factorial_iter x x))) (define expt (lambda (a b) (define expt_inter (lambda (result count) (if (== count 1) result (expt_inter (* result a) (- count 1))))) (if (== b 0) 1 (expt_inter a b)))) (define ^ expt) (define ** expt) (define __SIN_ACCURACY__ 0.01) (define cube (lambda (x) (* x x x))) (define p (lambda (x) (- (* 3 x) (* 4 (cube x))))) (define sine (lambda (angle) (if (not (> (abs angle) __SIN_ACCURACY__)) angle (p (sine (/ angle 3.0)))))) (define sin sine) (define pi 3.141592653589793) (define cos (lambda (x) (sin (+ x (/ pi 2))))) (define sec (lambda (x) (/ 1 (cos x)))) (define csc (lambda (x) (/ 1 (sin x)))) (define tan (lambda (x) (/ (sin x) (cos x)))) (define cot (lambda (x) (/ 1 (tan x)))) (define even? (lambda (x) (if (= (% x 2) 0) 1 0))) (define odd? (lambda (x) (if (even? x) 0 1))) (define gcd (lambda (a b) (if (= b 0) a (gcd b (remainder a b))))) (define deriv (lambda (f x dx) (/ (- (f (+ x dx)) (f x)) dx))) (define add-rat (lambda (x y) (make-rat (+ (* (numer x) (denom y)) (* (numer y) (denom x))) (* (denom x) (denom y))))) (define sub-rat (lambda (x y) (make-rat (- (* (numer x) (denom y)) (* (numer y) (denom x))) (* (denom x) (denom y))))) (define mul-rat (lambda (x y) (make-rat (* (numer x) (numer y)) (* (denom x) (denom y))))) (define div-rat (lambda (x y) (make-rat (* (numer x) (denom y)) (* (denom x) (numer y))))) (define equal-rat? (lambda (x y) (= (* (numer x) (denom y)) (* (denom x) (numer y))))) (define make-rat (lambda (n d) (let ((g (gcd n d))) (cons (/ n g) (/ d g))))) (define numer (lambda (x) (car x))) (define denom (lambda (x) (cdr x))) (define print-rat (lambda (x) (display \"\n\") (display (numer x)) (display \"/\") (display (denom x)))) (define map (lambda (process _list_) (if (null? _list_) nil (cons (process (car _list_)) (map process (cdr _list_))))))) "
+TO_RUN="(stms (define display print) (define begin stms) (define list (lambda (. args) (if (null? args) (quote ()) (cons (car args) (apply list (cdr args)))))) (define + __ADD__) (define - __MINUS__) (define * __MULT__) (define / __DIV__) (define null? (lambda (a) (if (eq a (quote ())) 1 0))) (define empty? null?) (define = (lambda (. args) (cond ((__EQUAL__ 2 (len args)) (__EQUAL__ (car args) (car (cdr args)))) (1 (__AND__ (__EQUAL__ (car args) (car (cdr args))) (apply = (cdr args))))))) (define == =) (define equal =) (define < (lambda (. args) (if (= 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)))))) (define <= (lambda (. args) (if (= 2 (len args)) (__OR__ (apply = args) (apply < args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)))) (apply < (list (car args) (car (cdr args))))) (apply <= (cdr args)))))) (define __GT__ (lambda (a b) (if (apply <= (list a b)) 0 1))) (define > (lambda (. args) (if (= 2 (len args)) (__GT__ (car args) (car (cdr args))) (__AND__ (__GT__ (car args) (car (cdr args))) (apply > (cdr args)))))) (define >= (lambda (. args) (if (= 2 (len args)) (or (apply = args) (apply > args)) (__AND__ (__OR__ (apply = (list (car args) (car (cdr args)))) (apply > (list (car args) (car (cdr args))))) (apply >= (cdr args)))))) (define != (lambda (. args) (if (= 2 (len args)) (not (= (car args) (car (cdr args)))) (__AND__ (not (= (car args) (car (cdr args)))) (apply != (cdr args)))))) (define __AND__ (lambda (a b) (if a (if b 1 0) 0))) (define __OR__ (lambda (a b) (if a 1 (if b 1 0)))) (define and (lambda (. args) (if (null? args) 1 (__AND__ (car args) (apply and (cdr args)))))) (define or (lambda (. args) (if (null? args) 0 (__OR__ (car args) (apply or (cdr args)))))) (define not (lambda (a) (if a 0 1))) (define nil (quote ())) (define while (lambda (&judge &stm) (cond (judge (stms stm (while judge stm))) (1 nil)))) (define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2)))) (define remainder (lambda (a b) (if (< a b) a (remainder (- a b) b)))) (define % remainder) (define list? (lambda (a) (if (atom? a) 0 1))) (define charIsDigit (lambda (char) (if (or (eq char 0) (eq char 1) (eq char 2) (eq char 3) (eq char 4) (eq char 5) (eq char 6) (eq char 7) (eq char 8) (eq char 9)) 1 0))) (define isInteger (lambda (input) (if (null? input) 1 (if (charIsDigit (car input)) (isInteger (cdr input)) 0)))) (define isFloat (lambda (input) (define isFloatTest (lambda (input count_of_dot_and_e) (if (null? input) (if (eq count_of_dot_and_e 1) 1 0) (if (> count_of_dot_and_e 1) 0 (if (charIsDigit (car input)) (isFloatTest (cdr input) count_of_dot_and_e) (if (or (eq (car input) (quote .)) (eq (car input) (quote e))) (isFloatTest (cdr input) (+ count_of_dot_and_e 1)) 0)))))) (isFloatTest input 0))) (define isFraction (lambda (input) (define isFractionTest (lambda (input count_of_slash) (if (null? input) (if (eq count_of_slash 1) 1 0) (if (charIsDigit (car input)) (isFractionTest (cdr input) count_of_slash) (if (eq (car input) (quote /)) (isFractionTest (cdr input) (+ count_of_slash 1)) 0))))) (isFractionTest input 0))) (define +1 (lambda (x) (+ x 1))) (define last (lambda (__list__) (if (null? __list__) (print \"Error...Cannot get last atom of empty list\") (if (null? (cdr __list__)) (car __list__) (last (cdr __list__)))))) (define list-reverse (lambda (_list_) (define list-reverse (lambda (_list_ result) (if (null? _list_) result (list-reverse (cdr _list_) (cons (car _list_) result))))) (list-reverse _list_ (quote ())))) (define list-length (lambda (_list_) (define list-length-iter (lambda (_list_ count) (if (null? _list_) count (list-length-iter (cdr _list_) (+ count 1))))) (if (list? _list_) (list-length-iter _list_ 0) (print \"Error...Function list-length can not be used to get length of non-list type value\")))) (define len list-length) (define list-get (lambda (_list_ index) (if (>= index (list-length _list_)) (print \"Error...Index out of range\") (if (= index 0) (car _list_) (list-get (cdr _list_) (- index 1)))))) (define list-member (lambda (item _list_) (if (null? _list_) 0 (if (eq (car _list_) item) 1 (list-member item (cdr _list_)))))) (define list-append (lambda (_list_ append_element) (if (null? _list_) (cons append_element nil) (cons (car _list_) (list-append (cdr _list_) append_element))))) (define range (lambda (arg0 . args) (stms (cond ((= args (quote ())) (stms (define begin 0) (define end arg0) (define interval 1) (define output (quote ())))) ((= 1 (list-length args)) (stms (define begin arg0) (define end (car args)) (define interval 1) (define output (quote ())))) (1 (stms (define begin arg0) (define end (car args)) (define interval (car (cdr args))) (define output (quote ()))))) (if (> interval 0) (while (< begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval)))) (while (> begin end) (stms (set! output (list-append output begin)) (set! begin (+ begin interval))))) output))) (define atom-find (lambda (_atom_ find_string) (define atom-find-test (lambda (_atom_ find_string) (if (null? find_string) 1 (if (not (eq (car _atom_) (car find_string))) 0 (atom-find-test (cdr _atom_) (cdr find_string)))))) (define atom-find-iter (lambda (_atom_ count) (if (null? _atom_) -1 (if (atom-find-test _atom_ find_string) count (atom-find-iter (cdr _atom_) (+ count 1)))))) (atom-find-iter _atom_ 0))) (define atom-slice (lambda (_atom_ start end) (define atom-slice-ahead (lambda (result count) (if (eq count start) result (atom-slice-ahead (cdr result) (+ count 1))))) (define atom-slice-back (lambda (_atom_ result count) (if (eq count end) result (atom-slice-back (cdr _atom_) (cons (car _atom_) result) (+ count 1))))) (let ((ahead (atom-slice-ahead _atom_ 0)) (after (atom-slice-back ahead (quote ()) start))) (list-reverse after)))) (define atom->list (lambda (atom) (define atom->list-iter (lambda (atom result) (if (null? atom) result (atom->list-iter (cdr atom) (cons (car atom) result))))) (list-reverse (atom->list-iter atom (quote ()))))) (define atom-length (lambda (_atom_) (define atom-length-iter (lambda (_atom_ count) (if (null? _atom_) count (atom-length-iter (cdr _atom_) (+ count 1))))) (atom-length-iter _atom_ 0))) (define abs (lambda (a) (cond ((< a 0) (- 0 a)) (1 a)))) (define __SQRT_ACCURATE__ 0.001) (define sqrt (lambda (x) (define sqrt-iter (lambda (guess) (cond ((good-enough? guess) guess) (1 (sqrt-iter (improve guess)))))) (define improve (lambda (guess) (average guess (/ x guess)))) (define average (lambda (x y) (/ (+ x y) 2))) (define good-enough? (lambda (guess) (< (abs (- (* guess guess) x)) __SQRT_ACCURATE__))) (sqrt-iter __SQRT_ACCURATE__))) (define factorial (lambda (x) (define factorial_iter (lambda (outcome count) (if (== count 1) outcome (factorial_iter (* outcome (- count 1)) (- count 1))))) (factorial_iter x x))) (define expt (lambda (a b) (define expt_inter (lambda (result count) (if (== count 1) result (expt_inter (* result a) (- count 1))))) (if (== b 0) 1 (expt_inter a b)))) (define ^ expt) (define ** expt) (define __SIN_ACCURACY__ 0.01) (define cube (lambda (x) (* x x x))) (define p (lambda (x) (- (* 3 x) (* 4 (cube x))))) (define sine (lambda (angle) (if (not (> (abs angle) __SIN_ACCURACY__)) angle (p (sine (/ angle 3.0)))))) (define sin sine) (define pi 3.141592653589793) (define cos (lambda (x) (sin (+ x (/ pi 2))))) (define sec (lambda (x) (/ 1 (cos x)))) (define csc (lambda (x) (/ 1 (sin x)))) (define tan (lambda (x) (/ (sin x) (cos x)))) (define cot (lambda (x) (/ 1 (tan x)))) (define even? (lambda (x) (if (= (% x 2) 0) 1 0))) (define odd? (lambda (x) (if (even? x) 0 1))) (define gcd (lambda (a b) (if (= b 0) a (gcd b (remainder a b))))) (define deriv (lambda (f x dx) (/ (- (f (+ x dx)) (f x)) dx))) (define add-rat (lambda (x y) (make-rat (+ (* (numer x) (denom y)) (* (numer y) (denom x))) (* (denom x) (denom y))))) (define sub-rat (lambda (x y) (make-rat (- (* (numer x) (denom y)) (* (numer y) (denom x))) (* (denom x) (denom y))))) (define mul-rat (lambda (x y) (make-rat (* (numer x) (numer y)) (* (denom x) (denom y))))) (define div-rat (lambda (x y) (make-rat (* (numer x) (denom y)) (* (denom x) (numer y))))) (define equal-rat? (lambda (x y) (= (* (numer x) (denom y)) (* (denom x) (numer y))))) (define make-rat (lambda (n d) (let ((g (gcd n d))) (cons (/ n g) (/ d g))))) (define numer (lambda (x) (car x))) (define denom (lambda (x) (cdr x))) (define print-rat (lambda (x) (display \"\n\") (display (numer x)) (display \"/\") (display (denom x)))) (define map (lambda (process _list_) (if (null? _list_) nil (cons (process (car _list_)) (map process (cdr _list_))))))) "
 VirtualFileSystem["walley_toy"]=TO_RUN
 
 
@@ -513,56 +583,24 @@ def interpreter(tree):
     #        append_str = Walley_Calculation(append_str,interpreter(tree[i]),sign)
     #        i=i+1
     #    return append_str
-    
-    elif tree[0]=="__ADD__":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        is_floating = True
-        if value1.isdigit() and value2.isdigit():
-            is_floating = False
-        result = str(eval(value1+"+"+value2)) 
-        if is_floating == False:
-            result = str(int(result))
-        return result
-    elif tree[0]=="__MINUS__":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        is_floating = True
-        if value1.isdigit() and value2.isdigit():
-            is_floating = False
-        result = str(eval(value1+"-"+value2)) 
-        if is_floating == False:
-            result = str(int(result))
-        return result
-    elif tree[0]=="__MULT__":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        is_floating = True
-        if value1.isdigit() and value2.isdigit():
-            is_floating = False
-        result = str(eval(value1+"*"+value2)) 
-        if is_floating == False:
-            result = str(int(result))
-        return result
-    elif tree[0]=="__DIV__":
-        value1=interpreter(tree[1])
-        value2=interpreter(tree[2])
-        is_floating = True
-        if value1.isdigit() and value2.isdigit():
-            is_floating = False
-        result = str(eval(value1+"/"+value2)) 
-        # remove . and 0 after
-        if  is_floating == False:
-            i = len(result)-1
-            while i>=0:
-                if result[i]!="0":
-                    break
-                i=i-1
-            if result[i]!=".":
-                i=i+1
-            return result[0:i]
-        return result
 
+    elif tree[0]=="__ADD__" or tree[0]=="__MINUS__" or tree[0]=="__MULT__" or tree[0]=="__DIV__":
+        sign = "+"
+        if tree[0]=="__ADD__":
+            sign="+"
+        elif tree[0]=="__MINUS__":
+            sign="-"
+        elif tree[0]=="__MULT__":
+            sign="*"
+        else:
+            sign="/"
+        previous = interpreter(tree[1])
+        i = 2
+        while i<len(tree):
+            next = interpreter(tree[i])
+            previous = math_operation(previous,next,sign)
+            i=i+1
+        return previous
 
     elif tree[0]=="__EQUAL__":
         value1=interpreter(tree[1])
