@@ -28,14 +28,21 @@
 	; (add 3 4) -> (+ 3 4)
 	(define syntax-transfer (lambda (variable_table transfer)
 		(define syntax-transfer-iter (lambda (transfer)
-			(display transfer)
-			(display (null? transfer))
 			(if (null? transfer) '()
-				(let 
-					((index (list-atom-index (car transfer) variable_table)))
-					(if (eq? -1 index )
-						(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
-						(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+				; check whether (car transfer) is list
+				(if (list? (car transfer))
+					; if ahead is list
+					(cons (syntax-transfer-iter (car transfer))  (syntax-transfer-iter (cdr transfer)) )
+					; check whether (car transfer) is number
+					(if (number? (car transfer))
+						(cons (car transfer) (syntax-transfer-iter (cdr transfer)) )
+						(let 
+							((index (list-atom-index (car transfer) variable_table)))
+							(if (eq? -1 index )
+								(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
+								(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+								)
+							)
 						)
 					)
 				)
@@ -74,11 +81,18 @@
 		(getmacro-iter pattern_lists)
 		))
 
-	(defmacro add 
-		(and)
-		((add stm1 stm2) (+ stm1 stm2))
-		)
-	;(add 3 4)
+	;(defmacro add 
+	;	(and)
+	;	((add stm1 stm2) (+ stm1 stm2))
+	;	)
+	;(display (add 3 4))
+	(display (syntax-transfer '(judge (== 1 1) stm1 4 stm2 5) '(cond (judge stm1) (1 stm2))))
+
+	;(defmacro if2
+	;	()
+	;	((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
+	;	)
+	;(display (if2 (= 2 2) 1 2))
 	
 
 
@@ -93,7 +107,7 @@
 	;(newline)
 	;(display (syntax-match '(and) '(3 4 and 7) '(add stm1 stm2 and stm3)) )
 	;(newline)
-	(display (syntax-transfer '(stm1 3 stm2 4 stm3 5) '(+ stm1 stm2 and stm3)))
+	;(display (syntax-transfer '(stm1 3 stm2 4 stm3 5) '(+ stm1 stm2 and stm3)))
 
 	;(newline)
 	;(display (apply add-macro '(3 4 and2 7)))
@@ -103,5 +117,3 @@
 
 	;(display (add 3 4 5 7))
 )
-
-

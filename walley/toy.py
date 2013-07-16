@@ -450,7 +450,7 @@ def convertArrayToString(array):
         if type(i)==str:
             output=output+i+" "
         else:
-            output=output+convertArrayToString(i)
+            output=output+convertArrayToString(i)+" "
     return output.strip()+")"
 
 # convert string to Array
@@ -1043,7 +1043,10 @@ def interpreter(tree):
                 i=i+1
             to_run = ["getmacro",["quote"]]
             to_run[1].append(macro)
-            return interpreter(to_run)
+            expand = interpreter(to_run)
+            #print "expand-----> "
+            #print expand
+            return interpreter(expand)
 
         # function_procedure
         if type(function_name)==str:
