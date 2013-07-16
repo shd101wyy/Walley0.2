@@ -41,6 +41,8 @@
 	(define - __MINUS__)
 	(define * __MULT__)
 	(define / __DIV__)
+	(define and __AND__)
+	(define or __OR__)
 
 	; convert int or fraction to float
 	(define float (lambda (a) (* 1.0 a)))
@@ -90,45 +92,6 @@
 
 	(define != (lambda (. args)
 		(if (= 2 (len args)) (not (= (car args) (car (cdr args)))) (__AND__ (not (= (car args) (car (cdr args)))) (apply != (cdr args)) )
-			)
-		)
-	)
-
-	(define __AND__ (lambda (a b)
-		(if a 
-			(if b 
-				1
-				0
-				)
-			0
-			)
-		)
-	)
-
-	(define __OR__ (lambda (a b)
-		(if a 
-			1
-			(if b
-				1
-				0
-				)
-
-			)
-		)
-		
-	)
-	(define and (lambda (. args) (
-		if (null? args)
-			1
-			(__AND__ (car args) (apply and (cdr args)))
-			)
-		)
-	)
-
-	(define or (lambda (. args) (
-		if (null? args)
-			0
-			(__OR__ (car args) (apply or (cdr args)))
 			)
 		)
 	)

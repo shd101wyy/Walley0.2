@@ -42,8 +42,6 @@
 	; (syntax-transfer '(... (3 4) stm 1 )) '(+ stm ...) -> (+ 1 3 4)
 	(define syntax-transfer (lambda (variable_table transfer)
 		(define syntax-transfer-iter (lambda (transfer)
-			(display "\n\n------>\n")
-			(display transfer)
 			(if (null? transfer) '()
 				; check whether (car transfer) is list
 				(if (list? (car transfer))
@@ -104,46 +102,21 @@
 		(getmacro-iter pattern_lists)
 		))
 
-	(define __AND2__ (lambda (a b)
-		(cond
-			((eq a 0) 0)
-			(1 (cond 
-				((eq b 0) 0)
-				(1 1)
-				))
-			)
-		))
-	(__AND2__ 0 (car '()))
-	(display "FINISH")
-
-	(display (__AND2__ 1 1))
-
-	(display (not (null? (cdr '(stm1)))))
-	(display 
-		(__AND2__ 
-			(not 
-				(null? 
-					(cdr '(stm1)))) 
-			(eq? 
-				(car (cdr '(stm1))) 
-				'...)
-			)
+	(defmacro add 
+		(and)
+		((add stm1 stm2) (+ stm1 stm2))
 		)
-	;(defmacro add 
-	;	(and)
-	;	((add stm1 stm2) (+ stm1 stm2))
-	;	)
-	;(display (add 3 4))
+	(display (add 3 4))
 	;(display (syntax-transfer '(judge (== 1 1) stm1 4 stm2 5) '(cond (judge stm1) (1 stm2))))
 
 	;(display (syntax-match '() '((= 2 3) 1 2) '(unless condition stm1 stm2)))
 	;(display (syntax-transfer  '(stm2 2 stm1 1 condition (= 2 3)) '(cond (condition stm1) (1 stm2) )  ))
 	
-	;(defmacro if2
-	;	()
-	;	((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
-	;	)
-	;(display (if2 (= 2 3) 1 2))
+	(defmacro if2
+		()
+		((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
+		)
+	(display (if2 (= 2 3) 1 2))
 	
 	;(display (syntax-match '() '(3 4 5 6) '(add stm ...) ))
 	;(display (syntax-transfer '(... (3 4 5) stm 2) '(+ stm ...)  ))
