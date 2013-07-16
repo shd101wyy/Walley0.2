@@ -4,12 +4,27 @@ import sys
 print sys.argv
 
 # COMMANDS
-
+# fix /t problem
+def cleanString(input_str):
+    count_of_double_quote = 0
+    output = ""
+    i=0
+    while i<len(input_str):
+        if input_str[i]=="\"":
+            count_of_double_quote = count_of_double_quote + 1
+        if count_of_double_quote%2==0 and (input_str[i]=="\t"):
+            output = output+ " "
+            i=i+1
+            continue
+        output = output+input_str[i]
+        i=i+1
+    return output
 # run one file
 if len(sys.argv)==2:
     file_name=sys.argv[1]
     file=open(file_name)
     string_in_side = file.read()
+    string_in_side = cleanString(string_in_side)
     #print "\n\nLexer---->\n"
     #print "--> "+string_in_side
     x=lexer(string_in_side)
@@ -30,6 +45,7 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
     file_name=sys.argv[2]
     file=open(file_name)
     string_in_side = file.read()
+    string_in_side = cleanString(string_in_side)
 
     x = lexer(string_in_side)[0]
     if x[1]==False:

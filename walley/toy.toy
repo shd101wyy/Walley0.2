@@ -141,16 +141,16 @@
 	(define nil '())
 	;function while"
     ;(while (< i 10) (= i (+ i 1)))"
-	(define while (lambda (&judge &stm) (
-		cond (judge (stms stm (while judge stm))) (1 nil)
-			)
-		)
-	)
+	;(define while (lambda (&judge &stm) (
+	;	cond (judge (stms stm (while judge stm))) (1 nil)
+	;		)
+	;	)
+	;)
 
 
 	;function if"
     ;(if [judge] [run if pass] [run if not pass])"
-	(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
+	;(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
 
 	;One bug here"
 	;(print (<= 4 3 4))"

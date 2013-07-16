@@ -1,39 +1,4 @@
 (begin
-	(use-modules (ice-9 syncase))
-	; (add stm1 stm2)
-	;			   leading name
-	(define-syntax add2 
-		(syntax-rules 
-			; keywords
-			()
-			;(<pattern> <templete>)
-			((add stm1 stm2) (+ stm1 stm2))
-			((add stm1 stm2 ...) (+ stm1 stm2 ...))
-			)
-		)
-
-	; ('a '(a b c)) -> 1
-	(define list-atom-is-member? (lambda (element in_list) 
-		(if (null? in_list) 0
-			(if (eq? element (car in_list)) 1
-				(list-atom-is-member? element (cdr in_list))
-			  )
-			)
-		))
-
-		; ('a '(a b c)) -> 0 return index
-		; if not found; return -1
-	(define list-atom-index (lambda (element in_list) 
-		(define list-atom-index-iter (lambda (in_list result)
-			(if (null? in_list) -1
-				(if (eq? (car in_list) element) result
-					(list-atom-index-iter (cdr in_list) (+ result 1))
-					)
-				)
-			))
-		(list-atom-index-iter in_list 0)
-		))
-
 	; check whether match syntax
 	(define syntax-match (lambda (const_keywords arg1 test_match)
 		; variable_table can be used to save variables and their value
@@ -63,6 +28,8 @@
 	; (add 3 4) -> (+ 3 4)
 	(define syntax-transfer (lambda (variable_table transfer)
 		(define syntax-transfer-iter (lambda (transfer)
+			(display transfer)
+			(display (null? transfer))
 			(if (null? transfer) '()
 				(let 
 					((index (list-atom-index (car transfer) variable_table)))
@@ -111,14 +78,14 @@
 		(and)
 		((add stm1 stm2) (+ stm1 stm2))
 		)
-	(add 3 4)
+	;(add 3 4)
 	
 
 
 	;(define newline (lambda () (display "\n")))
 	;(display (list-atom-is-member? 'a '(c a c)))
 	;(newline)
-	;(display (list-atom-index 'a '(c b a)))
+	;(display (list-atom-index 'a '(c b b)))
 	;(newline)
 	;(display (eq? 'a 'a))
 	;(newline)
@@ -126,7 +93,7 @@
 	;(newline)
 	;(display (syntax-match '(and) '(3 4 and 7) '(add stm1 stm2 and stm3)) )
 	;(newline)
-	;(display (syntax-transfer '(stm1 3 stm2 4 stm3 5) '(+ stm1 stm2 and stm3)))
+	(display (syntax-transfer '(stm1 3 stm2 4 stm3 5) '(+ stm1 stm2 and stm3)))
 
 	;(newline)
 	;(display (apply add-macro '(3 4 and2 7)))
@@ -136,3 +103,5 @@
 
 	;(display (add 3 4 5 7))
 )
+
+

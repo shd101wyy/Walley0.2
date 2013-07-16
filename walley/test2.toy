@@ -1,0 +1,9 @@
+(if (null? transfer) '()
+	(let 
+		((index (list-atom-index (car transfer) variable_table)))
+		(if (eq? -1 index )
+			(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
+				(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+			)
+		)
+	)
