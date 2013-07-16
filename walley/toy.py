@@ -1027,8 +1027,8 @@ def interpreter(tree):
     #   
     elif tree[0]=="defmacro":
         #macro
-        # ['getmacro' , macro_name , const_keywords , pattern_list ]
-        macro=[tree[1],tree[2],[]]
+        # [ macro_name , const_keywords , pattern_list , arguments]
+        macro=[tree[1],tree[2],[],[]]
         #macro_name = tree[1]
         #macro_const_keywords = tree[2]
         #macro_patterns = []
@@ -1042,7 +1042,7 @@ def interpreter(tree):
     elif tree[0]=="expandmacro":
         if tree[1] in MARCRO_DATABASE:
             macro = MARCRO_DATABASE[tree[1]]
-            macro.append([])
+            macro[3]=[]
             i=2
             while i<len(tree):
                 macro[3].append(tree[i])
@@ -1071,7 +1071,7 @@ def interpreter(tree):
         # is macro
         if function_name in MARCRO_DATABASE:
             macro = MARCRO_DATABASE[function_name]
-            macro.append([])
+            macro[3]=[]
             i=1
             while i<len(tree):
                 macro[3].append(tree[i])
