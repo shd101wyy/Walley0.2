@@ -148,6 +148,11 @@
 	;)
 
 
+	; macro if
+	;(defmacro if
+	;	()
+	;	((if condition stm1 stm2) (cond (condition stm1) (1 stm2)))
+	;	)
 	;function if"
     ;(if [judge] [run if pass] [run if not pass])"
 	;(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))
