@@ -1,208 +1,138 @@
 (begin
+	(use-modules (ice-9 syncase))
+	; (add stm1 stm2)
+	;			   leading name
+	(define-syntax add2 
+		(syntax-rules 
+			; keywords
+			()
+			;(<pattern> <templete>)
+			((add stm1 stm2) (+ stm1 stm2))
+			((add stm1 stm2 ...) (+ stm1 stm2 ...))
+			)
+		)
 
-	; this function can be used to find specific part from atom
-	(define atom-find (lambda (_atom_ find_string)
-		; Hello He -> 1
-		; Hello Ha -> 0
-		(define atom-find-test (lambda (_atom_ find_string)
-			(if (null? find_string) 1 
-				(if (not (eq (car _atom_) (car find_string) ))  
-					0
-					(atom-find-test (cdr _atom_) (cdr find_string))
+	; ('a '(a b c)) -> 1
+	(define list-atom-is-member? (lambda (element in_list) 
+		(if (null? in_list) 0
+			(if (eq? element (car in_list)) 1
+				(list-atom-is-member? element (cdr in_list))
+			  )
+			)
+		))
+
+		; ('a '(a b c)) -> 0 return index
+		; if not found; return -1
+	(define list-atom-index (lambda (element in_list) 
+		(define list-atom-index-iter (lambda (in_list result)
+			(if (null? in_list) -1
+				(if (eq? (car in_list) element) result
+					(list-atom-index-iter (cdr in_list) (+ result 1))
 					)
 				)
 			))
-		(define atom-find-iter (lambda (_atom_  count)
-			(if (null? _atom_) 
-				-1 
-				(if (atom-find-test _atom_ find_string)
-					count
-					(atom-find-iter (cdr _atom_) (+ count 1))
-					)
-				 )
-			))
-		(atom-find-iter _atom_ 0)
+		(list-atom-index-iter in_list 0)
 		))
 
-	(define atom-slice (lambda (_atom_ start end)
-		; get _atom_[ start : length of _atom_ ]
-		(define atom-slice-ahead (lambda (result count)
-			(if (eq count start) result (atom-slice-ahead (cdr result) (+ count 1)))
-			))
-		(define atom-slice-back (lambda (_atom_ result count)
-			(if (eq count end) result (atom-slice-back (cdr _atom_) (cons (car _atom_) result) (+ count 1)))
-			))
-
-		(let 
-			(
-				(ahead (atom-slice-ahead _atom_ 0))
-				(after (atom-slice-back ahead '() start))
-			)
-				(list-reverse after)
-			) 
-
-		))
-
-	(define list-reverse (lambda (_list_)
-		(define list-reverse (lambda (_list_ result)
-			(if (null? _list_) result (list-reverse (cdr _list_) (cons (car _list_) result) ))
-			))
-		(list-reverse _list_ '())
-		))
-
-
-	(define toy_eval (lambda (argument)
-		(if (null? argument) nil 
-			(let 
-				(
-					; (+ 3 4) -> +
-					; get function name
-					(function_name (car argument)) 
-					; (+ 3 4) -> (3 4)
-					; get function parameters
-					(function_params (cdr argument))
-				)
-				(apply function_name function_params)
-			)
-		)))
-	(display (toy_eval '(+ 3 4)))
-	(display (atom-find 'Hello 'lo))
-	(display (atom-slice 'Hello 0 2))
-	(display (atom-slice '(1 2 6 4) 0 3))
-	(display (list-reverse '(1 (2 3) 3)))
-
-	; convert atom to list
-	; (atom->list 'Hello)  -> (H e l l o)
-	(define atom->list (lambda (atom)
-		(define atom->list-iter (lambda (atom result)
-			(if (null? atom) result (atom->list-iter (cdr atom) (cons (car atom) result)))
-			))
-		(list-reverse (atom->list-iter atom '()))
-		))
-	(display (atom->list 'Hello))
-
-	(define atom-length (lambda (_atom_)
-		(define atom-length-iter (lambda (_atom_ count) 
-			(if (null? _atom_) count (atom-length-iter (cdr _atom_) (+ count 1)))
-			))
-		(atom-length-iter _atom_ 0)
-		))
-
-	; ================== MATH =================
-	; check whether char is digit
-	(define charIsDigit (lambda (char)
-		(if (or (eq char 0) (eq char 1) (eq char 2) (eq char 3) (eq char 4) (eq char 5) (eq char 6) (eq char 7) (eq char 8)  (eq char 9) )
-			1
-			0
-			)
-		))
-
-	; check whether input is integer
-	; (isInteger 123) -> 1
-	; (isInteger 12.0) -> 0
-	; (isInteger 12e3) -> 0 
-	(define isInteger (lambda (input)
-		(if (null? input) 
-			1
-			(if (charIsDigit (car input))
-				(isInteger (cdr input))
-				0
-				)
-			)
-		))
-	(define isFloat (lambda (input)
-		(define isFloatTest (lambda (input count_of_dot_and_e)
-			(if (null? input)
-				(if (eq count_of_dot_and_e 1) 1 0)
-				(if (> count_of_dot_and_e 1) 0 
-					(if (charIsDigit (car input))
-						(isFloatTest (cdr input) count_of_dot_and_e)
-						(if (or 
-								(eq (car input) '.)
-								(eq (car input) 'e)
-							)
-							(isFloatTest (cdr input) (+ count_of_dot_and_e 1))
-							0
-						)
-						)
-					)
-				)
-
-			))
-		(isFloatTest input 0)
-		))
-
-	; test whether input is fraction
-	; requre quote
-	; (isFraction '1/2 )->1
-	; (isFraction 1/2) will occur error
-	(define isFraction (lambda (input)
-		(define isFractionTest (lambda (input count_of_slash)
-			(if (null? input)
-				(if (eq count_of_slash 1) 1 0)
-				(if (charIsDigit (car input)) (isFractionTest (cdr input) count_of_slash)
-					(if (eq (car input) '/)
-						(isFractionTest (cdr input) (+ count_of_slash 1))
+	; check whether match syntax
+	(define syntax-match (lambda (const_keywords arg1 test_match)
+		; variable_table can be used to save variables and their value
+		; (3 4) (stm1 stm2) -> (stm1 3 stm2 4)
+		(define syntax-match-iter (lambda (arg1 test_match variable_table)
+			; finish
+			(if (null? test_match) 
+				(if (null? arg1) variable_table 0)
+				(if (eq? (car arg1) (car test_match))
+					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+						(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
 						0
 						)
-				    )
+
+					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+							0
+							(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+						)
+					)
 				)
 			))
-		(isFractionTest input 0)
-
+			(syntax-match-iter arg1 (cdr test_match) '())
 		))
 
-	; support 1/3 3 3.0
-	; integer float fraction
-	; does not support complex now
-	(define number? (lambda (num)
-		(or (isFraction num) (isInteger num) (isFloat num))
+	; transfer syntax
+	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
+	; (add 3 4) -> (+ 3 4)
+	(define syntax-transfer (lambda (variable_table transfer)
+		(define syntax-transfer-iter (lambda (transfer)
+			(if (null? transfer) '()
+				(let 
+					((index (list-atom-index (car transfer) variable_table)))
+					(if (eq? -1 index )
+						(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
+						(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+						)
+					)
+				)
+			))
+		(syntax-transfer-iter transfer)
 	))
 
 
-	(define convertToFraction (lambda (fraction)
-		(let (
-			(index (atom-find fraction '/))
-			(ahead (list->atom (atom-slice fraction 0 index)))
-			(back (list->atom (atom-slice fraction (+ index 1) (atom-length fraction))))
-			)
-			(cons ahead back)
-			)
-		))
-	
-
-	(display "\nTest")
-	;(display (isInteger 12.0))
-	;(display (null? 12.0))
-	;(display (isFloat 12))
-	;(display (isFraction '3/2))
-	;(display (convertToFraction '36/24))
-	(display (number? '1/3))
-	(display (isFraction '1/3))
-
-	; (math_calculate '(+ 3 (* 3 4)))
-	(define math_calculate (lambda (argument)
-	
-		)
-	)
-	(define add (lambda (x y)
-		(let (
-			(x_fraction (convertToFraction x))
-			(y_fraction (convertToFraction y))
-			)
-
-			(add-rat x_fraction y_fraction)	
-		)
+	; args = [macro_name const_keywords pattern_lists arguments]
+	(define getmacro (lambda (args)
+		(define VARIABLE_TABLE '())
+		(define const_keywords (list-ref args 1))
+		(define pattern_lists (list-ref args 2))
+		(define arguments (list-ref args 3))
+		; assign value to var_name
+		; if value is not list
+		; return 0
+		; else
+		; return 1
+		(define list?= (lambda (value)
+			(if (list? value) 
+			  (begin 
+			  	(set! VARIABLE_TABLE value)
+			  	1
+			  	)
+			   0)
+			))
+		(define getmacro-iter (lambda (pattern_lists)
+			(if (null? pattern_lists) "Error... Does not match"
+				(if (eq? 1 (list?= (syntax-match const_keywords arguments (car (car pattern_lists)) )))
+					(syntax-transfer VARIABLE_TABLE (car (cdr (car pattern_lists))))
+					(getmacro-iter (cdr pattern_lists))
+					)
+				)
+			))
+		(getmacro-iter pattern_lists)
 		))
 
-	;(display (add '1/3 '3/4))
+	(defmacro add 
+		(and)
+		((add stm1 stm2) (+ stm1 stm2))
+		)
+	(add 3 4)
+	
+
+
+	;(define newline (lambda () (display "\n")))
+	;(display (list-atom-is-member? 'a '(c a c)))
+	;(newline)
+	;(display (list-atom-index 'a '(c b a)))
+	;(newline)
+	;(display (eq? 'a 'a))
+	;(newline)
+	;(display (syntax-match '(and) '(3 4 and 5) '(add stm1 stm2 and stm3)))
+	;(newline)
+	;(display (syntax-match '(and) '(3 4 and 7) '(add stm1 stm2 and stm3)) )
+	;(newline)
+	;(display (syntax-transfer '(stm1 3 stm2 4 stm3 5) '(+ stm1 stm2 and stm3)))
+
+	;(newline)
+	;(display (apply add-macro '(3 4 and2 7)))
 
 
 
 
-
-
-
-
-
+	;(display (add 3 4 5 7))
 )

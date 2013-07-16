@@ -42,6 +42,9 @@
 	(define * __MULT__)
 	(define / __DIV__)
 
+	; convert int or fraction to float
+	(define float (lambda (a) (* 1.0 a)))
+
 	(define null? (lambda (a)(if (eq a '()) 1 0)))
 	(define empty? null?)
 
@@ -52,6 +55,7 @@
 		)
 	)
 	(define == =)
+	(define eq? eq)
 	(define equal =)
 	(define < (lambda (. args)
 		(if (= 2 (len args)) (__LT__ (car args) (car (cdr args))) (__AND__ (__LT__ (car args) (car (cdr args))) (apply < (cdr args)) )
@@ -289,6 +293,7 @@
 				)
 			)
 		)
+		(define list-ref list-get)
 		;test list-get"
 		;(print (list-get '(12 2 14) 2))"
 
@@ -302,6 +307,29 @@
 				)
 			)
 		))
+
+	; ('a '(a b c)) -> 1
+	(define list-atom-is-member? (lambda (element in_list) 
+		(if (null? in_list) 0
+			(if (eq? element (car in_list)) 1
+				(list-atom-is-member? element (cdr in_list))
+			  )
+			)
+		))
+
+		; ('a '(a b c)) -> 0 return index
+		; if not found; return -1
+	(define list-atom-index (lambda (element in_list) 
+		(define list-atom-index-iter (lambda (in_list result)
+			(if (null? in_list) -1
+				(if (eq? (car in_list) element) result
+					(list-atom-index-iter (cdr in_list) (+ result 1))
+					)
+				)
+			))
+		(list-atom-index-iter in_list 0)
+		))
+
 	;====================="
 	;Function: list-append"
 	;(list-append '() 12) -> (12)"
@@ -420,7 +448,91 @@
 			))
 		(atom-length-iter _atom_ 0)
 	))
+	;============== MACRO =========================
+	;==============================================
+	; check whether match syntax
+	(define syntax-match (lambda (const_keywords arg1 test_match)
+		; variable_table can be used to save variables and their value
+		; (3 4) (stm1 stm2) -> (stm1 3 stm2 4)
+		(define syntax-match-iter (lambda (arg1 test_match variable_table)
+			; finish
+			(if (null? test_match) 
+				(if (null? arg1) variable_table 0)
+				(if (eq? (car arg1) (car test_match))
+					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+						(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
+						0
+						)
 
+					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+							0
+							(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+						)
+					)
+				)
+			))
+			(syntax-match-iter arg1 (cdr test_match) '())
+		))
+
+	; transfer syntax
+	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
+	; (add 3 4) -> (+ 3 4)
+	(define syntax-transfer (lambda (variable_table transfer)
+		(define syntax-transfer-iter (lambda (transfer)
+			(if (null? transfer) '()
+				(let 
+					((index (list-atom-index (car transfer) variable_table)))
+					(if (eq? -1 index )
+						(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
+						(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+						)
+					)
+				)
+			))
+		(syntax-transfer-iter transfer)
+	))
+
+		; args = [macro_name const_keywords pattern_lists arguments]
+	(define getmacro (lambda (args)
+		(define VARIABLE_TABLE '())
+		(define const_keywords (list-ref args 1))
+		(define pattern_lists (list-ref args 2))
+		(define arguments (list-ref args 3))
+		; assign value to var_name
+		; if value is not list
+		; return 0
+		; else
+		; return 1
+		(define list?= (lambda (value)
+			(if (list? value) 
+			  (begin 
+			  	(set! VARIABLE_TABLE value)
+			  	1
+			  	)
+			   0)
+			))
+		(define getmacro-iter (lambda (pattern_lists)
+			(if (null? pattern_lists) "Error... Does not match"
+				(if (eq? 1 (list?= (syntax-match const_keywords arguments (car (car pattern_lists)) )))
+					(syntax-transfer VARIABLE_TABLE (car (cdr (car pattern_lists))))
+					(getmacro-iter (cdr pattern_lists))
+					)
+				)
+			))
+		(getmacro-iter pattern_lists)
+		))
+		
+		(define macro-eg 
+		'(add (and) 
+			(
+				((add stm1 stm2) (+ stm1 stm2))  
+				((add stm1 stm2 and stm3) (+ stm1 stm2 stm3) )
+			) 
+			(3 4 and 5)
+		 ) 
+		)
+		;(display macro-eg)
+		;(display (getmacro macro-eg))
 	;==============================================
 	;==============================================
 	; SICP
