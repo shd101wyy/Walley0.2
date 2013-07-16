@@ -15,7 +15,10 @@
 
 					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
 							0
-							(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+							(if (eq? '... (car test_match))
+								(cons '... (cons arg1 variable_table))
+								(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+								)
 						)
 					)
 				)
@@ -23,11 +26,24 @@
 			(syntax-match-iter arg1 (cdr test_match) '())
 		))
 
+	; (1 2) (3 4) -> (1 2 3 4)
+	(define list-combine (lambda (a b)
+		(if (null? a)
+			(if (null? b)
+				'()
+				(cons (car b) (list-combine a (cdr b)))
+				)
+			(cons (car a) (list-combine (cdr a) b) )
+			)
+		))
 	; transfer syntax
 	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
 	; (add 3 4) -> (+ 3 4)
+	; (syntax-transfer '(... (3 4) stm 1 )) '(+ stm ...) -> (+ 1 3 4)
 	(define syntax-transfer (lambda (variable_table transfer)
 		(define syntax-transfer-iter (lambda (transfer)
+			(display "\n\n------>\n")
+			(display transfer)
 			(if (null? transfer) '()
 				; check whether (car transfer) is list
 				(if (list? (car transfer))
@@ -40,7 +56,14 @@
 							((index (list-atom-index (car transfer) variable_table)))
 							(if (eq? -1 index )
 								(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
-								(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+								; ... support
+								(if (and 
+										(not (null? (cdr transfer)))
+										(eq? (car (cdr transfer)) '...)
+										)
+									(cons (list-ref variable_table (+ 1 index)) (list-combine (list-ref variable_table (- index 1)) (syntax-transfer-iter (cdr (cdr transfer))) ))
+									(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+									)
 								)
 							)
 						)
@@ -81,6 +104,31 @@
 		(getmacro-iter pattern_lists)
 		))
 
+	(define __AND2__ (lambda (a b)
+		(cond
+			((eq a 0) 0)
+			(1 (cond 
+				((eq b 0) 0)
+				(1 1)
+				))
+			)
+		))
+	(__AND2__ 0 (car '()))
+	(display "FINISH")
+
+	(display (__AND2__ 1 1))
+
+	(display (not (null? (cdr '(stm1)))))
+	(display 
+		(__AND2__ 
+			(not 
+				(null? 
+					(cdr '(stm1)))) 
+			(eq? 
+				(car (cdr '(stm1))) 
+				'...)
+			)
+		)
 	;(defmacro add 
 	;	(and)
 	;	((add stm1 stm2) (+ stm1 stm2))
@@ -88,12 +136,18 @@
 	;(display (add 3 4))
 	;(display (syntax-transfer '(judge (== 1 1) stm1 4 stm2 5) '(cond (judge stm1) (1 stm2))))
 
-	(defmacro if
-		()
-		((if condition stm1 stm2) (cond (condition stm1) (1 stm2)))
-		)
-	(display (if (= 2 3) 1 2))
+	;(display (syntax-match '() '((= 2 3) 1 2) '(unless condition stm1 stm2)))
+	;(display (syntax-transfer  '(stm2 2 stm1 1 condition (= 2 3)) '(cond (condition stm1) (1 stm2) )  ))
 	
+	;(defmacro if2
+	;	()
+	;	((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
+	;	)
+	;(display (if2 (= 2 3) 1 2))
+	
+	;(display (syntax-match '() '(3 4 5 6) '(add stm ...) ))
+	;(display (syntax-transfer '(... (3 4 5) stm 2) '(+ stm ...)  ))
+	;(display (list-combine '(1 2) '(3 4) ))
 
 
 	;(define newline (lambda () (display "\n")))

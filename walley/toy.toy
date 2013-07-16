@@ -348,6 +348,18 @@
 		))
 	;(print (list-append '(1 2) '(14 15) ))"
 
+	; (1 2) (3 4) -> (1 2 3 4)
+	(define list-combine (lambda (a b)
+		(if (null? a)
+			(if (null? b)
+				'()
+				(cons (car b) (list-combine a (cdr b)))
+				)
+			(cons (car a) (list-combine (cdr a) b) )
+			)
+		))
+
+
 	;==============="
 	;Function: Range"
 	;(range 10)"
@@ -471,7 +483,10 @@
 
 					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
 							0
-							(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+							(if (eq? '... (car test_match))
+								(cons '... (cons arg1 variable_table))
+								(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+								)
 						)
 					)
 				)
@@ -482,14 +497,31 @@
 	; transfer syntax
 	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
 	; (add 3 4) -> (+ 3 4)
+	; (syntax-transfer '(... (3 4) stm 1 )) '(+ stm ...) -> (+ 1 3 4)
 	(define syntax-transfer (lambda (variable_table transfer)
 		(define syntax-transfer-iter (lambda (transfer)
 			(if (null? transfer) '()
-				(let 
-					((index (list-atom-index (car transfer) variable_table)))
-					(if (eq? -1 index )
-						(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
-						(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+				; check whether (car transfer) is list
+				(if (list? (car transfer))
+					; if ahead is list
+					(cons (syntax-transfer-iter (car transfer))  (syntax-transfer-iter (cdr transfer)) )
+					; check whether (car transfer) is number
+					(if (number? (car transfer))
+						(cons (car transfer) (syntax-transfer-iter (cdr transfer)) )
+						(let 
+							((index (list-atom-index (car transfer) variable_table)))
+							(if (eq? -1 index )
+								(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
+								; ... support
+								(if (and 
+										(not (null? (cdr transfer)))
+										(eq? (car (cdr transfer)) '...)
+										)
+									(cons (list-ref variable_table (+ 1 index)) (list-combine (list-ref variable_table (- index 1)) (syntax-transfer-iter (cdr (cdr transfer))) ))
+									(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
+									)
+								)
+							)
 						)
 					)
 				)
@@ -497,7 +529,7 @@
 		(syntax-transfer-iter transfer)
 	))
 
-		; args = [macro_name const_keywords pattern_lists arguments]
+	; args = [macro_name const_keywords pattern_lists arguments]
 	(define getmacro (lambda (args)
 		(define VARIABLE_TABLE '())
 		(define const_keywords (list-ref args 1))
