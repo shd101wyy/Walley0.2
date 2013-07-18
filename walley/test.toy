@@ -1,32 +1,5 @@
 (begin
-	; check whether match syntax
-	(define syntax-match (lambda (const_keywords arg1 test_match)
-		; variable_table can be used to save variables and their value
-		; (3 4) (stm1 stm2) -> (stm1 3 stm2 4)
-		(define syntax-match-iter (lambda (arg1 test_match variable_table)
-			; finish
-			(if (null? test_match) 
-				(if (null? arg1) variable_table 0)
-				(if (eq? (car arg1) (car test_match))
-					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
-						(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
-						0
-						)
-
-					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
-							0
-							(if (eq? '... (car test_match))
-								(cons '... (cons arg1 variable_table))
-								(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
-								)
-						)
-					)
-				)
-			))
-			(syntax-match-iter arg1 (cdr test_match) '())
-		))
-
-	; (1 2) (3 4) -> (1 2 3 4)
+		; (1 2) (3 4) -> (1 2 3 4)
 	(define list-combine (lambda (a b)
 		(if (null? a)
 			(if (null? b)
@@ -36,6 +9,42 @@
 			(cons (car a) (list-combine (cdr a) b) )
 			)
 		))
+	
+	; check whether match syntax
+	(define syntax-match (lambda (const_keywords arg1 test_match)
+		; variable_table can be used to save variables and their value
+		; (3 4) (stm1 stm2) -> (stm1 3 stm2 4)
+		(define syntax-match-iter (lambda (arg1 test_match variable_table)
+			; finish
+			(if (null? test_match) 
+				(if (null? arg1) variable_table 0)
+				(if (null? arg1)
+					(cons '... (cons '() variable_table))
+					(if (eq? (car arg1) (car test_match))
+						(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+							(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
+							0
+							)
+
+						(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+								0
+								(if (eq? '... (car test_match))
+									(cons '... (cons arg1 variable_table))
+									(if (list? (car test_match))
+										; list
+										(syntax-match-iter (cdr arg1) (cdr test_match) (list-combine (syntax-match-iter (car arg1) (car test_match) '()) variable_table))
+										(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+										)
+									)
+							)
+						)
+					)
+				)
+			))
+			(syntax-match-iter arg1 (cdr test_match) '())
+		))
+
+
 	; transfer syntax
 	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
 	; (add 3 4) -> (+ 3 4)
@@ -112,11 +121,22 @@
 	;(display (syntax-match '() '((= 2 3) 1 2) '(unless condition stm1 stm2)))
 	;(display (syntax-transfer  '(stm2 2 stm1 1 condition (= 2 3)) '(cond (condition stm1) (1 stm2) )  ))
 	
-	(defmacro if2
-		()
-		((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
-		)
-	(display (if2 (= 2 3) 1 2))
+	;(defmacro if2
+	;	()
+	;	((if2 condition stm1 stm2) (cond (condition stm1) (1 stm2)))
+	;	)
+	;(display (if2 (= 2 3) 1 2))
+
+	;(defmacro test
+	;	() ; constant
+	;	((test (a b) c) (+ a b c))
+	;	)
+	;(display (syntax-match '() '(3 4) '(add a b) ))
+	;(display (syntax-match '() '((3 4 7 8) 5) '(add (a b ...) c ...) ))
+	;(display (syntax-transfer '(... () c 5 ... (7 8) b 4 a 3) '(add (a b ...) c ...) ))
+
+	;(display (test (3 4) 5) )
+
 	
 	;(display (syntax-match '() '(3 4 5 6) '(add stm ...) ))
 	;(display (syntax-transfer '(... (3 4 5) stm 2) '(+ stm ...)  ))

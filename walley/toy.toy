@@ -438,18 +438,25 @@
 			; finish
 			(if (null? test_match) 
 				(if (null? arg1) variable_table 0)
-				(if (eq? (car arg1) (car test_match))
-					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
-						(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
-						0
-						)
-
-					(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+				(if (null? arg1)
+					(cons '... (cons '() variable_table))
+					(if (eq? (car arg1) (car test_match))
+						(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+							(syntax-match-iter (cdr arg1) (cdr test_match) variable_table)
 							0
-							(if (eq? '... (car test_match))
-								(cons '... (cons arg1 variable_table))
-								(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
-								)
+							)
+
+						(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
+								0
+								(if (eq? '... (car test_match))
+									(cons '... (cons arg1 variable_table))
+									(if (list? (car test_match))
+										; list
+										(syntax-match-iter (cdr arg1) (cdr test_match) (list-combine (syntax-match-iter (car arg1) (car test_match) '()) variable_table))
+										(syntax-match-iter (cdr arg1) (cdr test_match) (cons (car test_match) (cons (car arg1) variable_table)))
+										)
+									)
+							)
 						)
 					)
 				)
@@ -521,6 +528,7 @@
 			))
 		(getmacro-iter pattern_lists)
 		))
+	;===================================
 		
 		(define macro-eg 
 		'(add (and) 
