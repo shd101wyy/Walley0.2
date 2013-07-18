@@ -1086,7 +1086,7 @@ def interpreter(tree):
         function_name=tree[0]
 
         # is macro
-        if function_name in MARCRO_DATABASE:
+        if type(function_name)==str and function_name in MARCRO_DATABASE:
             macro = MARCRO_DATABASE[function_name]
             macro[3]=[]
             i=1

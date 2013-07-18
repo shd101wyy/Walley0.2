@@ -1,9 +1,71 @@
-(if (null? transfer) '()
-	(let 
-		((index (list-atom-index (car transfer) variable_table)))
-		(if (eq? -1 index )
-			(cons (car transfer) (syntax-transfer-iter (cdr transfer)))
-				(cons (list-ref variable_table (+ 1 index)) (syntax-transfer-iter (cdr transfer)))
-			)
+(begin
+
+	; change value at index of _list_
+	(define list-set_ (lambda (_list_ value index)
+		(define list-set-iter (lambda (_list_ index)
+			(if (null? _list_) '()
+				(if (eq index 0)
+					(cons value (cdr _list_) )
+					(cons (car _list_) (list-set-iter (cdr _list_) (- index 1) ))
+					)
+				)
+			))
+		(list-set-iter _list_ index)
+		))
+
+	; used macro to call function list-set
+	(defmacro list-set! 
+		() ; no constant keywords
+		((list-set! var_name value index) (set! var_name (list-set_ var_name value index)) )
 		)
+
+
+	; Toy Language Object (javscript like) implementation
+	; Define an object
+	; (key . value)
+	(define x '(
+		(a . 12)
+		(b . 13)
+		(c . 14)
+		)
+	)
+
+	;(display x)
+	; get the value of object according to key
+	(define object-get (lambda (obj key)
+		(cond 
+			((null? obj) "Error...Cannot find key from object")
+			(1 (cond
+				(
+					(eq key (car (car obj))) 
+					(cdr (car obj)) 
+					)
+				(1 (object-get (cdr obj) key) )
+				))
+			)
+		))
+
+	; set value at key of object
+	(define object-set_ (lambda (obj key value)
+		(define object-set-iter (lambda (obj)
+			(if (null? obj) '()
+				(if (eq key (car (car obj)))
+					; find key
+					(cons (cons key value) (cdr obj))
+					(cons (car obj) (object-set-iter (cdr obj)) )
+					)
+				)
+			))
+			(object-set-iter obj)
+		))
+	; use macro to change object
+	(defmacro object-set! ()
+		((object-set! var_name key value)(set! var_name (object-set_ var_name key value)))
+		)
+
+	
+
+
+
+
 	)
