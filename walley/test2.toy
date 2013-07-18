@@ -29,7 +29,14 @@
 		(c . 14)
 		)
 	)
-
+	; return keys as list
+	; eg ((a . 12) (b . 13)) -> (a b)
+	(define object-keys (lambda (obj)
+		(if (null? obj)
+			'()
+			(cons (car (car obj)) (object-keys (cdr obj)))
+			)
+		))
 	;(display x)
 	; get the value of object according to key
 	; (define x '((a . b)))
@@ -69,22 +76,58 @@
 			))
 			(object-set-iter obj)
 		))
+
+	(define object-set-according-to-keys (lambda (obj value . keys)
+		(define object-set-according-to-keys_ (lambda (obj keys)
+			(if (null? keys)
+				"Error"
+				(if (eq? (car (car obj)) (car keys) )
+					(if (null? (cdr keys))
+						(cons (cons (car keys) value) (cdr obj))
+						(cons (cons (car keys) (object-set-according-to-keys_ (cdr (car obj)) (cdr keys))) (cdr obj))
+						)
+					(cons (car obj) (object-set-according-to-keys_ (cdr obj) keys ) )
+					)
+				)
+			))
+
+
+		(object-set-according-to-keys_ obj keys)
+		))
+
 	; use macro to change object
 	(defmacro object-set! ()
 		((object-set! var_name key value)(set! var_name (object-set_ var_name key value)))
 		)
+	; use macro to set object
+	(defmacro object-set-according-to-keys! ()
+		(
+			(object-set-according-to-keys var_name value key1 ... )
+			(set! var_name (object-set-according-to-keys var_name value key1 ... ))
+			)
+
+	 )
 
 	; object macro
 	(defmacro object (=)
 		; init object
 		((object var_name = var_value) (define var_name var_value))
+		; set value according to index
+		((object var_name key1 ... = value) (object-set-according-to-keys! var_name value key1 ...) )
 		; get value according to index
 		((object var_name key1 ...) (object-get-according-to-keys var_name key1 ... )) 
 		)
 
+
 	(object x = '((a . ((c . 15))) (b . 13)))
+	(display x)
+	(display "\n")
+	(object x 'a 'c = 12)
+	(display x)
+	(display (object x 'a 'c))
+	(display (object-keys x))
 	;(display (object-get-according-to-keys '((a . b)) 'a))
-	(display (object-get-according-to-keys x 'a 'c))
-	
+	;(display (object-get-according-to-keys x 'a 'c))
+	;(display (object-set-according-to-keys x 12 'a 'c))
 
 	)
