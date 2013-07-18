@@ -455,7 +455,16 @@
 						(if (eq? (list-atom-is-member? (car test_match) const_keywords) 1)
 								0
 								(if (eq? '... (car test_match))
-									(cons '... (cons arg1 variable_table))
+									(if (null? (cdr test_match))
+										(cons '... (cons arg1 variable_table))
+										(begin
+											(define result (check (car (cdr test_match)) arg1))
+											(if (eq 0 result)
+												0
+												(syntax-match-iter (car result) (cdr test_match) (list-combine (cons '... (cdr result)) variable_table ) )
+												)
+											)
+										)
 									(if (list? (car test_match))
 										; list
 										(syntax-match-iter (cdr arg1) (cdr test_match) (list-combine (syntax-match-iter (car arg1) (car test_match) '()) variable_table))
@@ -467,8 +476,38 @@
 					)
 				)
 			))
+			
+			; return remain arg1
+			; return the value that will to ...
+			; eg 
+			;  test_match   arg1
+			;  (... = b)   (1 2 3 = 4)
+			;  then ... = (1 2 3)
+			; 		
+			; return ((= 4) (1 2 3))
+			(define check (lambda (stop_word arg1)
+				(define check-iter (lambda (temp_arg1)
+					(if (null? temp_arg1) 0 ; Error
+						(if (eq (car temp_arg1) stop_word)
+							(begin
+								(set! arg1 temp_arg1)
+								'()
+								)
+							(cons (car temp_arg1) (check-iter (cdr temp_arg1)))
+							)
+						)
+					)) 
+				(define value_need_to_assigned_to_ (check-iter arg1))
+				(if (eq? value_need_to_assigned_to_ 0)
+					0
+					(cons arg1 (cons value_need_to_assigned_to_ '()))
+					)
+				))
+
+
 			(syntax-match-iter arg1 (cdr test_match) '())
 		))
+
 
 	; transfer syntax
 	; eg (syntax-transfer  '(stm1 3 stm2 4) '(+ stm1 stm2)) -> (+ 3 4)
@@ -504,6 +543,7 @@
 			))
 		(syntax-transfer-iter transfer)
 	))
+
 
 	; args = [macro_name const_keywords pattern_lists arguments]
 	(define getmacro (lambda (args)

@@ -32,6 +32,8 @@
 
 	;(display x)
 	; get the value of object according to key
+	; (define x '((a . b)))
+	; (object-get x 'a)  -> b
 	(define object-get (lambda (obj key)
 		(cond 
 			((null? obj) "Error...Cannot find key from object")
@@ -43,6 +45,15 @@
 				(1 (object-get (cdr obj) key) )
 				))
 			)
+		))
+	(define object-get-according-to-keys (lambda (obj . keys)
+		(define object-get-according-to-keys_ (lambda (obj keys)
+			(if (null? keys)
+				obj
+				(object-get-according-to-keys_ (object-get obj (car keys)) (cdr keys))
+				)
+			))
+		(object-get-according-to-keys_ obj keys)
 		))
 
 	; set value at key of object
@@ -63,9 +74,17 @@
 		((object-set! var_name key value)(set! var_name (object-set_ var_name key value)))
 		)
 
+	; object macro
+	(defmacro object (=)
+		; init object
+		((object var_name = var_value) (define var_name var_value))
+		; get value according to index
+		((object var_name key1 ...) (object-get-according-to-keys var_name key1 ... )) 
+		)
+
+	(object x = '((a . ((c . 15))) (b . 13)))
+	;(display (object-get-according-to-keys '((a . b)) 'a))
+	(display (object-get-according-to-keys x 'a 'c))
 	
-
-
-
 
 	)
