@@ -170,6 +170,8 @@
 
 	(display (test2 3 4 5 = 6))
 
+	(display (list-combine '(1 2) '(3 4) ))
+
 	;(display (syntax-transfer '(judge (== 1 1) stm1 4 stm2 5) '(cond (judge stm1) (1 stm2))))
 
 	;(display (syntax-match '() '((= 2 3) 1 2) '(unless condition stm1 stm2)))
