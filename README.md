@@ -3,7 +3,7 @@ Walley0.2
 Toy language is a lisp dialect written in Python 2.7.5 ......  
 Well.... It cannot be regarded as lisp dialect cuz I did not learn lisp very well  
 It does not support "Macro" now cuz.... idk what macro really is ..... so hard... XD  
-
+The whole language is like Scheme
 	./----  
 		toy        
 		init.py  
@@ -11,6 +11,7 @@ It does not support "Macro" now cuz.... idk what macro really is ..... so hard..
 		toy.toy       toy language libraries  
 		test.py       test file  
 		test.toy      test file  
+		test2.toy     test file
 
 #=================  
 In toy.py file:  
@@ -38,6 +39,9 @@ type "./toy" in terminal or cmd
 然后便于用其他语言编写Toy解释器，已助于移植代码。。  
 这样可以使得Toy语言寄生于任何一种语言之上  
   
+支持lisp最基础的7个函数
+atom? cons car cdr quote cond eq
+
   
 operator:  
 	+ - * / % float fraction  
@@ -47,30 +51,41 @@ operator:
 	(float 1/2) -> 0.5  
 
 comparison:  
-	== > < >= <= != not and or  
-  
+	=(==) > < >= <= != not and or  
+annotation:
+	; ur annotation
   
 assignment value:  
-	=  
+	===============
+	define
 	格式:  
-		(= [var_name] [var_value])  
+		(define [var_name] [var_value])  
   
 	这个函数可以被用来创造全局变量  
   
 	eg:   
-		(= x 12) assign 12 to x  
-		(= x (/ 2 6)) assign 1/3 to x  
+		(define x 12) assign 12 to x  
+		(define x (/ 2 6)) assign 1/3 to x  
+
+	===============
+	set!：  change defined value  
+		(set! [var_name] [var_value])  
+	eg:  
+		(define x 12) ; assign 12 to x  
+		(set! x 13)	  ; change the value of x from 12 to 13  
+		Similar as scheme  
+
 quote:  
 	eg:  
-		(= x '(1 2)) assign (1 2) to x  
+		(define x '(1 2)) assign (1 2) to x  
 		# 加上'符号意味着不计算后面的值  
   
 		'(1 2) 等价于 (quote 1 2)  
   
 		如果事先    
-		(= a 12)  
+		(define a 12)  
 		那么  
-		(= x '(,a a)) 则 assign (12 a) to x  
+		(define x '(,a a)) 则 assign (12 a) to x  
 		# 加上 , 符号意味着进行计算  
   
 		所以 '(,a a) 会计算第一个a而不计算第二个a。。  
@@ -78,7 +93,7 @@ quote:
 embeded functions:  
 内嵌函数：  
 	#########  
-	local=  
+	local=    （和 define作用一样的函数。。将在未来删除)  
 		(local= [var_name] [var_value])  
 		eg:  
 			(local= x 12)   
@@ -97,13 +112,13 @@ embeded functions:
 	#########  
 	lambda  
 		定义函数  
-		(= [func_name] (lambda ([var_argv] ...)  
+		(define [func_name] (lambda ([var_argv] ...)  
 				[stms]  
 			)  
 		)  
   
 		eg:  
-			(= add (lambda (a b)  
+			(define add (lambda (a b)  
 					(+ a b)  
 				)  
 			)  
@@ -142,27 +157,12 @@ embeded functions:
 		eg:  
 		>>> (print "Hello")  
 			Hello  
-		>>>  
-	  
-	#########  
-	while   
-	和C语言等语言一样的while语句  
-	格式：  
-		(while [judge] [stms])  
-  
-  	
-	#########  
-	len  
-	格式：  
-		(len [list/string])  
-		返回 列表 或 字符串 的长度  
-  
-  
+		>>>    
   
 	##########  
 	Variadic Function parameters  
 	. args  
-	(= add (lambda (. args) (+ 12 (car args))))  
+	(define add (lambda (. args) (+ 12 (car args))))  
 				    -------  
 				    . args 为可变参数 variadic params  
 	(add 3 4) -> 12+3=15, args = (3 4)  
@@ -177,11 +177,12 @@ About Lazy Evaluation
 	if 函数的源代码 source code  
 	如果 函数参数前加了 &， 则表示该参数为惰性求值，传递参数时不会计算  
 	if & is ahead param, then this param is for lazy evaluation...  
-	(= if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))  
+	(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))  
 
 ===========  
 About Macro  
 由于本人正在学习macro。。。尚未完全理解macro。。所以只是简单的做了一个定义macro的函数  
+
 (defmacro <macro_name> (<constant_keywords 非变量关键字>)  
 	( (<pattern>) (<templete>) )  
 	( (<pattern>) (<templete>) )  
@@ -190,14 +191,16 @@ About Macro
   )  
 和scheme相似。。关于 ... 的用法也相近  
 eg:  
+	<code>
 	(defmacro test_add (and)  
 		((add a b) (+ a b))  
 		((add a b and ...) (+ a b ...))  
 		)  
+	</code>
 	>(test_add 3 4) ; 展开为 (+ 3 4)  
 	> 7  
-	>(test_add 3 4 and 5 6) ; 展开为 (+ 3 4 5 6)
-	> 18
+	>(test_add 3 4 and 5 6) ; 展开为 (+ 3 4 5 6)  
+	> 18  
 
 
 

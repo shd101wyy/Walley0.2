@@ -174,6 +174,8 @@ def stringIsFloat(input_str):
                 count_of_dot=count_of_dot+1
             elif input_str[i]=="e":
                 count_of_e=count_of_e+1
+            elif input_str[i]=="-":
+                pass
             else:
                 return False
         i=i+1
@@ -198,6 +200,8 @@ def stringIsNumber(input_str):
         elif input_str[i]=="/":
             count_of_slash = count_of_slash + 1
             break
+        elif input_str[i]=="-":
+            pass
         elif charIsDigit(input_str[i]) == False:
             return False
         i=i+1
@@ -1241,5 +1245,4 @@ def toy_runString(input_str):
 
 # RUN TO_RUN
 toy_runString("(load \"walley_toy\")")
-
 
