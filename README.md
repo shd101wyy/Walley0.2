@@ -182,13 +182,14 @@ About Lazy Evaluation
 ===========  
 About Macro  
 由于本人正在学习macro。。。尚未完全理解macro。。所以只是简单的做了一个定义macro的函数  
-
+<code>
 (defmacro <macro_name> (<constant_keywords 非变量关键字>)  
 	( (<pattern>) (<templete>) )  
 	( (<pattern>) (<templete>) )  
 	( (<pattern>) (<templete>) )  
 	...  
   )  
+ </code>
 和scheme相似。。关于 ... 的用法也相近  
 eg:  
 	<code>
