@@ -155,6 +155,8 @@ def charIsDigit(char):
     return char=="0" or char=="1" or char=="2" or char=="3" or char=="4" or char=="5" or char=="6" or char=="7" or char=="8" or char=="9"
 def stringIsInteger(input_str):
     i=0
+    if input_str[i]=="-":
+        i=1
     while i<len(input_str):
         if charIsDigit(input_str[i]) == False:
             return False
@@ -162,6 +164,8 @@ def stringIsInteger(input_str):
     return True
 def stringIsFloat(input_str):
     i=0
+    if input_str[i]=="-":
+        i=1
     count_of_dot=0
     count_of_e=0
     while i<len(input_str):
@@ -178,10 +182,14 @@ def stringIsFloat(input_str):
     return False
 # support integer 3 float 3.0 fraction 3/4
 def stringIsNumber(input_str):
+    if type(input_str)!=str or len(input_str)==0:
+        return False
     count_of_e=0
     count_of_slash=0
     count_of_dot=0
     i=0
+    if input_str[i]=="-":
+        i=1
     while i<len(input_str):
         if input_str[i]=="e":
             count_of_e = count_of_e+1
@@ -198,7 +206,7 @@ def stringIsNumber(input_str):
         if stringIsInteger(input_str[0:i]) and stringIsInteger(input_str[i+1:len(input_str)]):
             return True
         return False
-    if count_of_e==0 and count_of_dot==0:
+    if count_of_e==0 and count_of_dot==0 and len(input_str)>0:
         return True
     if count_of_e==1 or count_of_dot==1:
         return True

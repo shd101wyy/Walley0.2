@@ -116,6 +116,13 @@
 		((add stm1 stm2) (+ stm1 stm2))
 		)
 	(display (add 3 4))
+
+	(defmacro test_add (and) 
+		((add a b) (+ a b)) 
+		((add a b and ...) (+ a b ...))
+		)
+	(display (test_add 15 14 and 4 5))
+
 	;(display (syntax-transfer '(judge (== 1 1) stm1 4 stm2 5) '(cond (judge stm1) (1 stm2))))
 
 	;(display (syntax-match '() '((= 2 3) 1 2) '(unless condition stm1 stm2)))
