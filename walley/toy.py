@@ -339,26 +339,6 @@ def lexer(input_str):
             
             
             output.append(to_append)
-            # quote
-            #if to_append=="quote":
-            # delete spaces
-            #    while i!=len(input_str) and input_str[i]==" ":
-            #         i=i+1
-            
-            #    a=length-1
-            #    count2=0
-            #    while a>i:
-            #        if input_str[a]=="(":
-            #            count2=count2-1
-            #        elif input_str[a]==")":
-            #            count2=count2+1
-            #            if count2==count:
-            #                print input_str[i:a]
-            #                output.append(input_str[i:a])
-            #                break
-            #        a=a-1
-            #    i=a
-            #    continue
             continue
     
     return_obj=[]
@@ -534,19 +514,7 @@ def interpreter(tree):
             i=length-1
             while i>=0:
                 if tree in SYMBOLIC_TABLE[i].keys():
-                    
-                    tree = SYMBOLIC_TABLE[i][tree]
-                    # Deal with Lazy Evaluation
-                    #['__LAZY_VALUE__', SYMBOLIC_TABLE_index, var_name, var_value]
-                    if type(tree)!=str and len(tree)==4 and tree[0]=="__LAZY_VALUE__":
-                        index = tree[1]                        
-                        value = interpreter(tree[3])
-                        # stop running the code below
-                        # to solve bug in recursion function
-                        # SYMBOLIC_TABLE[index][tree[2]] = value
-                        return value
-
-                    return tree
+                    return SYMBOLIC_TABLE[i][tree]
                 i=i-1
             print("\nError...\nUndefined value "+tree+"\n")
 
@@ -554,9 +522,7 @@ def interpreter(tree):
     # add to global symbolic table
     elif tree[0]=="global=":
         var_name=tree[1]
-        
         # (= x 12)
-        
         # or
         # (= x '(1 2 3))
         #
@@ -730,18 +696,6 @@ def interpreter(tree):
             return value[2]
         else:
             return value[1:len(value)]
-
-    #if value[0]!="(" or value[len(value)-1]!=")":
-    #    print "Error...\nFunction 'cdr' only support list like (1 2 3)\nNot like "+value
-    #else:
-    #    _tree_=parser(lexer(value)[0])
-    #    if len(_tree_)==0:
-    #        print "Error\nFunction 'cdr' cannot be used on empty list"
-    #    elif len(_tree_)==1:
-    #        return "()"
-    #    else:
-    #        _tree_=_tree_[1:len(_tree_)]
-    #        return convertArrayToString(_tree_)
     
     # function cons
     # (cons 12 '(1 2 3)) -> (12 1 2 3)
@@ -1070,6 +1024,7 @@ def interpreter(tree):
             return expand
         print "Error...\n"+tree[1]+" is not macro"
         return ""
+    # I removed lazy evaluation support for function on 07/18
     # For Lazy Evaluation, I will add __LAZY_VALUE__ property   
     # (__LAZY_VALUE__ [SYMBOLIC_TABLE_index] [var_name] [var_value])
     # To appoint Lazy Evaluation value, you need to:
@@ -1084,7 +1039,6 @@ def interpreter(tree):
     # call function directly
     else:
         function_name=tree[0]
-
         # is macro
         if type(function_name)==str and function_name in MARCRO_DATABASE:
             macro = MARCRO_DATABASE[function_name]
@@ -1096,8 +1050,6 @@ def interpreter(tree):
             to_run = ["getmacro",["quote"]]
             to_run[1].append(macro)
             expand = interpreter(to_run)
-            #print "expand-----> "
-            #print expand
             return interpreter(expand)
 
         # function_procedure
@@ -1122,14 +1074,9 @@ def interpreter(tree):
             tree[0]=function_procedure
             return interpreter(tree)
         
-
-        #let_tree=["let"]
-        #param_tree=[]
-        
         # ADD NEW SYMBOLIC_TABLE
         LOCAL_SYMBOLIC_TABLE={}
         
-
         #(add 3 4)
         # user_param_tree -> [3,4]
         #(for i in 14)
@@ -1161,69 +1108,27 @@ def interpreter(tree):
         a = 0
         i = 0
         while a < num_of_function_param :
-            # too many parameters
-            #if a>=num_of_function_param:
-            #    print "Error...Too many params"
-            #    return ""
-
+            # variadic params
             if function_procedure[1][a]==".":
                 variadic_var_name = function_procedure[1][a+1]
-
-                quote_array = ["quote"]
-                temp=["__LAZY_VALUE__",len(SYMBOLIC_TABLE)]
-                temp.append(variadic_var_name)
-                quote_array=["quote"]
-                quote_array.append([])
+                quote_array=[]
+                #quote_array.append([])
                 while i<num_of_user_param:
                     #Does not support Lazy Evalutation
-                    quote_array[1].append( interpreter( user_param_tree[i] ) )
+                    quote_array.append( interpreter( user_param_tree[i] ) )
                     i=i+1
-                temp.append(quote_array)
-                
                 # ADD TO SYMBOLIC_TABLE
-                LOCAL_SYMBOLIC_TABLE[variadic_var_name] = temp
-                #param_tree.append(temp)
+                LOCAL_SYMBOLIC_TABLE[variadic_var_name] = quote_array
                 break
-
             var_name = function_procedure[1][a]
-            # Lazy Evaluation
-            if var_name[0]=="&":
-                var_name = var_name[1:len(var_name)]                
-                # solve lazy evaluation recursion bug
-                if type(user_param_tree[i])==str and (user_param_tree[i] in SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1]) and len(SYMBOLIC_TABLE)>1:
-                    LOCAL_SYMBOLIC_TABLE[var_name] = SYMBOLIC_TABLE[len(SYMBOLIC_TABLE)-1][user_param_tree[i]]
-                    i=i+1
-                    a=a+1
-                    continue
-
-                temp=["__LAZY_VALUE__",len(SYMBOLIC_TABLE)]
-                temp.append(var_name)
-
-                #Lazy Evaluation
-                temp.append(user_param_tree[i])
-
-                # ADD TO SYMBOLIC_TABLE
-                LOCAL_SYMBOLIC_TABLE[var_name] = temp
-            #This is not Lazy Evaluation
-            else:
-                ### SUCH A BIG BUG
-                value = interpreter(user_param_tree[i])
-                ### SUCH A BIG BUG
-                ### I HAVE TO CALCULATE VALUE AT FIRST
-                ### CUZ DICTIONARY WILL INIT VAR_NAME AT FIRST
-                ### WHICH MAY CAUSE BUG
-                LOCAL_SYMBOLIC_TABLE[var_name] = value
+            value = interpreter(user_param_tree[i])
+            LOCAL_SYMBOLIC_TABLE[var_name] = value
 
             i=i+1
             a=a+1
 
         # PUSH LOCAL SYMBOLIC TABLE TO SYMBOLIC_TABLE
         SYMBOLIC_TABLE.append(LOCAL_SYMBOLIC_TABLE)
-
-
-        # print SYMBOLIC_TABLE
-        # print "\n"
-
         return_value = interpreter(function_procedure[2])
         # push SYMBOLIC_TABLE
         # SYMBOLIC_TABLE=pushSymbolicTable(SYMBOLIC_TABLE)
