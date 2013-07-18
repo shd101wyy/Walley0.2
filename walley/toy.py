@@ -153,15 +153,22 @@ def numerator_and_denominator_of_string(x):
         return [int(x[0:index]), int(x[index+1:len(x)])]
 def charIsDigit(char):
     return char=="0" or char=="1" or char=="2" or char=="3" or char=="4" or char=="5" or char=="6" or char=="7" or char=="8" or char=="9"
-def stringIsFloat(string):
+def stringIsInteger(input_str):
+    i=0
+    while i<len(input_str):
+        if charIsDigit(input_str[i]) == False:
+            return False
+        i=i+1
+    return True
+def stringIsFloat(input_str):
     i=0
     count_of_dot=0
     count_of_e=0
-    while i<len(string):
-        if charIsDigit(string[i])==False:
-            if string[i]==".":
+    while i<len(input_str):
+        if charIsDigit(input_str[i])==False:
+            if input_str[i]==".":
                 count_of_dot=count_of_dot+1
-            elif string[i]=="e":
+            elif input_str[i]=="e":
                 count_of_e=count_of_e+1
             else:
                 return False
@@ -169,6 +176,34 @@ def stringIsFloat(string):
     if count_of_e==1 or count_of_dot==1:
         return True
     return False
+# support integer 3 float 3.0 fraction 3/4
+def stringIsNumber(input_str):
+    count_of_e=0
+    count_of_slash=0
+    count_of_dot=0
+    i=0
+    while i<len(input_str):
+        if input_str[i]=="e":
+            count_of_e = count_of_e+1
+        elif input_str[i]==".":
+            count_of_dot = count_of_dot + 1
+        elif input_str[i]=="/":
+            count_of_slash = count_of_slash + 1
+            break
+        elif charIsDigit(input_str[i]) == False:
+            return False
+        i=i+1
+    # check fraction
+    if count_of_slash == 1:
+        if stringIsInteger(input_str[0:i]) and stringIsInteger(input_str[i+1:len(input_str)]):
+            return True
+        return False
+    if count_of_e==0 and count_of_dot==0:
+        return True
+    if count_of_e==1 or count_of_dot==1:
+        return True
+    return False
+
 def math_operation(x,y,sign):
     if stringIsFloat(x) or stringIsFloat(y):
         return str(eval(x+sign+y))
@@ -465,38 +500,6 @@ def convertStringToArray(input_str):
         output.append(i)
     return output
 
-# support 3 3.0 3.0e-12 2/5
-# three kind of value
-# does not support complex number
-def isNumber(element):
-    if type(element)!=str:
-        return False
-    try:
-        float(element)
-        return True
-    except ValueError:
-        #print "Not a float"
-        # check fraction
-        # check fraction
-        i=0
-        if element[0]=="-":
-            i=i+1
-        count=0
-        while i<len(element):
-            if element[i].isdigit()==False:
-                if element[i]=="/":
-                    i=i+1
-                    count=count+1
-                    continue
-                else:
-                    return False
-            else:
-                i=i+1
-                continue
-        if count==1:
-            return True
-        return False
-
 
 def interpreter(tree):
     global SYMBOLIC_TABLE
@@ -509,7 +512,7 @@ def interpreter(tree):
         return ""
     # (= x 3) x and 3 are just returned
     if type(tree)==str:        
-        if isNumber(tree):
+        if stringIsNumber(tree):
             return tree
         # string
         elif tree[0]=="\"" and tree[len(tree)-1]=="\"":
@@ -557,6 +560,8 @@ def interpreter(tree):
                 var_value=interpreter(tree[2])
                 SYMBOLIC_TABLE[0][var_name]=var_value
                 return var_value
+            return ""
+        return ""
     
     # local x = 12
     # add to local symbolic table
@@ -612,11 +617,11 @@ def interpreter(tree):
 
     elif tree[0]=="__EQUAL__":
         value1=interpreter(tree[1])
-        if isNumber(value1):
+        if stringIsNumber(value1):
             value1=eval(value1)
 
         value2=interpreter(tree[2])
-        if isNumber(value2):
+        if stringIsNumber(value2):
             value2=eval(value2)
 
         if type(value1)==str and  value1[0]=="\"":
@@ -630,11 +635,11 @@ def interpreter(tree):
             return "0"
     elif tree[0]=="__LT__":
         value1=interpreter(tree[1])
-        if isNumber(value1):
+        if stringIsNumber(value1):
             value1=eval(value1)
 
         value2=interpreter(tree[2])
-        if isNumber(value2):
+        if stringIsNumber(value2):
             value2=eval(value2)
 
         if type(value1)==str and  value1[0]=="\"":
@@ -954,9 +959,9 @@ def interpreter(tree):
         if type(value2)==str and value2[0]=="\"":
             value2 = convertStringToArray(value2[1:len(value2)-1])
 
-        if isNumber(value1):
+        if stringIsNumber(value1):
             value1=str(eval(value1))
-        if isNumber(value2):
+        if stringIsNumber(value2):
             value2=str(eval(value2))
 
         if type(value1)!=type(value2):
@@ -1008,7 +1013,7 @@ def interpreter(tree):
     
     elif tree[0]=="number?":
         value = interpreter(tree[1])
-        if isNumber(value):
+        if stringIsNumber(value):
             return "1"
         else:
             return "0"

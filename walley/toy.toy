@@ -11,7 +11,13 @@
 		(if (null? args) '() (cons (car args) (apply list (cdr args))))
 		)
 	)
-	
+	; check whether atom is symbol
+	(define symbol? (lambda (a)
+		(if (and (atom? a) (not (number? a)))
+			1
+			0
+			)
+		))
 	;Arithmetic Operation"
 	;Now only support number, exclude fraction, real, complex"
 	;(define + (lambda (. args)
