@@ -1,5 +1,14 @@
 # codeset: utf8
+
 '''
+    7 primitives:
+    quote atom eq car cdr cons cond(or if)
+    
+    9 primitives:
+        atom eq car cdr cons
+        quote cond lambda label
+
+
     walley
     
     Copyright shd101wyy Yiyi Wang 2013~2014
@@ -41,73 +50,6 @@
     (= x (+ 3 4)) ->     x = 7
     
     # eg (= x (+ 3 (- 4 5) ))-> [['(', '=', 'x', '(', '+', '3', '(', '-', '4', '5', ')', ')', ')'], True]
-    
-    
-    
-    
-    
-    Macro
-    
-    
-    Macro Database
-    variable must start with $
-    
-    ==================================
-    (for i in 0 10
-    (print i)
-    )
-    
-    ->
-    
-    (stms
-    (= i 0)
-    (while (< i 0)
-    (print i)
-    )
-    )
-    
-    (=>
-    "translate"
-    "symbol"
-    '(for $i $v in $1 $2 $3))
-    
-    
-    "return "
-    "symbol"
-    
-    (cond
-    ((< $1 $2)
-    '(while (< $i $1) (stms $3 (= $1 (+ $1 1))))
-    )
-    )
-    )
-    
-    
-    ==================================
-    
-    (square x) -> (* x x)
-    (square x y) -> (* x y)
-    
-    (=> start_name ([1] [translate 1 to .1]) ([2] [.2]))
-    
-    (=> square
-    ('($) '(* $ $))
-    ('($ $$) '(* $ $$))
-    )
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     '''
 # force float division
@@ -637,27 +579,27 @@ def interpreter(tree):
     elif tree[0]=="quote":
         #print 'it is quote'
         quote_value=tree[1]
-        
+        return quote_value
         # if a=12
         # a -> a
         # [[unquote a] a]-> [12 a]
         # [unquote a]-> 12
-        def calculateQuote(quote_value):
+        #def calculateQuote(quote_value):
             # a
-            if type(quote_value)==str:
-                return quote_value
+        #    if type(quote_value)==str:
+        #        return quote_value
             # [quote a]
-            elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
-                return interpreter(quote_value[1])
-            else:
-                output=[]
-                for a in quote_value:
-                    output.append(calculateQuote(a))
-                return output
+        #    elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
+        #        return interpreter(quote_value[1])
+        #    else:
+        #        output=[]
+        #        for a in quote_value:
+        #            output.append(calculateQuote(a))
+        #        return output
 
         
-        return_tree = calculateQuote(quote_value)
-        return return_tree
+        #return_tree = calculateQuote(quote_value)
+        #return return_tree
     
     # function car
     # (car '(1 2 3)) -> 1
