@@ -579,27 +579,26 @@ def interpreter(tree):
     elif tree[0]=="quote":
         #print 'it is quote'
         quote_value=tree[1]
-        return quote_value
         # if a=12
         # a -> a
         # [[unquote a] a]-> [12 a]
         # [unquote a]-> 12
-        #def calculateQuote(quote_value):
+        def calculateQuote(quote_value):
             # a
-        #    if type(quote_value)==str:
-        #        return quote_value
+            if type(quote_value)==str:
+                return quote_value
             # [quote a]
-        #    elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
-        #        return interpreter(quote_value[1])
-        #    else:
-        #        output=[]
-        #        for a in quote_value:
-        #            output.append(calculateQuote(a))
-        #        return output
+            elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
+                return interpreter(quote_value[1])
+            else:
+                output=[]
+                for a in quote_value:
+                    output.append(calculateQuote(a))
+                return output
 
         
-        #return_tree = calculateQuote(quote_value)
-        #return return_tree
+        return_tree = calculateQuote(quote_value)
+        return return_tree
     
     # function car
     # (car '(1 2 3)) -> 1
@@ -860,6 +859,8 @@ def interpreter(tree):
 #   1
 
     elif tree[0]=="eq":
+        if tree[1]==tree[2]:
+            return "1"
         value1 = interpreter(tree[1])
         value2 = interpreter(tree[2])
         if type(value1)==str and  value1[0]=="\"":
