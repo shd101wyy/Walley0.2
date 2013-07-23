@@ -221,7 +221,7 @@
 			)
 		))
 
-	(display (toy '(begin (define x 32) (set! x 15)  x) '((x . a))))
+	(display (toy '(hi 123) '((x . a))))
 
 
 
