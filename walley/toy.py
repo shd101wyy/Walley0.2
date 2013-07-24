@@ -348,23 +348,11 @@ def atom(arg):
             return "0"
         return "1"
 def eq(var_name1, var_name2,env):
-    def get_varname(var_name,env):
-        if env==[]:
-            print "Error..."+var_name+" does not exist"
-        else:
-            if var_name==env[0][0]:
-                if env[0][1]=="&":
-                    return env[0][2]
-                return env[0][0]
-        return get_varname(var_name,env[1:len(env)])
-        
-    if type(var_name1)==str and type(var_name2)==str:
-        var_name1 = get_varname(var_name1,env)
-        var_name2 = get_varname(var_name2,env)
-        if var_name1 == var_name2:
-            return "1"
+    from operator import is_
     value1 = toy(var_name1,env)
     value2 = toy(var_name2,env)
+    if is_(value1,value2):
+        return "1"
     if type(value1)==str and  value1[0]=="\"":
         value1 = convertStringToArray(value1[1:len(value1)-1])
     if type(value2)==str and value2[0]=="\"":
@@ -457,10 +445,6 @@ def assoc(var_name, env):
     if env==[]:
         print "Error...Cannot find "+var_name
     if env[0][0]==var_name:
-        # reference
-        if env[0][1]=="&":
-            return assoc(env[0][2],env[1:len(env)])
-        # not reference
         return env[0][1]
     return assoc(var_name,env[1:len(env)])
 
@@ -561,14 +545,6 @@ def toy(tree,env):
                     return "0"    
             # (define var_name var_value)
             elif tree[0]=="define":
-                # check object identity
-                if type(tree[2])==str:
-                    # (define x '(1 2 3) )
-                    # (define y x)
-                    # y is x ... reference
-                    if type(toy(tree[2],env))!=str:
-                        env.insert(0,[tree[1],"&", tree[2]])
-                        return tree[2]
                 env.insert(0,[tree[1],toy(tree[2],env)])               
                 return toy(tree[2],env)
             elif tree[0]=="set!":
@@ -583,10 +559,6 @@ def toy(tree,env):
                 if index==-1:
                     print "Error...In function set! var does not existed"
                 else:
-                    if type(tree[2])==str:
-                        if type(toy(tree[2],env))!=str:
-                            env[index]=[env[index][0],"&",tree[2]]
-                            return tree[2]
                     env[index] = [env[index][0],toy(tree[2],env)]
                     return toy(tree[2],env)
             elif tree[0]=="lambda":
