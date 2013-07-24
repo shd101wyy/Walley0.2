@@ -3,6 +3,13 @@ from toy import *
 import sys
 print sys.argv
 
+# toy language simple repl
+def repl(prompt="toy > "):
+    while True:
+        input_str = raw_input(prompt)
+        print toy(parser(lexer(input_str)[0]),global_env)
+        #print global_env
+
 # COMMANDS
 # fix /t problem
 def cleanString(input_str):
@@ -78,21 +85,7 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
 elif len(sys.argv)==1:
     print "Toy Language >>>>>>>>>>>>>>>"
     print "Press ctrl+C to quit\n"
-    while True:
-        print ">>> ",
-        x=raw_input()
-        if x=="":
-            continue
-        x=lexer(x)
-        #print "Lexer----> ",
-        #print x
-        if x[1]==False:
-            print "Incomplete Statement"
-            continue
-        x=parser(x[0])
-        #print "Parser----> ",
-        #print x
-        print interpreter(x)
+    repl()
 else:
     print "Argv Error.."
 

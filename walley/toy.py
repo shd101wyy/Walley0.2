@@ -578,18 +578,6 @@ def toy(tree,env):
                 return toy( tree[0][2], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
             else:
                 print "Error..."
-            #((eq (caar expr) 'label)
-            #    (toy (cons (caddar expr) (cdr expr))
-            #        (cons (list (cadar expr) (car expr)) env )
-            #        )
-            #    )
-            # lambda function
-            #((eq (caar expr) 'lambda)
-            #    (toy (caddar expr)
-            #        (append (pair (cadar expr) (evlis (cdr expr) env)) env)
-            #        )
-            #    )
-            #)
 #return new env
 #expr -> ((a 12)(b 13)) 
 #env -> ((c 14))
@@ -620,15 +608,7 @@ def eval_begin(stms,env):
             return eval_begin(stms[1:len(stms)],env)
 
 
-def repl(prompt="toy > "):
-    while True:
-        input_str = raw_input(prompt)
-        print toy(parser(lexer(input_str)[0]),global_env)
-        print global_env
-repl()
-
-
-
+'''
 SYMBOLIC_TABLE=[]
 SYMBOLIC_TABLE.append({})
 
@@ -668,12 +648,12 @@ SYMBOLIC_TABLE[0]["lambda"]="lambda"
 SYMBOLIC_TABLE[0]["len"]="len"
 SYMBOLIC_TABLE[0]["if"]="if"
 SYMBOLIC_TABLE[0]["number?"]="number?"
-
+'''
 
 '''
 ADD EMBEDED FUNCTION WHICH CANNOT BE USED AS VAR NAME
 '''
-
+'''
 SYMBOLIC_TABLE[0]["__ADD__"]="__ADD__"
 SYMBOLIC_TABLE[0]["__MINUS__"]="__MINUS__"
 SYMBOLIC_TABLE[0]["__MULT__"]="__MULT__"
@@ -684,7 +664,7 @@ SYMBOLIC_TABLE[0]["__LT__"]="__LT__"
 
 
 MARCRO_DATABASE={}
-
+'''
 
 
 '''
@@ -712,7 +692,7 @@ def convertStringToArray(input_str):
         output.append(i)
     return output
 
-
+'''
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global MARCRO_DATABASE
@@ -1371,4 +1351,4 @@ def toy_runString(input_str):
 
 # RUN TO_RUN
 #toy_runString("(load \"walley_toy\")")
-
+'''
