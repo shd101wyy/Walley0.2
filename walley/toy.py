@@ -348,8 +348,21 @@ def atom(arg):
             return "0"
         return "1"
 def eq(var_name1, var_name2,env):
-    if type(var_name1)==str and var_name1==var_name2:
-        return "1"
+    def get_varname(var_name,env):
+        if env==[]:
+            print "Error..."+var_name+" does not exist"
+        else:
+            if var_name==env[0][0]:
+                if env[0][1]=="&":
+                    return env[0][2]
+                return env[0][0]
+        return get_varname(var_name,env[1:len(env)])
+        
+    if type(var_name1)==str and type(var_name2)==str:
+        var_name1 = get_varname(var_name1,env)
+        var_name2 = get_varname(var_name2,env)
+        if var_name1 == var_name2:
+            return "1"
     value1 = toy(var_name1,env)
     value2 = toy(var_name2,env)
     if type(value1)==str and  value1[0]=="\"":
@@ -444,6 +457,10 @@ def assoc(var_name, env):
     if env==[]:
         print "Error...Cannot find "+var_name
     if env[0][0]==var_name:
+        # reference
+        if env[0][1]=="&":
+            return assoc(env[0][2],env[1:len(env)])
+        # not reference
         return env[0][1]
     return assoc(var_name,env[1:len(env)])
 
@@ -467,6 +484,8 @@ def math_(tree,sign,env):
 # ...
 #
 #=======================================
+# set global env
+global_env=[]
 
 def toy(tree,env):
     # number
@@ -540,6 +559,36 @@ def toy(tree,env):
                     return "1"
                 else:
                     return "0"    
+            # (define var_name var_value)
+            elif tree[0]=="define":
+                # check object identity
+                if type(tree[2])==str:
+                    # (define x '(1 2 3) )
+                    # (define y x)
+                    # y is x ... reference
+                    if type(toy(tree[2],env))!=str:
+                        env.insert(0,[tree[1],"&", tree[2]])
+                        return tree[2]
+                env.insert(0,[tree[1],toy(tree[2],env)])               
+                return toy(tree[2],env)
+            elif tree[0]=="set!":
+                def set_index(var_name,env,count):
+                    if env==[]:
+                        return -1
+                    elif var_name==env[0][0]:
+                        return count
+                    return set_index(var_name,env[1:len(env)],count+1)
+
+                index = set_index(tree[1],env,0)
+                if index==-1:
+                    print "Error...In function set! var does not existed"
+                else:
+                    if type(tree[2])==str:
+                        if type(toy(tree[2],env))!=str:
+                            env[index]=[env[index][0],"&",tree[2]]
+                            return tree[2]
+                    env[index] = [env[index][0],toy(tree[2],env)]
+                    return toy(tree[2],env)
             elif tree[0]=="lambda":
                 return tree
             elif tree[0]=="begin":
@@ -595,33 +644,17 @@ def eval_begin(stms,env):
         if type(stms[0])==str:
             return eval_begin(stms[1:len(stms)],env)
         else:
-            # define
-            if stms[0][0]=="define":
-                return eval_begin(stms[1:len(stms)] ,  cons([stms[0][1],toy(stms[0][2],env)] , env))
-            # set!
-            elif stms[0][0]=="set!":
-                return eval_begin(stms[1:len(stms)] , set_env(stms[0][1],toy(stms[0][2],env),env) )
-            # both above functions can only be used inside begin
-            else:
-                # Error here
-                pass
-
-# var_name -> x
-# var_value -> 12
-# env -> ((y 12) (x 1))
-# return ((y 12) (x 12))
-def set_env(var_name,var_value,env):
-    if env==[]:
-        print "Error... "+var_name+" does not exist\nFunction set! error"
-    elif env[0][0]==var_name:
-        return cons( [var_name,var_value] , env[1:len(env)] )
-    else:
-        return cons(env[0], set_env(var_name,var_value,env[1:len(env)]))
+            toy(stms[0],env)
+            return eval_begin(stms[1:len(stms)],env)
 
 
-input_str = "(begin (define x 12) (set! x 14) x)"
-tree = parser(lexer(input_str)[0])
-print toy(tree,[])
+def repl(prompt="toy > "):
+    while True:
+        input_str = raw_input(prompt)
+        print toy(parser(lexer(input_str)[0]),global_env)
+        print global_env
+repl()
+
 
 
 SYMBOLIC_TABLE=[]
