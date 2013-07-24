@@ -45,7 +45,7 @@ if len(sys.argv)==2:
     #print x
     #print "Parser----> ",
     #print x
-    interpreter(x)
+    toy(x,global_env)
 
 # compress file
 elif len(sys.argv)==3 and sys.argv[1]=="compress":

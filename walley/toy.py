@@ -463,7 +463,18 @@ def math_(tree,sign,env):
     if len(tree)==1:
         return toy(tree[0],env)
     return math_operation(math_(tree[0:len(tree)-1],sign,env), toy(tree[len(tree)-1],env) ,sign)
-
+def number_(value):
+    if stringIsNumber(value):
+        return "1"
+    return "0"
+def display_(value):
+    if type(value)==str:
+        if len(value)!=0 and value[0]=="\"":
+            print eval(value),
+        else:
+            print value,
+    else:
+        print convertArrayToString(value),
 # ...
 #
 #=======================================
@@ -556,7 +567,6 @@ def toy(tree,env):
                     elif var_name==env[0][0]:
                         return count
                     return set_index(var_name,env[1:len(env)],count+1)
-
                 index = set_index(tree[1],env,0)
                 if index==-1:
                     print "Error...In function set! var does not existed"
@@ -571,6 +581,14 @@ def toy(tree,env):
                 return toy(tree[2],eval_let(tree[1],env))
             elif tree[0]=="apply":
                 return toy(cons(tree[1],toy(tree[2],env)),env)
+            elif tree[0]=="number?":
+                return number_(toy(tree[1],env))
+            # io function
+            elif tree[0]=="display":
+                return display_(toy(tree[1],env))
+            #elif tree[0]=="input":
+            #    value = raw_input(toy(tree[1],env))
+            #    return value
             #procedure value
             else:
                 return toy(cons(assoc(tree[0],env), cdr(tree)),env)
@@ -579,7 +597,7 @@ def toy(tree,env):
             if tree[0]=="label":
                 pass
             elif tree[0][0]=="lambda":
-                return toy( tree[0][2], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
+                return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
             else:
                 print "Error..."
 #return new env

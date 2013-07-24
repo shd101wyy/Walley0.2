@@ -4,7 +4,6 @@
 	;==============================================
 	;===== Begin to construct Toy Language ========
 	;==============================================
-
 	(define cadr (lambda (_list_)
 		(car (cdr _list_))
 		))
@@ -59,8 +58,8 @@
 	; expr is the expression that need to be evaluated
 	; env is the environment
 	(define toy (lambda (expr env)
-		(print env)
-		(print "\n")
+		(display env)
+		(display "\n")
 		(cond
 			((number? expr) expr)
 			((atom? expr) (assoc expr env) )
@@ -221,8 +220,8 @@
 			)
 		))
 
-	(display (toy '(hi 123) '((x . a))))
 
+	(display (toy '(eq 1 1) '((x . a))))
 
 
 
