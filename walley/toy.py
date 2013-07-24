@@ -390,7 +390,6 @@ def cdr(value):
     # string
     if value[0]=="\"":
         return "\""+value[2:len(value)]
-
     #print value
     if len(value)==0:
         print("Error\nFunction 'cdr' cannot be used on empty list")
@@ -472,6 +471,9 @@ def math_(tree,sign,env):
 global_env=[]
 
 def toy(tree,env):
+    # string
+    if tree[0]=="\"":
+            return tree
     # number
     if stringIsNumber(tree):
         return tree
@@ -567,6 +569,8 @@ def toy(tree,env):
                 return eval_begin(tree[1:len(tree)],env)
             elif tree[0]=="let":
                 return toy(tree[2],eval_let(tree[1],env))
+            elif tree[0]=="apply":
+                return toy(cons(tree[1],toy(tree[2],env)),env)
             #procedure value
             else:
                 return toy(cons(assoc(tree[0],env), cdr(tree)),env)
