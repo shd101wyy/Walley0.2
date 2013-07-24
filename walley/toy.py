@@ -569,31 +569,26 @@ def toy(tree,env):
                         return True
                     return var_existed(var_name,env[1:len(env)])
                 if var_existed(tree[1],env):
-                    print "Error..."+tree[1]+" has already been defined"
+                    print "Error... "+tree[1]+" has been defined"
                     print "In toy language, it is not allowed to redefine var"
+                    print "It is not recommended to change value of a defined var"
+                    print "If you really want to do so, use set! function instead"
                     return ""
-                #env.insert(0,[tree[1],toy(tree[2],env)])   
-                # in order to support lazy evalution
-                # tree[2] will not be calculated
-                # if length = 3:
-                # then it mean it is lazy evaluation
-                env.insert(0,[tree[1],tree[2],[]])            
+                env.insert(0,[tree[1],toy(tree[2],env)])      
                 return tree[2]
-            
-            #elif tree[0]=="set!":
-            #    def set_index(var_name,env,count):
-            #        if env==[]:
-            #            return -1
-            #        elif var_name==env[0][0]:
-            #            return count
-            #        return set_index(var_name,env[1:len(env)],count+1)
-            #    index = set_index(tree[1],env,0)
-            #    if index==-1:
-            #        print "Error...In function set! var does not existed"
-            #    else:
-            #        env[index] = [env[index][0],toy(tree[2],env)]
-            #        return toy(tree[2],env)
-            
+            elif tree[0]=="set!":
+                def set_index(var_name,env,count):
+                    if env==[]:
+                        return -1
+                    elif var_name==env[0][0]:
+                        return count
+                    return set_index(var_name,env[1:len(env)],count+1)
+                index = set_index(tree[1],env,0)
+                if index==-1:
+                    print "Error...In function set! var does not existed"
+                else:
+                    env[index] = [env[index][0],toy(tree[2],env)]
+                    return toy(tree[2],env)
             elif tree[0]=="lambda":
                 return tree
             elif tree[0]=="begin":
