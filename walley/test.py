@@ -1,6 +1,9 @@
-x=[["x",[1,2,3]]]
-y=["y",x[0][1]]
-import operator
-print operator.is_(y[1],x[0][1])
-print y 
+def test(x,count):
+	if count==0:
+		x[0]=12
+		return x
+	else:
+		return test(x[1:len(x)],count-1)
+x=[1,2,3,4]
+test(x,0)
 print x

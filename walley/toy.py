@@ -64,6 +64,11 @@ VirtualFileSystem["walley_toy"]=TO_RUN
     
     # eg (= x (+ 3 (- 4 5) ))-> [['(', '=', 'x', '(', '+', '3', '(', '-', '4', '5', ')', ')', ')'], True]
     
+    
+
+
+    1. support lazy evaluation
+
     '''
 
 #================== Fraction Support ===================
@@ -446,13 +451,37 @@ def assoc(var_name, env):
     if env[0][0]==var_name:
         return env[0][1]
     return assoc(var_name,env[1:len(env)])
+# ("x",[["x","1+2"]]) 
+# return 3
+# and env -> [["x","3"]]
+def assoc_and_assign_value_if_lazy_evaluation(var_name,env):
+    i=0
+    while i<len(env):
+        if env[i][0]==var_name:
+            # lazy evaluation
+            if len(env[i])==3:
+                value = toy(env[i][1],env)
+                # value does not in scope
+                if value == False:
+                    return ""
+                env[i] = [env[i][0],value]
+                return value
+            else:
+                return toy(env[i][1],env)
+        i=i+1
+    print "Error..."+var_name+" not in scope"
+    return False
 
 # [a,b],[3,4] -> [[a,3],[b,4]]
 def pair(x,y):
     if x==[] and y==[]:
         return []
     return cons([x[0],y[0]], pair(x[1:len(x)],y[1:len(x)]))
-
+# [a,b] [c+d,12] -> [[a,c+d] , [b,12]]
+def pair_lazy(x,y):
+    if x==[] and y==[]:
+        return []
+    return cons([x[0],y[0],[]], pair(x[1:len(x)],y[1:len(x)]))
 # [a,b] [c,d] -> [a,b,c,d]
 def append(x,y):
     if x==[]:
@@ -490,7 +519,7 @@ def toy(tree,env):
         return tree
     # atom
     elif type(tree)==str:
-        return assoc(tree,env)
+        return assoc_and_assign_value_if_lazy_evaluation(tree,env)
     else:
         if type(tree[0])==str:
             # seven primitive functions
@@ -558,21 +587,38 @@ def toy(tree,env):
                     return "0"    
             # (define var_name var_value)
             elif tree[0]=="define":
-                env.insert(0,[tree[1],toy(tree[2],env)])               
-                return toy(tree[2],env)
-            elif tree[0]=="set!":
-                def set_index(var_name,env,count):
+                def var_existed(var_name,env):
                     if env==[]:
-                        return -1
-                    elif var_name==env[0][0]:
-                        return count
-                    return set_index(var_name,env[1:len(env)],count+1)
-                index = set_index(tree[1],env,0)
-                if index==-1:
-                    print "Error...In function set! var does not existed"
-                else:
-                    env[index] = [env[index][0],toy(tree[2],env)]
-                    return toy(tree[2],env)
+                        return False
+                    elif var_name == env[0][0]:
+                        return True
+                    return var_existed(var_name,env[1:len(env)])
+                if var_existed(tree[1],env):
+                    print "Error..."+tree[1]+" has already been defined"
+                    print "In toy language, it is not allowed to redefine var"
+                    return ""
+                #env.insert(0,[tree[1],toy(tree[2],env)])   
+                # in order to support lazy evalution
+                # tree[2] will not be calculated
+                # if length = 3:
+                # then it mean it is lazy evaluation
+                env.insert(0,[tree[1],tree[2],[]])            
+                return tree[2]
+            
+            #elif tree[0]=="set!":
+            #    def set_index(var_name,env,count):
+            #        if env==[]:
+            #            return -1
+            #        elif var_name==env[0][0]:
+            #            return count
+            #        return set_index(var_name,env[1:len(env)],count+1)
+            #    index = set_index(tree[1],env,0)
+            #    if index==-1:
+            #        print "Error...In function set! var does not existed"
+            #    else:
+            #        env[index] = [env[index][0],toy(tree[2],env)]
+            #        return toy(tree[2],env)
+            
             elif tree[0]=="lambda":
                 return tree
             elif tree[0]=="begin":
@@ -597,7 +643,8 @@ def toy(tree,env):
             if tree[0]=="label":
                 pass
             elif tree[0][0]=="lambda":
-                return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
+                #return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
+                return eval_begin( tree[0][2:len(tree[0])], append(pair_lazy(tree[0][1],tree[1:len(tree)]),env))
             else:
                 print "Error..."
 #return new env
