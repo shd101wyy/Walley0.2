@@ -655,8 +655,9 @@ def toy(tree,env):
 def eval_let(expr,env):
     if expr==[]:
         return env
-                # support lazy evaluation
-    return cons([expr[0][0],toy(expr[0][1],env)], eval_let(expr[1:len(expr)],env) )
+    # now ((x 12)(y x)) -> y = 12
+    return eval_let(expr[1:len(expr)], cons( [expr[0][0],toy(expr[0][1],env)] , env) )
+    #return cons([expr[0][0],toy(expr[0][1],env)], eval_let(expr[1:len(expr)],env) )
 # ["x","y"] [["x",12],["y",13]] -> [12,13]
 def evlis(params,env):
     if params==[]:
