@@ -219,7 +219,7 @@ def lexer(input_str):
             continue
 
         # quote and unquote
-        elif input_str[i]=="'" or input_str[i]==",":
+        elif input_str[i]=="'" or input_str[i]=="," or input_str[i]=="@":
             start=i+1
             i=i+1
             count_of_bracket=0
@@ -242,6 +242,9 @@ def lexer(input_str):
             # quote
             if input_str[start-1]=="'":
                 output.append("quote")
+            # quasiquote 
+            elif input_str[start-1]=="@":
+                output.append("quasiquote")
             # unquote
             else:
                 output.append("unquote")
@@ -342,6 +345,21 @@ def parser(arr):
 # (quote arg) -> arg
 def quote(arg):
     return arg
+# (quasiquote '(1 ,(+ 1 2))) -> (1 3)
+def quasiquote(arg,env):
+    def calculateQuote(quote_value,env):
+        # a
+        if type(quote_value)==str:
+            return quote_value
+        # [quote a]
+        elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
+            return toy(quote_value[1],env)
+        else:
+            output=[]
+            for a in quote_value:
+                output.append(calculateQuote(a,env))
+            return output
+    return calculateQuote(arg,env)
 # (atom? 'Hi)
 def atom(arg): 
     if type(arg)!=str:
@@ -599,6 +617,8 @@ def toy(tree,env):
                 return toy(cons(tree[1],toy(tree[2],env)),env)
             elif tree[0]=="number?":
                 return number_(toy(tree[1],env))
+            elif tree[0]=="quasiquote":
+                return quasiquote(tree[1],env)
             # io function
             elif tree[0]=="display":
                 return display_(toy(tree[1],env))
