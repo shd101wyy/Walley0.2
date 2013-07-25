@@ -613,7 +613,19 @@ def toy(tree,env):
             if tree[0]=="label":
                 pass
             elif tree[0][0]=="lambda":
-                return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
+                # ["a","b"] ["1","2"] -> [["a","1"],["b","2"]]
+                # [". args"] ["1","2"] -> [["args", ["1","2"]]] 
+                def pair_params(names,params,env):
+                    if names==[]:
+                        return []
+                    elif names[0]==".":
+                        return [[names[1],evlis(params,env)]]
+                    else:
+                        return cons([names[0],toy(params[0],env)],pair_params(names[1:len(names)],params[1:len(params)],env))
+
+                #return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
+                return eval_begin( tree[0][2:len(tree[0])], append(pair_params(tree[0][1],cdr(tree),env),env))
+
             else:
                 print "Error..."
 #return new env
@@ -630,6 +642,7 @@ def evlis(params,env):
     if params==[]:
         return []
     return cons(toy(params[0],env), evlis(params[1:len(params)],env))
+
 # eval begin function
 # stms -> (stm1 stm2 stm3)
 def eval_begin(stms,env):
