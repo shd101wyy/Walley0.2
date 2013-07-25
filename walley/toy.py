@@ -592,10 +592,10 @@ def toy(tree,env,module_name=""):
                 else:
                     var_name = module_name+"."+tree[1]
                 if var_existed(var_name,env):
-                    print "Error... "+var_name+" has been defined"
-                    print "In toy language, it is not allowed to redefine var"
-                    print "It is not recommended to change value of a defined var"
-                    print "If you really want to do so, use set! function instead"
+                    print "Error... "+var_name+" with value has been defined"
+                    print "In toy language, it is not allowed to redefine var."
+                    print "While not recommended to change value of a defined var,"
+                    print "you could use set! function to modify the value."
                     return ""
                 var_value = toy(tree[2],env)
                 env.insert(0,[var_name,var_value])   
@@ -670,7 +670,7 @@ def toy(tree,env,module_name=""):
                 return eval_begin( tree[0][2:len(tree[0])], append(pair_params(tree[0][1],cdr(tree),env),env))
 
             else:
-                print "Error..."
+                return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
 #return new env
 #expr -> ((a 12)(b 13)) 
 #env -> ((c 14))
