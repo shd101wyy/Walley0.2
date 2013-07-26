@@ -621,6 +621,8 @@ def toy(tree,env,module_name=""):
                 return toy(tree[2],eval_let(tree[1],env))
             elif tree[0]=="apply":
                 return toy(cons(tree[1],toy(tree[2],env)),env)
+            elif tree[0]=="eval":
+                return toy(toy(tree[1],env,module_name),env,module_name)
             elif tree[0]=="number?":
                 return number_(toy(tree[1],env))
             elif tree[0]=="quasiquote":
