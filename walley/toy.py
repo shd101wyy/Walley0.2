@@ -569,6 +569,15 @@ def toy(tree,env,module_name=""):
                     sign="*"
                 else:
                     sign="/"
+                # solve (__MINUS__ 4) = 4 bug
+                if len(tree)==2 and sign=="-":
+                    value = toy(tree[1],env,module_name)[0]
+                    if value=="0":
+                        return ["0",env]
+                    elif value[0]=="-":
+                        return [value[1:len(value)],env]
+                    else:
+                        return ["-" + value,env]
                 return [math_(tree[1:len(tree)],sign,env),env]
             elif tree[0]=="__EQUAL__":
                 value1=toy(tree[1],env)[0]
