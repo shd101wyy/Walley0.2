@@ -503,8 +503,6 @@ def display_(value):
 # ...
 #
 #=======================================
-# set global env
-global_env=[]
 
 def toy_language(trees,env,module_name):
     if trees==[]:
@@ -798,15 +796,6 @@ def convertStringToArray(input_str):
         output.append(i)
     return output
 
-to_run = [["define","x","12"],
-            ["define","y","13"],
-            ["define","z",["__ADD__","x","y"]],
-            [["lambda",["a"],["set!","z","1"]],"1"],
-            ["set!","x","15"],
-            ["begin",["define","a","z"]],
-            ["define","m",["let",[["x","x"],["y","x"]],["__ADD__","y","a"]]]
-         ]
-print toy_language(to_run,[],"")
 
 '''
 def interpreter(tree):
