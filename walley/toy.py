@@ -354,7 +354,7 @@ def quasiquote(arg,env):
             return quote_value
         # [quote a]
         elif len(quote_value)!=0 and type(quote_value[0])==str and quote_value[0]=="unquote" and len(quote_value)==2:
-            return toy(quote_value[1],env)
+            return toy(quote_value[1],env)[0]
         else:
             output=[]
             for a in quote_value:
@@ -372,8 +372,8 @@ def atom(arg):
         return "1"
 def eq(var_name1, var_name2,env):
     from operator import is_
-    value1 = toy(var_name1,env)
-    value2 = toy(var_name2,env)
+    value1 = toy(var_name1,env)[0]
+    value2 = toy(var_name2,env)[0]
     if is_(value1,value2):
         return "1"
     if type(value1)==str and  value1[0]=="\"":
@@ -499,6 +499,7 @@ def display_(value):
             print value,
     else:
         print convertArrayToString(value),
+    return ""
 # ...
 #
 #=======================================
@@ -529,13 +530,13 @@ def toy(tree,env,module_name=""):
             if tree[0]=="quote":
                 return [quote(tree[1]),env]
             elif tree[0]=="atom?":
-                return [atom(toy(tree[1],env)),env]
+                return [atom(toy(tree[1],env)[0]),env]
             elif tree[0]=="eq":
                 return [eq(tree[1],tree[2],env),env]
             elif tree[0]=="car":
-                return [car(toy(tree[1],env)),env]
+                return [car(toy(tree[1],env)[0]),env]
             elif tree[0]=="cdr":
-                return [cdr(toy(tree[1],env)),env]
+                return [cdr(toy(tree[1],env)[0]),env]
             elif tree[0]=="cons":
                 return [cons(toy(tree[1],env)[0],toy(tree[2],env)[0]) ,env]
             elif tree[0]=="cond":
@@ -605,7 +606,7 @@ def toy(tree,env,module_name=""):
                     print "In toy language, it is not allowed to redefine var."
                     print "While not recommended to change value of a defined var,"
                     print "you could use set! function to modify the value."
-                    return ""
+                    return ["",env]
                 var_value = toy(tree[2],env)[0]
                 #env.insert(0,[var_name,var_value])   
                 return [var_value,cons([var_name,var_value],env)]
@@ -640,9 +641,9 @@ def toy(tree,env,module_name=""):
                 return_env = return_obj[1]
                 return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
             elif tree[0]=="apply":
-                return toy(cons(tree[1],toy(tree[2],env)),env)
+                return toy(cons(tree[1],toy(tree[2],env)[0]),env)
             elif tree[0]=="eval":
-                return toy(toy(tree[1],env,module_name),env,module_name)
+                return toy(toy(tree[1],env,module_name)[0],env,module_name)
             elif tree[0]=="number?":
                 return [number_(toy(tree[1],env)[0]),env]
             elif tree[0]=="quasiquote":
@@ -662,7 +663,7 @@ def toy(tree,env,module_name=""):
                 return toy(parser(lexer(VirtualFileSystem[tree[1]])[0]) , env , module_name)
             # io function
             elif tree[0]=="display":
-                return [display_(toy(tree[1],env)),env]
+                return [display_(toy(tree[1],env)[0]),env]
             #elif tree[0]=="input":
             #    value = raw_input(toy(tree[1],env))
             #    return value
@@ -694,7 +695,6 @@ def toy(tree,env,module_name=""):
                 return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
                 #return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
                 #return toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
-
             else:
                 return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
 #return new env

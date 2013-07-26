@@ -4,10 +4,16 @@ import sys
 print sys.argv
 
 # toy language simple repl
-def repl(prompt="toy > "):
-    while True:
+def repl(prompt="toy > ",env=[]):
         input_str = raw_input(prompt)
-        print toy(parser(lexer(input_str)[0]),global_env)
+        tree = parser(lexer(input_str)[0])
+        if tree==["exit"]:
+            return
+        else:
+            return_obj = toy(tree,env,"")
+            print return_obj[0]
+                            # new environment
+            repl("toy > ",return_obj[1])
         #print global_env
 
 # COMMANDS
@@ -84,7 +90,7 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
 
 elif len(sys.argv)==1:
     print "Toy Language >>>>>>>>>>>>>>>"
-    print "Press ctrl+C to quit\n"
+    print "Press ctrl+C or Type (exit) to quit\n"
     repl()
 else:
     print "Argv Error.."
