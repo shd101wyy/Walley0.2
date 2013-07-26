@@ -454,7 +454,7 @@ def cons(value1,value2):
 def cond(tree,env):
     if tree==[]:
         return "0"
-    if toy(tree[0][0],env)!="0":
+    if toy(tree[0][0],env)[0]!="0":
         return toy(tree[0][1],env)
     return cond(tree[1:len(tree)],env) 
 
@@ -465,7 +465,8 @@ def cond(tree,env):
 # assoc("x",[["x",12],["y",13]])->12
 def assoc(var_name, env):
     if env==[]:
-        print "Error...Cannot find "+var_name
+        # print "Error...Cannot find "+var_name
+        return False
     if env[0][0]==var_name:
         return env[0][1]
     return assoc(var_name,env[1:len(env)])
@@ -484,8 +485,8 @@ def append(x,y):
 
 def math_(tree,sign,env):
     if len(tree)==1:
-        return toy(tree[0],env)
-    return math_operation(math_(tree[0:len(tree)-1],sign,env), toy(tree[len(tree)-1],env) ,sign)
+        return toy(tree[0],env)[0]
+    return math_operation(math_(tree[0:len(tree)-1],sign,env), toy(tree[len(tree)-1],env)[0] ,sign)
 def number_(value):
     if stringIsNumber(value):
         return "1"
@@ -504,33 +505,41 @@ def display_(value):
 # set global env
 global_env=[]
 
+def toy_language(trees,env,module_name):
+    if trees==[]:
+        return env
+    else:
+        return toy_language(cdr(trees), toy(car(trees),env,module_name)[1] , module_name )
+
+# TRY FUNCTIONAL PROGRAMMING, without global params
+# [return_value,env]
 def toy(tree,env,module_name=""):
     # string
     if tree[0]=="\"":
-            return tree
+        return [tree,env]
     # number
     if stringIsNumber(tree):
-        return tree
+        return [tree,env]
     # atom
     elif type(tree)==str:
-        return assoc(tree,env)
+        return [assoc(tree,env),env]
     else:
         if type(tree[0])==str:
             # seven primitive functions
             if tree[0]=="quote":
-                return quote(tree[1])
+                return [quote(tree[1]),env]
             elif tree[0]=="atom?":
-                return atom(toy(tree[1],env))
+                return [atom(toy(tree[1],env)),env]
             elif tree[0]=="eq":
-                return eq(tree[1],tree[2],env)
+                return [eq(tree[1],tree[2],env),env]
             elif tree[0]=="car":
-                return car(toy(tree[1],env))
+                return [car(toy(tree[1],env)),env]
             elif tree[0]=="cdr":
-                return cdr(toy(tree[1],env))
+                return [cdr(toy(tree[1],env)),env]
             elif tree[0]=="cons":
-                return cons(toy(tree[1],env),toy(tree[2],env))
+                return [cons(toy(tree[1],env)[0],toy(tree[2],env)[0]) ,env]
             elif tree[0]=="cond":
-                return cond(tree[1:len(tree)],env)
+                return [cond(tree[1:len(tree)],env),env]
 
             # builtin functions
             elif tree[0]=="__ADD__" or tree[0]=="__MINUS__" or tree[0]=="__MULT__" or tree[0]=="__DIV__":
@@ -543,13 +552,13 @@ def toy(tree,env,module_name=""):
                     sign="*"
                 else:
                     sign="/"
-                return math_(tree[1:len(tree)],sign,env)
+                return [math_(tree[1:len(tree)],sign,env),env]
             elif tree[0]=="__EQUAL__":
-                value1=toy(tree[1],env)
+                value1=toy(tree[1],env)[0]
                 if stringIsNumber(value1):
                     value1=eval(value1)
 
-                value2=toy(tree[2],env)
+                value2=toy(tree[2],env)[0]
                 if stringIsNumber(value2):
                     value2=eval(value2)
 
@@ -558,15 +567,15 @@ def toy(tree,env,module_name=""):
                 if type(value2)==str and value2[0]=="\"":
                     value2 = convertStringToArray(value2[1:len(value2)-1])
                 if value1==value2:
-                    return "1"
+                    return ["1",env]
                 else:
-                    return "0"
+                    return ["0",env]
             elif tree[0]=="__LT__":
-                value1=toy(tree[1],env)
+                value1=toy(tree[1],env)[0]
                 if stringIsNumber(value1):
                     value1=eval(value1)
 
-                value2=toy(tree[2],env)
+                value2=toy(tree[2],env)[0]
                 if stringIsNumber(value2):
                     value2=eval(value2)
 
@@ -576,9 +585,9 @@ def toy(tree,env,module_name=""):
                     value2 = convertStringToArray(value2[1:len(value2)-1])
 
                 if value1<value2:
-                    return "1"
+                    return ["1",env]
                 else:
-                    return "0"    
+                    return ["0",env]    
             # (define var_name var_value)
             elif tree[0]=="define":
                 def var_existed(var_name,env):
@@ -597,36 +606,47 @@ def toy(tree,env,module_name=""):
                     print "While not recommended to change value of a defined var,"
                     print "you could use set! function to modify the value."
                     return ""
-                var_value = toy(tree[2],env)
-                env.insert(0,[var_name,var_value])   
-                return var_value
+                var_value = toy(tree[2],env)[0]
+                #env.insert(0,[var_name,var_value])   
+                return [var_value,cons([var_name,var_value],env)]
             elif tree[0]=="set!":
-                def set_index(var_name,env,count):
+                def set_index(var_name,env,var_value):
                     if env==[]:
-                        return -1
+                        print "Error...In function set! "+var_name+" does not existed"
+                        return []
                     elif var_name==env[0][0]:
-                        return count
-                    return set_index(var_name,env[1:len(env)],count+1)
-                index = set_index(tree[1],env,0)
-                if index==-1:
-                    print "Error...In function set! var does not existed"
-                else:
-                    env[index] = [env[index][0],toy(tree[2],env)]
-                    return toy(tree[2],env)
+                        #return count
+                        #    return [var_value, new_env]
+                        return cons([var_name,var_value],cdr(env))
+                    return cons(car(env), set_index(var_name,env[1:len(env)],var_value))
+
+                #let
+                var_value = toy(tree[2],env)[0]
+                index = set_index(tree[1],env,var_value)
+                #if index==-1:
+                #    print "Error...In function set! var does not existed"
+                #else:
+                    #env[index] = [env[index][0],toy(tree[2],env)]
+                    #return toy(tree[2],env)
+                return [var_value,index]
             elif tree[0]=="lambda":
-                return tree
+                return [tree,env]
             elif tree[0]=="begin":
-                return eval_begin(tree[1:len(tree)],env,module_name)
+                return ["",toy_language(tree[1:len(tree)],env,module_name)]
+                #return eval_begin(tree[1:len(tree)],env,module_name)
             elif tree[0]=="let":
-                return toy(tree[2],eval_let(tree[1],env))
+                return_obj = toy(tree[2],eval_let(tree[1],env))
+                return_value = return_obj[0]
+                return_env = return_obj[1]
+                return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
             elif tree[0]=="apply":
                 return toy(cons(tree[1],toy(tree[2],env)),env)
             elif tree[0]=="eval":
                 return toy(toy(tree[1],env,module_name),env,module_name)
             elif tree[0]=="number?":
-                return number_(toy(tree[1],env))
+                return [number_(toy(tree[1],env)[0]),env]
             elif tree[0]=="quasiquote":
-                return quasiquote(tree[1],env)
+                return [quasiquote(tree[1],env),env]
             # load module
             # (load a) will import content in a with module_name ""
             # (load a a) will import content in a with module_name "a"
@@ -642,7 +662,7 @@ def toy(tree,env,module_name=""):
                 return toy(parser(lexer(VirtualFileSystem[tree[1]])[0]) , env , module_name)
             # io function
             elif tree[0]=="display":
-                return display_(toy(tree[1],env))
+                return [display_(toy(tree[1],env)),env]
             #elif tree[0]=="input":
             #    value = raw_input(toy(tree[1],env))
             #    return value
@@ -666,10 +686,14 @@ def toy(tree,env,module_name=""):
                     elif names[0]=="&":
                         return [[name[1],params]]
                     else:
-                        return cons([names[0],toy(params[0],env)],pair_params(names[1:len(names)],params[1:len(params)],env))
+                        return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
 
+                return_array = toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+                return_value = return_array[0]
+                return_env = return_array[1]
+                return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
                 #return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
-                return eval_begin( tree[0][2:len(tree[0])], append(pair_params(tree[0][1],cdr(tree),env),env))
+                #return toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
 
             else:
                 return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
@@ -681,29 +705,13 @@ def eval_let(expr,env):
     if expr==[]:
         return env
     # now ((x 12)(y x)) -> y = 12
-    return eval_let(expr[1:len(expr)], cons( [expr[0][0],toy(expr[0][1],env)] , env) )
+    return eval_let(expr[1:len(expr)], cons( [expr[0][0],toy(expr[0][1],env)[0]] , env) )
     #return cons([expr[0][0],toy(expr[0][1],env)], eval_let(expr[1:len(expr)],env) )
 # ["x","y"] [["x",12],["y",13]] -> [12,13]
 def evlis(params,env):
     if params==[]:
         return []
-    return cons(toy(params[0],env), evlis(params[1:len(params)],env))
-
-# eval begin function
-# stms -> (stm1 stm2 stm3)
-def eval_begin(stms,env,module_name=""):
-    if stms==[]:
-        print "Error...begin function invalid parameters"
-    if len(stms)==1:
-        return toy(stms[0],env,module_name)
-    else:
-        # it is atom
-        # so not calculated
-        if type(stms[0])==str:
-            return eval_begin(stms[1:len(stms)],env,module_name)
-        else:
-            toy(stms[0],env,module_name)
-            return eval_begin(stms[1:len(stms)],env,module_name)
+    return cons(toy(params[0],env)[0], evlis(params[1:len(params)],env))
 
 
 '''
@@ -789,6 +797,16 @@ def convertStringToArray(input_str):
     for i in input_str:
         output.append(i)
     return output
+
+to_run = [["define","x","12"],
+            ["define","y","13"],
+            ["define","z",["__ADD__","x","y"]],
+            [["lambda",["a"],["set!","z","1"]],"1"],
+            ["set!","x","15"],
+            ["begin",["define","a","z"]],
+            ["define","m",["let",[["x","x"],["y","x"]],["__ADD__","y","a"]]]
+         ]
+print toy_language(to_run,[],"")
 
 '''
 def interpreter(tree):
