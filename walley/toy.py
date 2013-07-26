@@ -266,7 +266,8 @@ def lexer(input_str):
                 if input_str[i]=="\"" and input_str[i-1]!="\\":
                     count2=count2+1
                     if count2==2:
-                        output.append(input_str[start:i+1])
+                        # remove " "
+                        output.append(["quote",input_str[start+1:i]])
                         break
                 i=i+1
             
@@ -367,7 +368,7 @@ def atom(arg):
         return "0"
     else:
         # string is list not atom
-        if arg[0]=="\"":
+        if arg.find(" ")!=-1:
             return "0"
         return "1"
 def eq(var_name1, var_name2,env):
@@ -376,10 +377,10 @@ def eq(var_name1, var_name2,env):
     value2 = toy(var_name2,env)[0]
     if is_(value1,value2):
         return "1"
-    if type(value1)==str and  value1[0]=="\"":
-        value1 = convertStringToArray(value1[1:len(value1)-1])
-    if type(value2)==str and value2[0]=="\"":
-        value2 = convertStringToArray(value2[1:len(value2)-1])
+    #if type(value1)==str and  value1[0]=="\"":
+    #    value1 = convertStringToArray(value1[1:len(value1)-1])
+    #if type(value2)==str and value2[0]=="\"":
+    #    value2 = convertStringToArray(value2[1:len(value2)-1])
 
     if stringIsNumber(value1):
         value1=str(eval(value1))
@@ -404,15 +405,15 @@ def car(value):
         print "Error... Cannot get car of empty list"
         return ""
     # string
-    if value[0]=="\"":
-        return value[0:2]+"\""
+    #if value[0]=="\"":
+    #    return value[0:2]+"\""
     #print value
     return value[0]
 
 def cdr(value):
     # string
-    if value[0]=="\"":
-        return "\""+value[2:len(value)]
+    #if value[0]=="\"":
+    #    return "\""+value[2:len(value)]
     #print value
     if len(value)==0:
         print("Error\nFunction 'cdr' cannot be used on empty list")
@@ -428,14 +429,14 @@ def cons(value1,value2):
     if type(value2)==str:
 
         # cons string
-        if value2[0]=="\"":
-            # (cons "H" "e") -> "He"
-            if value1[0]=="\"":
-                return value1[0:len(value1)-1]+value2[1:len(value2)]
-            elif type(value1)!=str:
-                return "\""+convertArrayToString(value1)+value2[1:len(value2)]
-            else:
-                return "\""+value1+value2[1:len(value2)]
+        #if value2[0]=="\"":
+        #    # (cons "H" "e") -> "He"
+        #    if value1[0]=="\"":
+        #        return value1[0:len(value1)-1]+value2[1:len(value2)]
+        #    elif type(value1)!=str:
+        #        return "\""+convertArrayToString(value1)+value2[1:len(value2)]
+        #    else:
+        #        return "\""+value1+value2[1:len(value2)]
 
         # add pair support
         #print("Error...\nFunction 'cons' only support (cons [value] [list])\n")
@@ -492,6 +493,23 @@ def number_(value):
         return "1"
     return "0"
 def display_(value):
+    '''
+        convert
+        [stms [+ a b]]
+        to
+        (stms (+ a b))
+        '''
+    def convertArrayToString(array):
+        #if type(array)==str:
+        #    return array
+        output="("
+        for i in array:
+            if type(i)==str:
+                output=output+i+" "
+            else:
+                output=output+convertArrayToString(i)+" "
+        return output.strip()+")"
+
     if type(value)==str:
         if len(value)!=0 and value[0]=="\"":
             print eval(value),
@@ -561,10 +579,11 @@ def toy(tree,env,module_name=""):
                 if stringIsNumber(value2):
                     value2=eval(value2)
 
-                if type(value1)==str and  value1[0]=="\"":
-                    value1 = convertStringToArray(value1[1:len(value1)-1])
-                if type(value2)==str and value2[0]=="\"":
-                    value2 = convertStringToArray(value2[1:len(value2)-1])
+                #if type(value1)==str and  value1[0]=="\"":
+                #    value1 = convertStringToArray(value1[1:len(value1)-1])
+                #if type(value2)==str and value2[0]=="\"":
+                #    value2 = convertStringToArray(value2[1:len(value2)-1])
+
                 if value1==value2:
                     return ["1",env]
                 else:
@@ -578,10 +597,10 @@ def toy(tree,env,module_name=""):
                 if stringIsNumber(value2):
                     value2=eval(value2)
 
-                if type(value1)==str and  value1[0]=="\"":
-                    value1 = convertStringToArray(value1[1:len(value1)-1])
-                if type(value2)==str and value2[0]=="\"":
-                    value2 = convertStringToArray(value2[1:len(value2)-1])
+                #if type(value1)==str and  value1[0]=="\"":
+                #    value1 = convertStringToArray(value1[1:len(value1)-1])
+                #if type(value2)==str and value2[0]=="\"":
+                #    value2 = convertStringToArray(value2[1:len(value2)-1])
 
                 if value1<value2:
                     return ["1",env]
@@ -771,25 +790,11 @@ MARCRO_DATABASE={}
 '''
 
 
-'''
-    convert
-    [stms [+ a b]]
-    to
-    (stms (+ a b))
-    '''
-def convertArrayToString(array):
-    #if type(array)==str:
-    #    return array
-    output="("
-    for i in array:
-        if type(i)==str:
-            output=output+i+" "
-        else:
-            output=output+convertArrayToString(i)+" "
-    return output.strip()+")"
 
 # convert string to Array
 # "Hi" -> ["H","i"]
+
+'''
 def convertStringToArray(input_str):
     output=[]
     for i in input_str:
@@ -797,7 +802,6 @@ def convertStringToArray(input_str):
     return output
 
 
-'''
 def interpreter(tree):
     global SYMBOLIC_TABLE
     global MARCRO_DATABASE
