@@ -633,9 +633,11 @@ def toy(tree,env,module_name=""):
                     print "While not recommended to change value of a defined var,"
                     print "you could use set! function to modify the value."
                     return ["",env]
-                var_value = toy(tree[2],env)[0]
+                return_obj = toy(tree[2],env)
+                var_value = return_obj[0]
+                new_env = return_obj[1]
                 #env.insert(0,[var_name,var_value])   
-                return [var_value,cons([var_name,var_value],env)]
+                return [var_value,cons([var_name,var_value],new_env)]
             elif tree[0]=="set!":
                 def set_index(var_name,env,var_value):
                     if env==[]:
@@ -648,8 +650,10 @@ def toy(tree,env,module_name=""):
                     return cons(car(env), set_index(var_name,env[1:len(env)],var_value))
 
                 #let
-                var_value = toy(tree[2],env)[0]
-                index = set_index(tree[1],env,var_value)
+                return_obj = toy(tree[2],env)
+                var_value = return_obj[0]
+                new_env = return_obj[1]
+                index = set_index(tree[1],new_env,var_value)
                 #if index==-1:
                 #    print "Error...In function set! var does not existed"
                 #else:
@@ -659,7 +663,7 @@ def toy(tree,env,module_name=""):
             elif tree[0]=="lambda":
                 return [tree,env]
             elif tree[0]=="begin":
-                return ["",toy_language(tree[1:len(tree)],env,module_name)]
+                return toy(tree[len(tree)-1], toy_language(tree[1:len(tree)-1],env,module_name),module_name)
                 #return eval_begin(tree[1:len(tree)],env,module_name)
             elif tree[0]=="let":
                 return_obj = toy(tree[2],eval_let(tree[1],env))
