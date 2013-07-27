@@ -695,7 +695,11 @@ def toy(tree,env,module_name=""):
             #    return value
             #procedure value
             else:
-                return toy(cons(assoc(tree[0],env), cdr(tree)),env)
+                value = assoc(tree[0],env)
+                if value == False:
+                    print "Error...Undefined function "+tree[0]
+                    return ["",env]
+                return toy(cons(value , cdr(tree)),env)
         else:
             # label function
             if tree[0]=="label":
