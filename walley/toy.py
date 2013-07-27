@@ -556,7 +556,7 @@ def toy(tree,env,module_name=""):
             elif tree[0]=="cons":
                 return [cons(toy(tree[1],env)[0],toy(tree[2],env)[0]) ,env]
             elif tree[0]=="cond":
-                return [cond(tree[1:len(tree)],env),env]
+                return cond(tree[1:len(tree)],env)
 
             # builtin functions
             elif tree[0]=="__ADD__" or tree[0]=="__MINUS__" or tree[0]=="__MULT__" or tree[0]=="__DIV__":

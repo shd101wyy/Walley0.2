@@ -37,6 +37,7 @@ if len(sys.argv)==2:
     file_name=sys.argv[1]
     file=open(file_name)
     string_in_side = file.read()
+    string_in_side = "(begin "+string_in_side+")"
     string_in_side = cleanString(string_in_side)
     #print "\n\nLexer---->\n"
     #print "--> "+string_in_side
@@ -51,7 +52,7 @@ if len(sys.argv)==2:
     #print x
     #print "Parser----> ",
     #print x
-    toy(x,global_env)
+    toy(x,[],"")
 
 # compress file
 elif len(sys.argv)==3 and sys.argv[1]=="compress":
