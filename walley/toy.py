@@ -719,7 +719,7 @@ def toy(tree,env,module_name=""):
                         return [[names[1],evlis(params,env)]]
                     # lazy and does not calculate params
                     elif names[0]=="&":
-                        return [[name[1],params]]
+                        return [[names[1],params]]
                     else:
                         return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
 

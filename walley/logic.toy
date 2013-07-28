@@ -1,0 +1,7 @@
+(define if (lambda (judge & args)
+	(cond 
+		(judge (eval (car args)))
+		(1 (eval (car (cdr args))))
+		)
+))
+(display (if 0 12 13))
