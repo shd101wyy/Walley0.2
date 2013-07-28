@@ -5,3 +5,227 @@
 		)
 ))
 (display (if 0 12 13))
+
+; stm '(mother hsj wyy)'  hsj is wyy's mother
+; output : return the database
+; return ( (like (hsj) (wyy)) )
+; eg:
+;	(display (logic '(like a b) '()))
+;   > ((like (a b)))
+;	(display (logic '(like b c) '((like (a b))) ))
+;   > ((like (b c) (a b)))
+; build database
+(define logic (lambda (stm env)
+	(let 
+		(
+			(verb (car stm))
+			(subject (car (cdr stm)))
+			(object (car (cdr (cdr stm))))
+
+			(check_exited (lambda (env verb subject object)
+				(cond 
+					; does not existed
+					((eq env '()) 
+						(let 
+							((consequence (cons verb   
+								(cons  
+									(cons 
+										subject
+										(cons 
+											object '()
+											)
+										)
+									'()
+									)
+								)))
+							(cons consequence env)
+							)
+						)
+					; find existed
+					((eq (car (car env)) verb)
+						(let 
+							((consequence (cons verb     
+								(cons 
+									(cons 
+										subject
+										(cons object '())
+										)
+									(cdr (car env))
+									)
+								)))
+							(cons consequence (cdr env))
+							)
+						)
+					(1 (cons (car env) (check_exited (cdr env) verb subject object)) )
+					)
+				))
+		)
+		(check_exited  env verb subject object)
+		)
+	))
+(display (logic '(like a b) '()))
+(display (logic '(like b c) '((like (a b))) ))
+; get variable value of stm according to env
+; eg:
+;      env: ((like (a) (b)))
+;	   stm: (like a X)
+;      vars: (X)
+;      will return ( (X b) )
+;
+;	   env: ((like (a b) (a c)))
+;	   stm: (like a X)
+;	   vars: (X)
+;	   will return ( (X b) (X c) )
+;
+;	   env: ((like (a b) (a c)))
+;	   stm: (like X Y)
+;      vars: (X Y)
+;      will return ((X a Y b) (X a Y c))  
+(define and __AND__)
+(define or __OR__)
+(define logic-? (lambda (stm vars env)
+	(let
+		(
+			; get verb subject object
+			(verb (car stm))
+			(subject (car (cdr stm)))
+			(object (car (cdr (cdr stm))))
+			; check whether subject is var
+			(subject_is_var (cond 
+				((eq subject (car vars)) (car vars))
+				((eq (cdr vars) '()) 0)
+				((eq subject (car (cdr vars))) (car (cdr vars)))
+				(1 0)
+				)
+				)
+			; check whether object is var
+			(object_is_var (cond 
+				((eq object (car vars)) (car vars))
+				((eq (cdr vars) '()) 0)
+				((eq object (car (cdr vars))) (car (cdr vars)))
+				(1 0)
+				)
+				)
+			; get env that has verb
+			; eg env ((like (a b) (a c))) with verb like
+			; return (like (a b) (a c))
+			(get_env (lambda (env verb)
+				(cond
+					((eq env '()) (display "Function logic-? error 1") )
+					((eq (car (car env)) verb) (car env))
+					(1 (get_env (cdr env) verb))
+					)
+				))
+			(predicate (get_env env verb))
+
+			; get match pattern
+			; eg (like (a b) (a c)) 
+			; with stm (like a X)
+			; return ((X a)(X b))
+			(get_consequence (lambda (env)
+				(cond
+					((eq env '()) '())
+					; subject is var
+					(subject_is_var 
+						(cond
+							; object is var 
+							(object_is_var 
+								(cons
+									(cons 
+										subject
+										(cons 
+											(car (car env))
+											(cons object
+												(cons 
+													(car (cdr (car env)))
+													'()
+													)
+												)
+											)
+										)
+									(get_consequence (cdr env))
+									)
+								)
+							; object is not var
+							(1 
+								(cond
+									; match object
+									((eq (car (cdr (car env))) object)
+										
+										(cons (cons 
+											subject
+											(cons
+												(car (car env))
+												'()
+												)
+											)  (get_consequence (cdr env)))
+										)
+									; does not match object
+									(1 
+										(get_consequence (cdr env))
+										)
+									)
+								)
+							)
+						)
+					; subject is not var
+					(1
+						(cond 
+							; match subject
+							((eq subject (car (car env)))
+								(cond
+									; object is var
+									(object_is_var 
+										(cons  
+											(cons object_is_var (cons (car (cdr (car env))) '()))
+											(get_consequence (cdr env)))
+										)
+									; object is not var
+									(1 (get_consequence (cdr env)))
+									)
+								)
+							; does not match
+							(1 
+								(get_consequence (cdr env)))
+							)
+						)
+					)
+				))
+
+		)
+
+		;predicate
+		(get_consequence (cdr predicate))
+		)
+	))
+
+(display (logic-? '(like Y X) '(X Y) '((like (b c) (d c) (a b) (a d)))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
