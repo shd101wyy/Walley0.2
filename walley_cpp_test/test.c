@@ -6,9 +6,9 @@ typedef struct VALUE{
 	struct VALUE *list_value;
 	struct VALUE *next;
 } VALUE;
-void VALUE_init(VALUE *value){
-	(*value).string_value = NULL;
-	(*value).list_value = NULL;
+void VALUE_init(VALUE *value,char *string_value, VALUE *list_value){
+	(*value).string_value = string_value;
+	(*value).list_value = list_value;
 	(*value).next = NULL;
 }
 void VALUE_print(VALUE *value);
@@ -37,7 +37,6 @@ void VALUE_append(VALUE *value, char *string_value, VALUE *list_value){
 
 	VALUE *append_value;
 	append_value = (VALUE *)malloc(sizeof(VALUE)*1);
-	//VALUE_init(&append_value);
 	append_value->string_value = NULL;
 	append_value->list_value = NULL;
 	append_value->next = NULL;
@@ -114,7 +113,10 @@ void VALUE_print(VALUE *value){
 	}
 }
 
-void lexer(VALUE *value,char *input_str){
+VALUE* lexer(char *input_str){
+	VALUE *value = (VALUE*)malloc(sizeof(VALUE));
+	VALUE_init(value,NULL,NULL);
+
 	int count = 0; // count of ( and )
 	int length = (int)strlen(input_str);
 	int i=0;
@@ -178,12 +180,8 @@ void lexer(VALUE *value,char *input_str){
             else
             	VALUE_append(value,"unquote",NULL);
             
-            VALUE *temp_=(VALUE*)malloc(sizeof(VALUE)*1);
-            temp_->string_value = NULL;
-            temp_->list_value = NULL;
-            temp_->next = NULL;
-            lexer(temp_,to_append);
-
+            VALUE *temp_=lexer(to_append);
+           
             while (temp_!=NULL){
             	VALUE_append(value,temp_->string_value,temp_->list_value);
             	temp_ = temp_->next;
@@ -243,6 +241,7 @@ void lexer(VALUE *value,char *input_str){
         }
 
 	}
+	return value;
 }
 
 VALUE *parser(VALUE *arr){
@@ -300,6 +299,42 @@ int isEmpty(VALUE *value){
 		return 1;
 	return 0;
 }
+int isString(VALUE *value){
+	if (value->string_value!=NULL)
+		return 1;
+	return 0;
+}
+int isList(VALUE *value){
+	if (value->next!=NULL)
+		return 1;
+	return 0;
+}
+// return the type of value
+char *type(VALUE *value){
+	if (value->next==NULL){
+		return "str";
+	}
+	return "list";
+}
+// ===============================
+// SEVEN primitives
+// ===============================
+// (quote arg) -> arg
+VALUE* quote(VALUE *arg){
+	return arg;
+}
+
+VALUE* atom(VALUE *arg){
+	VALUE *output;
+	output = (VALUE*)malloc(sizeof(VALUE));
+	if (isString(arg)){
+		VALUE_init(output,"1",NULL);
+		return output;
+	}
+	VALUE_init(output,"0",NULL);
+	return output;
+}
+
 // it is a copy 
 VALUE* car(VALUE *value){
 	VALUE *output = (VALUE*)malloc(sizeof(VALUE));
@@ -327,16 +362,50 @@ VALUE* cdr(VALUE *value){
 }
 
 
+// has problem here
+VALUE* cons(VALUE *value1, VALUE *value2){
+    if (strcmp(type(value2),"str")==0){
+    	VALUE *output;
+    	output = (VALUE*)malloc(sizeof(VALUE));
+    	VALUE_init(output,NULL,NULL);
+    	VALUE_append(output,value1->string_value,value1->list_value);
+    	
+    	// pair
+    	VALUE_append(output,".",NULL);
+    	VALUE_append(output,value2->string_value,value2->list_value);
+        return output;
+    }
+    // not pair
+    else{
+    	VALUE *output;
+    	output = (VALUE*)malloc(sizeof(VALUE));
+    	VALUE_init(output,NULL,NULL);
+    	if (strcmp(type(value1),"list")==0){
+   			VALUE_append(output,NULL,value1);
+    	}
+    	else{
+			VALUE_append(output,value1->string_value,value1->list_value);
+    	}
+    	//VALUE_append(output,value1->string_value,value1->list_value);
+    	while (value2!=NULL){
+    		VALUE_append(output,value2->string_value,value2->list_value);
+    		value2 = value2->next; 
+    	}
+        return output;
+    }
+}
+
 int main(int argc, char * argv[]){
+	
 	VALUE *value;
 	value = (VALUE*)malloc(sizeof(VALUE)*1);
 	value->string_value = NULL;
 	value->list_value = NULL;
 	value->next = NULL;
 
-	lexer(value,"()");
+	value=lexer("(1 2 3)");
 	VALUE_print(value);
-
+	
 	printf("@======================@\n");
 
 	VALUE *output = parser(value);
@@ -344,12 +413,9 @@ int main(int argc, char * argv[]){
 	VALUE_print(output);
 
 	printf("@@@@@@======================\n");
-	VALUE_print(cdr(output));
+	VALUE_print(cons(parser(lexer("(1 12)")),output));
 	if (cdr(output)==cdr(output))
 		printf("EQUAL\n" );
-	
-
-
 
 
 	return 0;
