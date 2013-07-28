@@ -199,8 +199,61 @@
 		)
 	))
 
-(display (logic-? '(like Y X) '(X Y) '((like (b c) (d c) (a b) (a d)))))
+;(display (logic-? '(like Y X) '(X Y) '((like (b c) (d c) (a b) (a d)))))
 
+;
+;
+;	test whether stm is valid
+;	eg:
+;		stm : (like a b)
+;		env : ((like (a c) (a d)))
+; 		return 0 because there is not match
+(define logic-test (lambda (stm env)
+	(let 
+		(
+		; get verb subject object
+			(verb (car stm))
+			(subject (car (cdr stm)))
+			(object (car (cdr (cdr stm))))
+		; get verb environment
+			(get_env (lambda (env)
+				(cond
+					; does not match
+					((eq env '()) 0)
+					((eq (car (car env)) verb) (cdr (car env)))
+					(1 (get_env (cdr env)))
+					)
+				))
+		; test whether match
+			(test (lambda (env)
+				(cond
+					; does not match at all
+					((eq env '()) 0)
+					; match subject
+					((eq (car (car env)) subject)
+						(cond
+							; match object
+							((eq (car (cdr (car env))) object)
+								1
+								)
+							(1 (test (cdr env)))
+							)
+						)
+					(1 (test (cdr env)))
+					)						
+				))
+			(new_env (get_env env))
+			; get consequence
+			(consequence (cond
+				((eq new_env 0) 0)
+				(1 (test new_env))
+				))
+			)
+		consequence
+		)
+	))
+
+(display (logic-test '(like a b) '((like (b c) (a b)))))
 
 
 
