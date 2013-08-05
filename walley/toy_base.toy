@@ -214,9 +214,22 @@
 				)
 			)
 		))
-
 	;=================== END let function procedure =============
 	;============================================================
+
+	;====== function begin ======
+	;============================
+	(define eval_begin (lambda (expr env module_name)
+		(cond 
+			((null? expr) (display "Error...begin function params num error"))
+			((null? (cdr expr))
+				(toy (car expr) env module_name)
+				)
+			(1 (eval_begin (cdr expr) (cadr (toy (car expr) env module_name)) module_name))
+			)
+		))
+
+	;============================
 
 	; Toy Language
 	; (toy 'x  '((x . a)) ) -> x
@@ -300,7 +313,7 @@
 						)
 					; (begin stm1 stm2)
 					((eq (car expr) 'begin)
-						(eval_begin (cdr expr) env)
+						(eval_begin (cdr expr) env module_name)
 						)
 					; (let ((var value) (var value) ... ) stm )
 					((eq (car expr) 'let)
@@ -351,7 +364,7 @@
 
 	(display (assoc 'a '((a (a b c)))))
 	;(display (toy 'a '((a (a b c))) ""))
-	(display (toy '(let ((a 3)(c (cdr b))) c) '( (a (a b c)) (b (a b c))  ) ""))
+	(display (toy '(begin (define x 12) (define y 15) (set! x 13) x) '( (a (a b c)) (b (a b c))  ) ""))
 
 )
 
