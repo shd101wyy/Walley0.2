@@ -85,8 +85,12 @@ quote:
 		如果事先    
 		(define a 12)  
 		那么  
-		(define x '(,a a)) 则 assign (12 a) to x  
-		# 加上 , 符号意味着进行计算  
+		(define x '(,a a)) 则 assign (12 a) to x   但是不进行计算
+			====> ((unquote a) a)
+		# 加上 , 符号意味着进行计算 
+
+		(define x @(,a a)) 则 assign (12 a) to x 并且进行计算
+			====> (12 a) 
   
 		所以 '(,a a) 会计算第一个a而不计算第二个a。。  
 
@@ -202,6 +206,17 @@ eg:
 	> 7  
 	>(test_add 3 4 and 5 6) ; 展开为 (+ 3 4 5 6)  
 	> 18  
+
+
+
+=============
+删除了 pair 的支持
+现在 
+	(cons 'a 'b) -> 'ab   # it is not pair anymore
+	(cons 'a '(b)) -> '(a b)
+	(cons '(a) '(b)) -> '((a) b)
+
+
 
 
 

@@ -419,11 +419,19 @@ def cdr(value):
         print("Error\nFunction 'cdr' cannot be used on empty list")
     elif len(value)==1:
         return []
+    # I removed pair
     # pair
-    elif type(value)!=str and len(value)==3 and value[1]==".":
-        return value[2]
+    #elif type(value)!=str and len(value)==3 and value[1]==".":
+    #    return value[2]
     else:
         return value[1:len(value)]
+'''
+I removed pair 
+now (cons 'a 'b) -> 'ab
+now (cons 'a '(a b)) -> '(a a b)
+now (cons '(a b) 'a) Error ... you cannot do that
+
+now no pair anymore
 
 def cons(value1,value2):
     if type(value2)==str:
@@ -451,6 +459,24 @@ def cons(value1,value2):
         for a in value2:
             output.append(a)
         return output
+'''
+def cons(value1,value2):
+    type_value1 = type(value1)
+    type_value2 = type(value2)
+    # 'a 'a -> 'aa
+    if type_value1==str and type_value2==str:
+        return value1 + value2
+    # 'a '(a) -> '(a a)
+    # '(a) '(b) -> '((a) b)
+    elif type_value2!=str:
+        output = [value1]
+        for i in value2:
+            output.append(i)
+        return output
+    else:
+        print "Error...Function cons param type error"
+        return ""
+
 
 def cond(tree,env):
     if tree==[]:
