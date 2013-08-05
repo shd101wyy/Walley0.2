@@ -4,6 +4,13 @@
 	;==============================================
 	;===== Begin to construct Toy Language ========
 	;==============================================
+	;
+	;
+	;
+	;	 I will only write this in 
+	;	'quote car cdr cons cond eq atom' 
+	;	====
+	;   and one 'define' function
 	(define cadr (lambda (_list_)
 		(car (cdr _list_))
 		))
@@ -23,6 +30,9 @@
 		(car (cdr (cdr (car _list_))))
 		))
 
+	(define null? (lambda (x)
+		(eq x '())
+		))
 	; '(a b) '(c d) -> (a b c d)
 	(define append (lambda (x y)
 		(cond 
@@ -41,72 +51,203 @@
 	; (assoc 'x '((x  a) (y  b) )) -> a
 	(define assoc (lambda (x y)
 		(cond 
+			; Error can not find value
 			((null? y) 
-				(begin 
-					(display "Error_Cannot_Find")
-					(display x)
-					'Error_Cannot_Find
-					)
+					(display 'Error_Cannot_Find)
 				)
 			((eq (caar y) x) (cadar y))
 			(1 (assoc x (cdr y)) )
 			)
 		))
 
+	; Toy Language iteration
+	(define toy_language (lambda (trees env module_name)
+		(cond
+			; finish toy_language
+			((null? trees) env)
+			; iteration
+			(1
+				(toy_language 
+					; next tree
+					(cdr trees)
+					; update environment
+					(cdar (toy (car trees) env module_name))
+					; module_name
+					module_name)
+				)
+			)
+		))
+
+	; [value , env]
+	(define cons_env (lambda (value env)
+		(cons value (cons env '()))
+		))
+
+	; =========================
+	; for define function
+	;check whether var existed
+	(define var_existed(lambda (var_name env)
+		(cond 
+			((null? env) 0)
+			((eq var_name (caar env)) 1)
+			(1 (var_existed var_name (cdr env)))
+			)
+		))
+	; update var_name
+	; add module_name
+	(define var_name_update (lambda (var_name module_name)
+		(cond 
+			((eq module_name "") var_name)
+			(1 (cons (module_name '.) var_name))
+			)
+		))
+	; deal with return object
+	; where return object is toy
+	; return_obj[0] = var_value
+	; return_obj[1] = new_env
+
+	(define deal_with_return_obj (lambda (return_obj var_name)
+		(cons 
+			; add var_value
+			(car return_obj)
+		(cons 
+		(cons 
+			; [var_name var_value]
+			(cons var_name (cons (car return_obj) '()))
+			(cadr return_obj)
+			)  '())
+			)
+		))
+
+	;define function procedure
+	(define define_procedure (lambda (updated_var_name uncalculated_var_value env module_name)
+		(cond 
+			((var_existed updated_var_name env)
+				(display (cons (cons "Error " updated_var_name) " Has already be defined") )
+				)
+			(1 (deal_with_return_obj (toy uncalculated_var_value env module_name) updated_var_name))
+			)
+		))
+
+	;=================== END define function procedure ==========
+	;============================================================
+
+	;========= set! function procedure ==========
+
+	; return new environment
+	(define set_index (lambda (var_name var_value env)
+		(cond
+			((null? env) 
+				((lambda (a b) b) 
+					(display (cons (cons "Error...In function set! " var_name) " does not exist")) '()
+					)
+				)
+			; find var
+			((eq var_name (caar env))
+				(cons 
+					; (var_name var_value)
+					(cons 
+						var_name
+						(cons var_value '())
+						)
+					; rest of env
+					(cdr env))
+				)
+			(1 (cons (car env) (set_index var_name var_value (cdr env))))
+			)
+		))
+	
+	(define set!_procedure (lambda (var_name return_obj)
+		;(var_value new_env)
+		(cons (car return_obj) (cons (set_index var_name (car return_obj) (cadr return_obj)) '()))
+		))
+
+
+	;========= End set! function procedure ======
+
+	;========= let function procedure ===========
+	;============================================
+	(define let_procedure (lambda (return_obj env)
+		1
+		))
+	;=================== END let function procedure =============
+	;============================================================
+
 	; Toy Language
 	; (toy 'x  '((x . a)) ) -> x
 	; expr is the expression that need to be evaluated
 	; env is the environment
-	(define toy (lambda (expr env)
-		(display env)
-		(display "\n")
+	(define toy (lambda (expr env module_name)
 		(cond
-			((number? expr) expr)
-			((atom? expr) (assoc expr env) )
+			; it is number
+			((number? expr) (cons_env expr env))
+			; it is atom
+			;				[value,env]
+			((atom? expr) (cons (assoc expr env) (cons env '())) )
 			((atom? (car expr))
 				(cond
 					; seven primitive functions
 					; (quote x) -> x
-					((eq (car expr) 'quote) (cadr expr))
+					;						 [value,env]
+					((eq (car expr) 'quote) (cons (cadr expr) (cons env '()) ))
 					; (atom? 'x) -> 1
-					((eq (car expr) 'atom?) (atom? (toy (cadr expr) env)))
+					((eq (car expr) 'atom?) 
+						(cons_env (atom? (car (toy (cadr expr) env module_name))) env)
+						)
 					; (eq 'x 'x) -> 1
 					((eq (car expr) 'eq)  
-						(eq (toy (car (cdr expr)) env )
-							(toy (car (cdr (cdr expr))) env)
-							)
+						(cons_env
+							(eq 
+								(car (toy (cadr expr) env module_name))
+								(car (toy (caddr expr) env module_name))
+								)
+							env
+						)
 						)
 					; (car '(a b))->a
-					((eq (car expr) 'car) (car (toy (cadr expr) env)) )
+					((eq (car expr) 'car) 
+						(cons_env 
+							(car (car (toy (cadr expr) env module_name)))
+							env
+						)
+
+						)
 					; (cdr '(a b)) -> (b)
-					((eq (car expr) 'cdr) (cdr (toy (cadr expr) env)) )
+					((eq (car expr) 'cdr) 
+						(cons_env
+							(cdr (car (toy (cadr expr) env module_name) ) )
+							env
+							)
+						)
 					; (cons 'a '(a) ) -> (a a)
 					((eq (car expr) 'cons)
-						(cons (toy (car (cdr expr)) env)
-							  (toy (car (cdr (cdr expr))) env)
+						(cons_env
+							(cons 
+								(car (toy (car (cdr expr)) env module_name))
+								(car (toy (car (cdr (cdr expr))) env module_name))
+								)
+							env
 							)
 						)
 					; (cond (judge1 stm1) (judge2 stm2) ) 
-					((eq (car expr) 'cond) (eval_cond (cdr expr) env))
+					((eq (car expr) 'cond) (eval_cond (cdr expr) env module_name))
 
 					; builtin functions
-					((eq (car expr) '__ADD__)	
-						(apply __ADD__ (evlis (cdr expr) env))	
+					; define function
+					((eq (car expr) 'define)
+						(define_procedure 
+							(var_name_update (cadr expr) module_name)
+							(caddr expr)
+							env 
+							module_name
+							)
 						)
-					((eq (car expr) '__MINUS__)	
-						(apply __MINUS__ (evlis (cdr expr) env))	
-						)
-					((eq (car expr) '__MULT__)	
-						(apply __MULT__ (evlis (cdr expr) env))	
-						)
-					((eq (car expr) '__DIV__)	
-						(apply __DIV__ (evlis (cdr expr) env))	
-						)
-					((eq (car expr) '__LT__)
-						(apply __LT__ (evlis (cdr expr) env))
-						)
-					((eq (car expr) '__EQUAL__)
-						(apply __EQUAL__ (evlis (cdr expr) env))
+					; set! function
+					((eq (car expr) 'set!) 
+						(set!_procedure
+							(cadr expr)
+							(toy (caddr expr) env module_name)
+							)
 						)
 					;=== my idea ====
 					((eq (car expr) 'lambda)
@@ -141,6 +282,7 @@
 			)
 		))
 
+
 	; return new env
 	; expr -> ((a 12)(b 13)) 
 	; env -> ((c 14))
@@ -157,12 +299,12 @@
 		))
 
 	; eval cond function
-	(define eval_cond (lambda (expr env)
+	(define eval_cond (lambda (expr env module_name)
 		(cond 
-			((toy (caar expr) env) 
-			 (toy (cadar expr) env)
+			((car (toy (caar expr) env module_name))
+			 (toy (cadar expr) env module_name)
 				)
-			(1 (eval_cond (cdr expr) env))
+			(1 (eval_cond (cdr expr) env module_name))
 			)
 		))
 
@@ -220,19 +362,21 @@
 			)
 		))
 
-
-	(display (toy '(eq 1 1) '((x . a))))
-
-
-
-
-
-
-
-
-
-
-
-
+	(display (assoc 'a '((a (a b c)))))
+	;(display (toy 'a '((a (a b c))) ""))
+	(display (toy '(set! a 'b) '( (a (a b c)) (b (a b c))  ) ""))
 
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
