@@ -156,7 +156,7 @@
 			(1 (cons (car env) (set_index var_name var_value (cdr env))))
 			)
 		))
-	
+
 	(define set!_procedure (lambda (var_name return_obj)
 		;(var_value new_env)
 		(cons (car return_obj) (cons (set_index var_name (car return_obj) (cadr return_obj)) '()))
@@ -167,9 +167,54 @@
 
 	;========= let function procedure ===========
 	;============================================
-	(define let_procedure (lambda (return_obj env)
-		1
+	;return new env
+	;expr -> ((a 12)(b 13)) 
+	;env -> ((c 14))
+	;return ((a 12)(b 13)(c 14))
+	(define eval_let (lambda (expr env module_name)
+		(cond 
+			((null? expr)
+				env)
+			; now ((x 12)(y x)) -> y = 12
+			(1 
+				(eval_let (cdr expr) 
+					(cons 
+					; (var_name var_value)
+						; var_name
+						(cons (caar expr)
+						(cons 
+						; var_value... this place has problem.. env maybe updated
+						(car (toy (cadar expr) env module_name)) '())
+						)
+						env
+					)
+					module_name				
+					)
+				)
+			)
 		))
+	; restore new_env to old_env length
+	(define restore_let_env (lambda (old_env new_env new_env_copy)
+		(cond 
+			((null? old_env)
+				(cond 
+					((null? new_env) new_env_copy)
+					(1 (restore_let_env old_env (cdr new_env) (cdr new_env_copy)))
+					)
+				)
+			(1 (restore_let_env (cdr old_env) (cdr new_env) new_env_copy))
+			)
+		))
+	(define let_procedure (lambda (return_obj env)
+		(cons 
+			(car return_obj)
+			(cons
+				(restore_let_env env (cadr return_obj) (cadr return_obj))
+				'()
+				)
+			)
+		))
+
 	;=================== END let function procedure =============
 	;============================================================
 
@@ -251,7 +296,7 @@
 						)
 					;=== my idea ====
 					((eq (car expr) 'lambda)
-						expr
+						(cons_env expr env)
 						)
 					; (begin stm1 stm2)
 					((eq (car expr) 'begin)
@@ -259,7 +304,7 @@
 						)
 					; (let ((var value) (var value) ... ) stm )
 					((eq (car expr) 'let)
-						(toy (caddr expr) (eval_let (cadr expr) env))
+						(let_procedure (toy (caddr expr) (eval_let (cadr expr) env module_name) module_name) env)
 						)
 					; (procesdure argv...)
 					(1 
@@ -283,21 +328,6 @@
 		))
 
 
-	; return new env
-	; expr -> ((a 12)(b 13)) 
-	; env -> ((c 14))
-	; return ((a 12)(b 13)(c 14))
-	(define eval_let (lambda (expr env)
-		(cond 
-			((eq expr '()) env)
-			(1 
-				(cons    
-					(cons (caar expr) (cons (toy (cadar expr) env) '()))
-					(eval_let (cdr expr) env))
-				)
-			)
-		))
-
 	; eval cond function
 	(define eval_cond (lambda (expr env module_name)
 		(cond 
@@ -315,56 +345,13 @@
 			(1 (cons (toy (car m) a) (evlis (cdr m) a)))
 			)
 		))
-	; eval begin function
-	; stms -> (stm1 stm2 stm3)
-	(define eval_begin (lambda (stms env)
-		(cond 
-			((null? stms)(display "Error...begin function invalid parameters"))
-			((null? (cdr stms))  (toy (car stms) env))
-			(1
-				(cond 
-					; it is atom
-					; so not calculated
-					((atom? (car stms)) (eval_begin (cdr stms) env))
-					(1
-						(cond
-							; define
-							; (define x 12)
-							; (define y 13) ... something like that
-							((eq (caar stms) 'define)
-								(eval_begin (cdr stms) (cons (cons (cadar stms) (cons (toy (caddar stms) env) '())) env))
-								)
-							; change existed value
-							((eq (caar stms) 'set!)
-								(eval_begin (cdr stms) (set!_env (cadar stms) (toy (caddar stms) env) env) )
-								)
-							)
-						)
-					)
-				)
-			; define can only be used inside begin
-			)
-		))
+	
 
-	; var_name -> x
-	; var_value -> 12
-	; env -> ((y 12) (x 1))
-	; return ((y 12) (x 12))
-	(define set!_env (lambda (var_name var_value env)
-		(cond
-			((null? env) "Error...set!_env function error")
-			((eq (caar env) var_name)
-				(cons (cons var_name (cons var_value '()))  (cdr env))
-				)
-			(1 
-				(cons (car env) (set!_env var_name var_value (cdr env)))
-				)
-			)
-		))
+
 
 	(display (assoc 'a '((a (a b c)))))
 	;(display (toy 'a '((a (a b c))) ""))
-	(display (toy '(set! a 'b) '( (a (a b c)) (b (a b c))  ) ""))
+	(display (toy '(let ((a 3)(c (cdr b))) c) '( (a (a b c)) (b (a b c))  ) ""))
 
 )
 
