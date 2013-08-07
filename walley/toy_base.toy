@@ -241,7 +241,7 @@
 				(display (cons "Undefined Function " func_name))
 				)
 			; find assoc function
-			((eq (func_name (car (car env))))
+			((eq func_name (car (car env)))
 				(toy (cons (cadar env) params) env module_name)
 				)
 			; iteration
@@ -466,7 +466,7 @@
 
 
 	(display (assoc 'a '((a (a b c)))))
-	(display (toy '((lambda (a) (cdr a)) '(1 2 3)) '((a (a b c)) (b (a b c))) ""))
+	(display (toy '(a '(1 2 3)) '((a (lambda (a) (cdr a))) (b (a b c))) ""))
 )
 
 
