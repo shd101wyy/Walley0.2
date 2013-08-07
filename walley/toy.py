@@ -145,6 +145,7 @@ def stringIsNumber(input_str):
     count_of_e=0
     count_of_slash=0
     count_of_dot=0
+    has_digit = False
     i=0
     if input_str[i]=="-":
         i=1
@@ -160,7 +161,11 @@ def stringIsNumber(input_str):
             pass
         elif charIsDigit(input_str[i]) == False:
             return False
+        else:
+            has_digit = True
         i=i+1
+    if has_digit==False:
+        return False
     # check fraction
     if count_of_slash == 1:
         if stringIsInteger(input_str[0:i]) and stringIsInteger(input_str[i+1:len(input_str)]):

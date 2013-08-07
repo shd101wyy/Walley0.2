@@ -194,22 +194,22 @@
 			)
 		))
 	; restore new_env to old_env length
-	(define restore_let_env (lambda (old_env new_env new_env_copy)
+	(define restore_env (lambda (old_env new_env new_env_copy)
 		(cond 
 			((null? old_env)
 				(cond 
 					((null? new_env) new_env_copy)
-					(1 (restore_let_env old_env (cdr new_env) (cdr new_env_copy)))
+					(1 (restore_env old_env (cdr new_env) (cdr new_env_copy)))
 					)
 				)
-			(1 (restore_let_env (cdr old_env) (cdr new_env) new_env_copy))
+			(1 (restore_env (cdr old_env) (cdr new_env) new_env_copy))
 			)
 		))
 	(define let_procedure (lambda (return_obj env)
 		(cons 
 			(car return_obj)
 			(cons
-				(restore_let_env env (cadr return_obj) (cadr return_obj))
+				(restore_env env (cadr return_obj) (cadr return_obj))
 				'()
 				)
 			)
@@ -228,6 +228,112 @@
 			(1 (eval_begin (cdr expr) (cadr (toy (car expr) env module_name)) module_name))
 			)
 		))
+
+	;============================
+
+	;======= procedure ==========
+	;(toy (cons (assoc (car expr) env) (cdr expr)) env)
+	; eg: (add 3 4)-> (+ 3 4) replace add with +
+	(define procedure_procedure (lambda (func_name params env module_name)
+		(cond 
+			; error... cannot deal with that procedure
+			((null? env) 
+				(display (cons "Undefined Function " func_name))
+				)
+			; find assoc function
+			((eq (func_name (car (car env))))
+				(toy (cons (cadar env) params) env module_name)
+				)
+			; iteration
+			(1 (procedure_procedure func_name params (cdr env) module_name))
+			)
+		))
+	;============================
+	;======== function lambda ===
+	; compute function params
+	; ["x","y"] [["x",12],["y",13]] -> [12,13]
+	(define evlis (lambda (params env module_name)
+		(cond 
+			((null? params) '())
+			(cons (car (toy (car params) env module_name)) (evlis (cdr params env module_name)))
+			)
+		))
+
+	; pair_params
+	; ["a","b"] ["1","2"] -> [["a","1"],["b","2"]]
+    ; [". args"] ["1","2"] -> [["args", ["1","2"]]] 
+    (define pair_params (lambda (names params env module_name)
+    	(cond 
+    		((null? names) '())
+    		; calculate params
+    		;==
+    		;variadic params
+    		((eq (car names) '.)
+    			(cons 
+				(cons 
+					(cadr names)
+					(cons 
+					(evlis params env module_name)
+					'())
+					)
+				'())
+				)
+    		; lazy evaluation->does not calculate params
+    		((eq (car names) '&)
+    			(cons 
+    			(cons 
+    				(cadr names)
+    				(cons 
+    				params
+    				'())
+    				)
+    			'())
+    			)
+    		(1 	
+    			(cons 
+    				;calcuate param
+    				(cons 
+    					;参数名字 
+    					(car names)
+    					(cons 
+    						;得到计算好的参数的数值
+    						(car (toy (car params) env module_name))
+    						'()
+    						)
+    					)
+    				
+    				(pair_params (cdr names) (cdr params) env module_name)
+    				)
+    			)
+    		)
+    	))
+
+        ;return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
+    	(define deal_with_return_obj_for_lambda_procedure (lambda (return_value return_env env)
+    		(cons 
+    			return_value
+    			(cons 
+    				(restore_env env return_env return_env)
+    				'())
+    			)
+    		))
+    	; return_obj -> toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+    	(define lambda_procedure (lambda (return_obj env module_name)
+    		(deal_with_return_obj_for_lambda_procedure (car return_obj) (cadr return_obj) env)
+    		))
+
+                ;def pair_params(names,params,env):
+                ;    if names==[]:
+                ;        return []
+                ;    # calculate params
+                ;    elif names[0]==".":
+                ;        return [[names[1],evlis(params,env)]]
+                ;    # lazy and does not calculate params
+                ;    elif names[0]=="&":
+                ;        return [[names[1],params]]
+                ;    else:
+                ;        return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
+
 
 	;============================
 
@@ -321,22 +427,26 @@
 						)
 					; (procesdure argv...)
 					(1 
-						(toy (cons (assoc (car expr) env) (cdr expr)) env)
+						(procedure_procedure (car expr) (cdr expr) env module_name)
 						)
 					)
 				)
 			; label function
-			((eq (caar expr) 'label)
-				(toy (cons (caddar expr) (cdr expr))
-					(cons (list (cadar expr) (car expr)) env )
-					)
-				)
+			; well... I don not want to support label function
+			;((eq (caar expr) 'label)
+			;	(toy (cons (caddar expr) (cdr expr))
+			;		(cons (list (cadar expr) (car expr)) env )
+			;		)
+			;	)
 			; lambda function
 			((eq (caar expr) 'lambda)
-				(toy (caddar expr)
-					(append (pair (cadar expr) (evlis (cdr expr) env)) env)
-					)
-				)
+				;return_obj -> toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+    			;(define lambda_procedure (lambda (return_obj env module_name)
+    			(lambda_procedure  
+    				(toy (caddr (car expr)) (append (pair_params (cadr (car expr)) (cdr expr) env module_name) env) module_name)
+    				env 
+    				module_name)
+    			)
 			)
 		))
 
@@ -351,21 +461,12 @@
 			)
 		))
 
-	; compute function params
-	(define evlis (lambda (m a)
-		(cond 
-			((null? m) '())
-			(1 (cons (toy (car m) a) (evlis (cdr m) a)))
-			)
-		))
 	
 
 
 
 	(display (assoc 'a '((a (a b c)))))
-	;(display (toy 'a '((a (a b c))) ""))
-	(display (toy '(begin (define x 12) (define y 15) (set! x 13) x) '( (a (a b c)) (b (a b c))  ) ""))
-
+	(display (toy '((lambda (a) (cdr a)) '(1 2 3)) '((a (a b c)) (b (a b c))) ""))
 )
 
 

@@ -88,6 +88,16 @@ elif len(sys.argv)==3 and sys.argv[1]=="compress":
     print "====================\n\n\n"
     print output
 
+# compress file and print array (list)
+elif len(sys.argv)==3 and sys.argv[1]=="compress2":
+    file_name=sys.argv[2]
+    file=open(file_name)
+    string_in_side = file.read()
+    string_in_side = cleanString(string_in_side)
+
+    x = lexer(string_in_side)[0]
+    print parser(x)
+
 
 elif len(sys.argv)==1:
     print "Toy Language >>>>>>>>>>>>>>>"
