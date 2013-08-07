@@ -255,7 +255,7 @@
 	(define evlis (lambda (params env module_name)
 		(cond 
 			((null? params) '())
-			(cons (car (toy (car params) env module_name)) (evlis (cdr params env module_name)))
+			(1 (cons (car (toy (car params) env module_name)) (evlis (cdr params) env module_name)))
 			)
 		))
 
@@ -273,8 +273,8 @@
 				(cons 
 					(cadr names)
 					(cons 
-					(evlis params env module_name)
-					'())
+						(evlis params env module_name)
+						'())
 					)
 				'())
 				)
@@ -466,7 +466,8 @@
 
 
 	(display (assoc 'a '((a (a b c)))))
-	(display (toy '(a '(1 2 3)) '((a (lambda (a) (cdr a))) (b (a b c))) ""))
+	(display (toy '((lambda (. args) args) a 'b) '((a 1) (b (a b c))) ""))
+
 )
 
 
