@@ -322,18 +322,18 @@
     		(deal_with_return_obj_for_lambda_procedure (car return_obj) (cadr return_obj) env)
     		))
 
-                ;def pair_params(names,params,env):
-                ;    if names==[]:
-                ;        return []
-                ;    # calculate params
-                ;    elif names[0]==".":
-                ;        return [[names[1],evlis(params,env)]]
-                ;    # lazy and does not calculate params
-                ;    elif names[0]=="&":
-                ;        return [[names[1],params]]
-                ;    else:
-                ;        return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
-
+                
+        ;==============
+    	; eval cond function
+		(define eval_cond (lambda (expr env module_name)
+			(cond 
+				((car (toy (caar expr) env module_name))
+				 (toy (cadar expr) env module_name)
+					)
+				(1 (eval_cond (cdr expr) env module_name))
+				)
+			))
+		;==============
 
 	;============================
 
@@ -425,6 +425,13 @@
 					((eq (car expr) 'let)
 						(let_procedure (toy (caddr expr) (eval_let (cadr expr) env module_name) module_name) env)
 						)
+					; (apply func_name '(params ...))
+					((eq (car expr) 'apply)
+						(toy (cons (cadr expr) (cdr (cdr expr))) env module_name)
+						)
+					((eq (car expr) 'eval)
+						(toy (car (toy (cadr expr) env module_name)) env module_name)
+						)
 					; (procesdure argv...)
 					(1 
 						(procedure_procedure (car expr) (cdr expr) env module_name)
@@ -451,22 +458,12 @@
 		))
 
 
-	; eval cond function
-	(define eval_cond (lambda (expr env module_name)
-		(cond 
-			((car (toy (caar expr) env module_name))
-			 (toy (cadar expr) env module_name)
-				)
-			(1 (eval_cond (cdr expr) env module_name))
-			)
-		))
-
 	
 
 
 
 	(display (assoc 'a '((a (a b c)))))
-	(display (toy '((lambda (. args) args) a 'b) '((a 1) (b (a b c))) ""))
+	(display (toy '(apply cdr '(a b c)) '((a 1) (b (a b c))) ""))
 
 )
 
