@@ -458,6 +458,119 @@
 		))
 
 
+
+; =========== implement + - * / ========================
+; === for real number and fraction only
+;
+;
+; ====format number funtion
+; 12 -> (  12     1  )
+;        numerator   denominator
+;
+; 12.04 -> ( 12.04 1 )
+; 13.04/5 -> (13.04 5)
+; 
+
+	; remainder function
+	(define remainder (lambda (a b) 
+		(cond 
+			((__LT__ a b) a)
+			('1 (remainder (- a b) b))
+			)	
+		))
+
+	; GCD
+	; General Common Divisor
+	(define gcd (lambda (a b)
+		(cond 
+			((__EQUAL__ b 0) a)
+			('1 (gcd b (remainder a b)))
+			)
+  		))
+
+	; fraction arithematic
+	(define add-rat (lambda (x y) 
+		(make-rat 
+			(+ 
+				(* (numer x) (denom y))  
+				(* (numer y) (denom x))
+			)
+			(* (denom x) (denom y)) )
+		))
+	(define sub-rat (lambda (x y) 
+		(make-rat
+			(- 
+				(* (numer x) (denom y))  
+				(* (numer y) (denom x))
+			)
+			(* (denom x) (denom y)) )
+		))
+
+	; (a/b)*(c/d) = (a*c) / (b*d)
+	(define mul-rat (lambda (x y) 
+		(make-rat
+			(* (numer x) (numer y)) 
+			(* (denom x) (denom y)) 
+			)
+		))
+	; (a/b)/(c/d) -> (a*d)/(b*c)
+	(define div-rat (lambda (x y)
+		(make-rat
+			(* (numer x) (denom y))
+			(* (denom x) (numer y))
+			)
+		))
+	; a/b c/d
+	(define equal-rat? (lambda (x y)
+		(= 
+			(* (numer x) (denom y))
+			(* (denom x) (numer y))
+			)
+		))
+	(define removeDot_iter (lambda (num)
+		(cond 
+			((null? num) "")
+			((eq (car num) '.) "")
+			('1 (cons (car num) (removeDot_iter (cdr num)) ))
+			)
+		))
+	; 12.000 -> 12
+	; 12.4500 -> 12
+	(define removeDot (lambda (num)
+		(removeDot_iter num)
+		))
+	(define 约分函数根据gcd (lambda (n d g)
+		(cons (removeDot (/ n g)) (cons (removeDot (/ d g)) '()) )
+		))
+	(define make-rat (lambda (n d) 
+		(约分函数根据gcd n d (gcd n d))
+		))
+	(define numer (lambda (x) (car x)))
+	(define denom (lambda (x) (cadr x)))
+	(define make_rat_string (lambda (rat)
+		(cons (car rat) (cons '/ (cadr rat)))
+		))
+
+
+	;============ format number ====================
+	(define get_numerator (lambda (num)
+		(cond
+			((null? num) "")
+			((eq (car num) '/) "")
+			(1 (cons (car num) (get_numerator (cdr num))))
+			)
+		))
+	(define get_denominator (lambda (num)
+		(cond 
+			((null? num) '1)
+			((eq (car num) '/) (cdr num))
+			(1 (get_denominator (cdr num)))
+			)
+		))
+
+	(define format_number (lambda (num)
+		(cons (get_numerator num) (cons (get_denominator num) '()))
+		))
 	; check whether one char is digit
 	(define 这个数字是整数 (lambda (value)
 		(cond
@@ -474,6 +587,138 @@
 			(1 0)
 			)
 		))
+
+	; Integer Float Fraction Unknown_or_Invalid
+	(define checkTypeOfNum (lambda (input_str num_of_e num_of_. num_of_/ hasDigit)
+		(cond 
+			; finish
+			((null? input_str)
+				(cond 
+					; it is not num
+					((eq hasDigit '0) 'Unknown_or_Invalid)
+					;check fraction
+					((eq num_of_/ '1) 
+						(cond 
+							((eq num_of_e '0)
+								(cond 
+									((eq num_of_. '0)
+										'Fraction
+										)
+									('1 'Unknown_or_Invalid)
+									)
+								)
+							('1 'Unknown_or_Invalid)
+							)
+						)
+					; check integer
+					((__AND__ (eq num_of_/ '0) (__AND__ (eq num_of_e '0) (eq num_of_. '0)))
+						'Integer
+						)
+					((__OR__ (eq num_of_e 1) (eq num_of_. 1))
+						'Float
+						)
+					('1  'Unknown_or_Invalid)
+					)
+				)
+			((eq (car input_str) 'e)
+				(checkTypeOfNum (cdr input_str) (+ num_of_e '1) num_of_. num_of_/ hasDigit)
+				)
+			((eq (car input_str) '.)
+				(checkTypeOfNum (cdr input_str) num_of_e (+ num_of_. '1) num_of_/ hasDigit)
+				)
+			((eq (car input_str) '/)
+				(checkTypeOfNum (cdr input_str) num_of_e num_of_. (+ num_of_/ '1) hasDigit)
+				)
+			((这个数字是整数 (car input_str)) 
+				(checkTypeOfNum (cdr input_str) num_of_e num_of_. num_of_/ '1)
+				)
+			('1 'Unknown_or_Invalid)
+			)
+		))
+	; 得到数据的类型
+	(define typeOfNum (lambda (input_str)
+		(cond 
+			((eq (car input_str) '-)
+				(checkTypeOfNum (cdr input_str) '0 '0 '0 '0)
+				)
+			('1 (checkTypeOfNum input_str '0 '0 '0 '0))
+			)
+		))
+
+	;==== add ========
+	(define _+_ (lambda (num1 num2)
+		(cond 
+			;是 fraction 直接进行计算
+			((__OR__ 
+				(eq 'Fraction (typeOfNum num1))
+				(eq 'Fraction (typeOfNum num2))
+				)
+				(make_rat_string (add-rat (format_number num1) (format_number num2)))
+				)
+			('1 
+				(+ num1 num2)
+				)
+			)
+		))
+	;==== substruction ===
+	(define _-_ (lambda (num1 num2)
+		(cond 
+			;是 fraction 直接进行计算
+			((__OR__ 
+				(eq 'Fraction (typeOfNum num1))
+				(eq 'Fraction (typeOfNum num2))
+				)
+				(make_rat_string (sub-rat (format_number num1) (format_number num2)))
+				)
+			('1 
+				(- num1 num2)
+				)
+			)
+		))	
+	;==== Multplication ===
+	(define _*_ (lambda (num1 num2)
+		(cond 
+			;是 fraction 直接进行计算
+			((__OR__ 
+				(eq 'Fraction (typeOfNum num1))
+				(eq 'Fraction (typeOfNum num2))
+				)
+				(make_rat_string (mul-rat (format_number num1) (format_number num2)))
+				)
+			('1 
+				(* num1 num2)
+				)
+			)
+		))
+	;==== Divition ===
+	(define _/_ (lambda (num1 num2)
+		(cond 
+			;是 fraction 直接进行计算
+			((__OR__ 
+				(eq 'Fraction (typeOfNum num1))
+				(eq 'Fraction (typeOfNum num2))
+				)
+				(make_rat_string (div-rat (format_number num1) (format_number num2)))
+				)
+			((__AND__
+				(eq 'Integer (typeOfNum num1))
+				(eq 'Integer (typeOfNum num2)))
+				(make_rat_string (div-rat (format_number num1) (format_number num2)))
+				)
+			('1 
+				(/ num1 num2)
+				)
+			)
+		))		
+
+
+	(display (_/_ 3 6))
+
+
+
+
+;===========下面的代码不要了 ==============================
+
 
 	; 表示数字的方式
 	; 123 (3  2  1  ...)
@@ -1045,11 +1290,11 @@
 	; 123.12 + 34
 	; ((3 2 1) (2 1)) + ((4 3) ())
 	(define 加法_已格式化的数字 (lambda (数字1 数字2)
-		
+
 		))
 
 
-	(display (格式化数字 '1234.56345))
+	;(display (格式化数字 '1234.56345))
 	;(display (计算两个数字 '(1 0 1) '(9 1) ))
 	;(display (计算两个数字 '(1 0 1) '(9 1) ))
 	;(display (小数点后补全位数 '(2 1 3) '(0 0 1 3)))

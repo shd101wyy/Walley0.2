@@ -612,7 +612,7 @@ def toy(tree,env,module_name=""):
                 return [math_(tree[1:len(tree)],sign,env),env]
             # add + - * / functions to calculate two numbers
             elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":
-                return [eval(toy(tree[1],env)[0]+tree[0]+toy(tree[2],env)[0]),env]
+                return [str(eval(toy(tree[1],env)[0]+tree[0]+toy(tree[2],env)[0])),env]
             elif tree[0]=="__EQUAL__":
                 value1=toy(tree[1],env)[0]
                 if stringIsNumber(value1):
@@ -640,15 +640,26 @@ def toy(tree,env,module_name=""):
                 if stringIsNumber(value2):
                     value2=eval(value2)
 
-                #if type(value1)==str and  value1[0]=="\"":
-                #    value1 = convertStringToArray(value1[1:len(value1)-1])
-                #if type(value2)==str and value2[0]=="\"":
-                #    value2 = convertStringToArray(value2[1:len(value2)-1])
-
                 if value1<value2:
                     return ["1",env]
                 else:
                     return ["0",env]    
+            elif tree[0]=="__OR__":
+                value1=toy(tree[1],env)[0]
+                if value1!="0":
+                    return "1"
+                value2=toy(tree[2],env)[0]
+                if value2!="0":
+                    return "1"
+                return "0"
+            elif tree[0]=="__AND__":
+                value1=toy(tree[1],env)[0]
+                if value1=="0":
+                    return "0"
+                value2=toy(tree[2],env)[0]
+                if value2=="0":
+                    return "0"
+                return "1"
             # (define var_name var_value)
             elif tree[0]=="define":
                 def var_existed(var_name,env):
