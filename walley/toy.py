@@ -70,126 +70,45 @@ VirtualFileSystem["walley_toy"]=TO_RUN
     1. support lazy evaluation
 
     '''
-
-#================== Fraction Support ===================
-# general common divisor
-def gcd(n,d):
-    if d==0:
-        return n
-    return gcd(d, n%d)
-def make_rat(n,d):
-    g = gcd(n,d)    # gcd
-    return [int(n/g),int(d/g)]
-def numer(fraction):
-    return fraction[0]
-def denom(fraction):
-    return fraction[1]
-def add_rat (x,y):
-    return make_rat( numer(x)*denom(y)+numer(y)*denom(x) , denom(x)*denom(y))
-def sub_rat (x,y):
-    return make_rat( numer(x)*denom(y)-numer(y)*denom(x) , denom(x)*denom(y))
-def mul_rat (x,y):
-    return make_rat(numer(x)*numer(y), denom(x)*denom(y))
-def div_rat (x,y):
-    return make_rat(numer(x)*denom(y),denom(x)*numer(y))
-def equal_rat (x,y):
-    return numer(x)*denom(y) == denom(x)*numer(y)
-def print_rat(x):
-    print str(numer(x))+"/"+str(denom(x))
-def rat_to_string(x):
-    if denom(x)==1:
-        return str(numer(x))
-    return str(numer(x))+"/"+str(denom(x))
-# [n,d]
-def numerator_and_denominator_of_string(x):
-    index = x.find("/")
-    if index==-1:
-        return [int(x),1]
-    else:
-        return [int(x[0:index]), int(x[index+1:len(x)])]
 def charIsDigit(char):
     return char=="0" or char=="1" or char=="2" or char=="3" or char=="4" or char=="5" or char=="6" or char=="7" or char=="8" or char=="9"
-def stringIsInteger(input_str):
-    i=0
-    if input_str[i]=="-":
-        i=1
-    while i<len(input_str):
-        if charIsDigit(input_str[i]) == False:
-            return False
-        i=i+1
-    return True
-def stringIsFloat(input_str):
-    i=0
-    if input_str[i]=="-":
-        i=1
-    count_of_dot=0
-    count_of_e=0
-    while i<len(input_str):
-        if charIsDigit(input_str[i])==False:
-            if input_str[i]==".":
-                count_of_dot=count_of_dot+1
-            elif input_str[i]=="e":
-                count_of_e=count_of_e+1
-            elif input_str[i]=="-":
-                pass
-            else:
-                return False
-        i=i+1
-    if count_of_e==1 or count_of_dot==1:
-        return True
-    return False
+    #Integer Float Fraction Unknown_or_Invalid
+def checkTypeOfNum(input_str,num_of_e,num_of_dot,num_of_slash,has_digit):
+    # finish
+    if input_str=="":
+        if has_digit!=True:
+            return "Unknown_or_Invalid"
+        elif num_of_slash==1 and num_of_e==0 and num_of_dot==0:
+            return "Fraction"
+        elif num_of_slash==0 and num_of_e==0 and num_of_dot==0:
+            return "Integer"
+        elif num_of_dot==1 or num_of_e==1:
+            return "Float"
+        return "Unknown_or_Invalid"
+    elif input_str[0]=="e":
+        return checkTypeOfNum(input_str[1:len(input_str)],num_of_e+1,num_of_dot,num_of_slash,has_digit)
+    elif input_str[0]==".":
+        return checkTypeOfNum(input_str[1:len(input_str)],num_of_e,num_of_dot+1,num_of_slash,has_digit)
+    elif input_str[0]=='/':
+        return checkTypeOfNum(input_str[1:len(input_str)],num_of_e,num_of_dot,num_of_slash+1,has_digit)
+    elif charIsDigit(input_str[0]):
+        return checkTypeOfNum(input_str[1:len(input_str)],num_of_e,num_of_dot,num_of_slash,True)
+    else:
+        return "Unknown_or_Invalid"
+# get type of num
+def typeOfNum (input_str):
+    if input_str[0]=="-":
+        return checkTypeOfNum(input_str[1:len(input_str)],0,0,0,False)
+    return checkTypeOfNum(input_str,0,0,0,False)
+
 # support integer 3 float 3.0 fraction 3/4
 def stringIsNumber(input_str):
-    if type(input_str)!=str or len(input_str)==0:
+    if type(input_str)!=str:
         return False
-    count_of_e=0
-    count_of_slash=0
-    count_of_dot=0
-    has_digit = False
-    i=0
-    if input_str[i]=="-":
-        i=1
-    while i<len(input_str):
-        if input_str[i]=="e":
-            count_of_e = count_of_e+1
-        elif input_str[i]==".":
-            count_of_dot = count_of_dot + 1
-        elif input_str[i]=="/":
-            count_of_slash = count_of_slash + 1
-            break
-        elif input_str[i]=="-":
-            pass
-        elif charIsDigit(input_str[i]) == False:
-            return False
-        else:
-            has_digit = True
-        i=i+1
-    if has_digit==False:
-        return False
-    # check fraction
-    if count_of_slash == 1:
-        if stringIsInteger(input_str[0:i]) and stringIsInteger(input_str[i+1:len(input_str)]):
-            return True
-        return False
-    if count_of_e==0 and count_of_dot==0 and len(input_str)>0:
-        return True
-    if count_of_e==1 or count_of_dot==1:
+    if typeOfNum(input_str)!="Unknown_or_Invalid":
         return True
     return False
 
-def math_operation(x,y,sign):
-    if stringIsFloat(x) or stringIsFloat(y):
-        return str(eval(x+sign+y))
-    f1 = numerator_and_denominator_of_string(x)
-    f2 = numerator_and_denominator_of_string(y)
-    if sign=="+":
-        return rat_to_string(add_rat(f1,f2))
-    elif sign=="-":
-        return rat_to_string(sub_rat(f1,f2))
-    elif sign=="*":
-        return rat_to_string(mul_rat(f1,f2))
-    else:
-        return rat_to_string(div_rat(f1,f2))
 
 
 
@@ -380,6 +299,8 @@ def eq(var_name1, var_name2,env):
     from operator import is_
     value1 = toy(var_name1,env)[0]
     value2 = toy(var_name2,env)[0]
+    if type(value1)!=type(value2):
+        return "0"
     if is_(value1,value2):
         return "1"
     #if type(value1)==str and  value1[0]=="\"":
@@ -409,25 +330,13 @@ def car(value):
     if value==[]:
         print "Error... Cannot get car of empty list"
         return ""
-    # string
-    #if value[0]=="\"":
-    #    return value[0:2]+"\""
-    #print value
     return value[0]
 
 def cdr(value):
-    # string
-    #if value[0]=="\"":
-    #    return "\""+value[2:len(value)]
-    #print value
     if len(value)==0:
         print("Error\nFunction 'cdr' cannot be used on empty list")
     elif len(value)==1:
         return []
-    # I removed pair
-    # pair
-    #elif type(value)!=str and len(value)==3 and value[1]==".":
-    #    return value[2]
     else:
         return value[1:len(value)]
 '''
@@ -488,10 +397,6 @@ def append(x,y):
         return y
     return cons(x[0],append(x[1:len(x)],y))
 
-def math_(tree,sign,env):
-    if len(tree)==1:
-        return toy(tree[0],env)[0]
-    return math_operation(math_(tree[0:len(tree)-1],sign,env), toy(tree[len(tree)-1],env)[0] ,sign)
 def number_(value):
     if stringIsNumber(value):
         return "1"
@@ -548,7 +453,7 @@ def toy(tree,env,module_name=""):
         if type(tree[0])==str:
             # seven primitive functions
             if tree[0]=="quote":
-                return [quote(tree[1]),env]
+                return [tree[1],env]
             elif tree[0]=="atom?":
                 return [atom(toy(tree[1],env)[0]),env]
             elif tree[0]=="eq":
@@ -561,28 +466,6 @@ def toy(tree,env,module_name=""):
                 return [cons(toy(tree[1],env)[0],toy(tree[2],env)[0]) ,env]
             elif tree[0]=="cond":
                 return cond(tree[1:len(tree)],env)
-
-            # builtin functions
-            elif tree[0]=="__ADD__" or tree[0]=="__MINUS__" or tree[0]=="__MULT__" or tree[0]=="__DIV__":
-                sign = "+"
-                if tree[0]=="__ADD__":
-                    sign="+"
-                elif tree[0]=="__MINUS__":
-                    sign="-"
-                elif tree[0]=="__MULT__":
-                    sign="*"
-                else:
-                    sign="/"
-                # solve (__MINUS__ 4) = 4 bug
-                if len(tree)==2 and sign=="-":
-                    value = toy(tree[1],env,module_name)[0]
-                    if value=="0":
-                        return ["0",env]
-                    elif value[0]=="-":
-                        return [value[1:len(value)],env]
-                    else:
-                        return ["-" + value,env]
-                return [math_(tree[1:len(tree)],sign,env),env]
             # add + - * / functions to calculate two numbers
             elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":
                 return [str(eval(toy(tree[1],env)[0]+tree[0]+toy(tree[2],env)[0])),env]
@@ -594,11 +477,6 @@ def toy(tree,env,module_name=""):
                 value2=toy(tree[2],env)[0]
                 if stringIsNumber(value2):
                     value2=eval(value2)
-
-                #if type(value1)==str and  value1[0]=="\"":
-                #    value1 = convertStringToArray(value1[1:len(value1)-1])
-                #if type(value2)==str and value2[0]=="\"":
-                #    value2 = convertStringToArray(value2[1:len(value2)-1])
 
                 if value1==value2:
                     return ["1",env]
@@ -692,8 +570,8 @@ def toy(tree,env,module_name=""):
                 return toy(cons(tree[1],toy(tree[2],env)[0]),env)
             elif tree[0]=="eval":
                 return toy(toy(tree[1],env,module_name)[0],env,module_name)
-            elif tree[0]=="number?":
-                return [number_(toy(tree[1],env)[0]),env]
+            #elif tree[0]=="number?":
+            #    return [number_(toy(tree[1],env)[0]),env]
             elif tree[0]=="quasiquote":
                 return [quasiquote(tree[1],env),env]
             # load module
@@ -764,5 +642,4 @@ def evlis(params,env):
     if params==[]:
         return []
     return cons(toy(params[0],env)[0], evlis(params[1:len(params)],env))
-
 
