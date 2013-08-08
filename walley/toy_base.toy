@@ -453,6 +453,31 @@
 							(/_array (evlis (cdr expr) env module_name))
 							 env)
 						)
+					((eq (car expr) '__LT__)
+						(cons_env
+							(__LT__ 
+								(car (toy (car (cdr expr)) env module_name))
+								(car (toy (car (cdr (cdr expr))) env module_name))
+								)
+							env)
+						)
+					((eq (car expr) '__EQUAL__)
+						(cons_env
+							(__EQUAL__ 
+								(car (toy (car (cdr expr)) env module_name))
+								(car (toy (car (cdr (cdr expr))) env module_name))
+								)
+							env)
+						)
+					; (if condtion stm1 stm2)
+					((eq (car expr) 'if)
+						(cond 
+							((car (toy (cadr expr) env module_name))
+								(toy (caddr expr) env module_name)
+								)
+							('1 (toy (car (cdr (cdr (cdr expr)))) env module_name))
+							)
+						)
 					; (procesdure argv...)
 					('1 
 						(procedure_procedure (car expr) (cdr expr) env module_name)
@@ -825,8 +850,9 @@
 		))
 
 	;===== Finish defining arithematic
+	;=====
 	(display (/_array '(3 4 5)))
-	(display (toy '(/ 3 4 (+ 5 6)) '() ""))
+	(display (toy '(if 0 2 3) '() ""))
 )
 
 

@@ -524,13 +524,10 @@ def toy(tree,env,module_name=""):
                 return [tree,env]
             elif tree[0]=="begin":
                 return toy(tree[len(tree)-1], toy_language(tree[1:len(tree)-1],env,module_name),module_name)
-                #return eval_begin(tree[1:len(tree)],env,module_name)
             elif tree[0]=="apply":
                 return toy(cons(tree[1],toy(tree[2],env)[0]),env)
             elif tree[0]=="eval":
                 return toy(toy(tree[1],env,module_name)[0],env,module_name)
-            #elif tree[0]=="number?":
-            #    return [number_(toy(tree[1],env)[0]),env]
             elif tree[0]=="quasiquote":
                 return [quasiquote(tree[1],env),env]
             # load module
@@ -549,9 +546,6 @@ def toy(tree,env,module_name=""):
             # io function
             elif tree[0]=="display":
                 return [display_(toy(tree[1],env)[0]),env]
-            #elif tree[0]=="input":
-            #    value = raw_input(toy(tree[1],env))
-            #    return value
             #procedure value
             else:
                 value = assoc(tree[0],env)
