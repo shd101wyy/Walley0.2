@@ -610,6 +610,9 @@ def toy(tree,env,module_name=""):
                     else:
                         return ["-" + value,env]
                 return [math_(tree[1:len(tree)],sign,env),env]
+            # add + - * / functions to calculate two numbers
+            elif tree[0]=="+" or tree[0]=="-" or tree[0]=="*" or tree[0]=="/":
+                return [eval(toy(tree[1],env)[0]+tree[0]+toy(tree[2],env)[0]),env]
             elif tree[0]=="__EQUAL__":
                 value1=toy(tree[1],env)[0]
                 if stringIsNumber(value1):
