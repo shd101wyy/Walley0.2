@@ -379,12 +379,6 @@ def assoc(var_name, env):
         return env[0][1]
     return assoc(var_name,env[1:len(env)])
 
-# [a,b],[3,4] -> [[a,3],[b,4]]
-def pair(x,y):
-    if x==[] and y==[]:
-        return []
-    return cons([x[0],y[0]], pair(x[1:len(x)],y[1:len(x)]))
-
 # [a,b] [c,d] -> [a,b,c,d]
 def append(x,y):
     if x==[]:
@@ -570,15 +564,14 @@ def toy(tree,env,module_name=""):
             if tree[0]=="label":
                 pass
             elif tree[0][0]=="lambda":
-                # ["a","b"] ["1","2"] -> [["a","1"],["b","2"]]
-                # [". args"] ["1","2"] -> [["args", ["1","2"]]] 
+                # ["a","b"] ["1","2"] [["c","12"]] -> [["a","1"],["b","2"],["c","12"]]
                 def pair_params(names,params,env):
                     if names==[]:
-                        return []
+                        return env
                     else:
                         return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
 
-                return_array = toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+                return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env))
                 return_value = return_array[0]
                 return_env = return_array[1]
                 return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
@@ -587,9 +580,5 @@ def toy(tree,env,module_name=""):
             else:
                 return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
 
-# ["x","y"] [["x",12],["y",13]] -> [12,13]
-def evlis(params,env):
-    if params==[]:
-        return []
-    return cons(toy(params[0],env)[0], evlis(params[1:len(params)],env))
+
 
