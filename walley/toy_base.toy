@@ -10,7 +10,7 @@
 	;	 I will only write this in 
 	;	'quote car cdr cons cond eq atom' 
 	;	====
-	;   and one 'define' function
+	;   and + - * / define __LT__ __AND__ __OR__ function
 	(define cadr (lambda (_list_)
 		(car (cdr _list_))
 		))
@@ -37,14 +37,14 @@
 	(define append (lambda (x y)
 		(cond 
 			((null? x) y)
-			(1 (cons (car x) (append (cdr x) y)))
+			('1 (cons (car x) (append (cdr x) y)))
 			)
 		))
 	; '(a b) '(3 4) -> ((a 3) (b 4))
 	(define pair (lambda (x y)
 		(cond
 			((and (null? x) (null? y) )  '() )
-			(1 (cons (cons (car x) (cons (car y) '())) (pair (cdr x) (cdr y))))
+			('1 (cons (cons (car x) (cons (car y) '())) (pair (cdr x) (cdr y))))
 			)
 		))
 	; get value according to key
@@ -56,7 +56,7 @@
 					(display 'Error_Cannot_Find)
 				)
 			((eq (caar y) x) (cadar y))
-			(1 (assoc x (cdr y)) )
+			('1 (assoc x (cdr y)) )
 			)
 		))
 
@@ -66,7 +66,7 @@
 			; finish toy_language
 			((null? trees) env)
 			; iteration
-			(1
+			('1
 				(toy_language 
 					; next tree
 					(cdr trees)
@@ -88,9 +88,9 @@
 	;check whether var existed
 	(define var_existed(lambda (var_name env)
 		(cond 
-			((null? env) 0)
-			((eq var_name (caar env)) 1)
-			(1 (var_existed var_name (cdr env)))
+			((null? env) '0)
+			((eq var_name (caar env)) '1)
+			('1 (var_existed var_name (cdr env)))
 			)
 		))
 	; update var_name
@@ -98,7 +98,7 @@
 	(define var_name_update (lambda (var_name module_name)
 		(cond 
 			((eq module_name "") var_name)
-			(1 (cons (module_name '.) var_name))
+			('1 (cons (module_name '.) var_name))
 			)
 		))
 	; deal with return object
@@ -125,7 +125,7 @@
 			((var_existed updated_var_name env)
 				(display (cons (cons "Error " updated_var_name) " Has already be defined") )
 				)
-			(1 (deal_with_return_obj (toy uncalculated_var_value env module_name) updated_var_name))
+			('1 (deal_with_return_obj (toy uncalculated_var_value env module_name) updated_var_name))
 			)
 		))
 
@@ -153,7 +153,7 @@
 					; rest of env
 					(cdr env))
 				)
-			(1 (cons (car env) (set_index var_name var_value (cdr env))))
+			('1 (cons (car env) (set_index var_name var_value (cdr env))))
 			)
 		))
 
@@ -176,7 +176,7 @@
 			((null? expr)
 				env)
 			; now ((x 12)(y x)) -> y = 12
-			(1 
+			('1 
 				(eval_let (cdr expr) 
 					(cons 
 					; (var_name var_value)
@@ -199,10 +199,10 @@
 			((null? old_env)
 				(cond 
 					((null? new_env) new_env_copy)
-					(1 (restore_env old_env (cdr new_env) (cdr new_env_copy)))
+					('1 (restore_env old_env (cdr new_env) (cdr new_env_copy)))
 					)
 				)
-			(1 (restore_env (cdr old_env) (cdr new_env) new_env_copy))
+			('1 (restore_env (cdr old_env) (cdr new_env) new_env_copy))
 			)
 		))
 	(define let_procedure (lambda (return_obj env)
@@ -225,7 +225,7 @@
 			((null? (cdr expr))
 				(toy (car expr) env module_name)
 				)
-			(1 (eval_begin (cdr expr) (cadr (toy (car expr) env module_name)) module_name))
+			('1 (eval_begin (cdr expr) (cadr (toy (car expr) env module_name)) module_name))
 			)
 		))
 
@@ -245,7 +245,7 @@
 				(toy (cons (cadar env) params) env module_name)
 				)
 			; iteration
-			(1 (procedure_procedure func_name params (cdr env) module_name))
+			('1 (procedure_procedure func_name params (cdr env) module_name))
 			)
 		))
 	;============================
@@ -255,7 +255,7 @@
 	(define evlis (lambda (params env module_name)
 		(cond 
 			((null? params) '())
-			(1 (cons (car (toy (car params) env module_name)) (evlis (cdr params) env module_name)))
+			('1 (cons (car (toy (car params) env module_name)) (evlis (cdr params) env module_name)))
 			)
 		))
 
@@ -289,7 +289,7 @@
     				)
     			'())
     			)
-    		(1 	
+    		('1 	
     			(cons 
     				;calcuate param
     				(cons 
@@ -330,7 +330,7 @@
 				((car (toy (caar expr) env module_name))
 				 (toy (cadar expr) env module_name)
 					)
-				(1 (eval_cond (cdr expr) env module_name))
+				('1 (eval_cond (cdr expr) env module_name))
 				)
 			))
 		;==============
@@ -433,7 +433,7 @@
 						(toy (car (toy (cadr expr) env module_name)) env module_name)
 						)
 					; (procesdure argv...)
-					(1 
+					('1 
 						(procedure_procedure (car expr) (cdr expr) env module_name)
 						)
 					)
@@ -483,7 +483,7 @@
 	; General Common Divisor
 	(define gcd (lambda (a b)
 		(cond 
-			((__EQUAL__ b 0) a)
+			((__EQUAL__ b '0) a)
 			('1 (gcd b (remainder a b)))
 			)
   		))
@@ -557,14 +557,14 @@
 		(cond
 			((null? num) "")
 			((eq (car num) '/) "")
-			(1 (cons (car num) (get_numerator (cdr num))))
+			('1 (cons (car num) (get_numerator (cdr num))))
 			)
 		))
 	(define get_denominator (lambda (num)
 		(cond 
 			((null? num) '1)
 			((eq (car num) '/) (cdr num))
-			(1 (get_denominator (cdr num)))
+			('1 (get_denominator (cdr num)))
 			)
 		))
 
@@ -574,17 +574,17 @@
 	; check whether one char is digit
 	(define 这个数字是整数 (lambda (value)
 		(cond
-			((eq value '0) 1) 
-			((eq value '1) 1)
-			((eq value '2) 1)
-			((eq value '3) 1)
-			((eq value '4) 1)
-			((eq value '5) 1)
-			((eq value '6) 1)
-			((eq value '7) 1)
-			((eq value '8) 1)
-			((eq value '9) 1)
-			(1 0)
+			((eq value '0) '1) 
+			((eq value '1) '1)
+			((eq value '2) '1)
+			((eq value '3) '1)
+			((eq value '4) '1)
+			((eq value '5) '1)
+			((eq value '6) '1)
+			((eq value '7) '1)
+			((eq value '8) '1)
+			((eq value '9) '1)
+			('1 '0)
 			)
 		))
 
@@ -614,7 +614,7 @@
 					((__AND__ (eq num_of_/ '0) (__AND__ (eq num_of_e '0) (eq num_of_. '0)))
 						'Integer
 						)
-					((__OR__ (eq num_of_e 1) (eq num_of_. 1))
+					((__OR__ (eq num_of_e '1) (eq num_of_. '1))
 						'Float
 						)
 					('1  'Unknown_or_Invalid)
@@ -645,8 +645,23 @@
 			)
 		))
 
+	;@@@@@@
+	(define number?_accordint_to_type (lambda (type)
+		(cond 
+			((eq type 'Float) '1)
+			((eq type 'Fraction) '1)
+			((eq type 'Integer) '1)
+			('1 '0)
+			)
+		))
+	; check whether input is number
+	(define number? (lambda (input_str)
+		(number?_accordint_to_type (typeOfNum input_str))
+		))
+	;@@@@@@
+
 	;==== add ========
-	(define _+_ (lambda (num1 num2)
+	(define $+$ (lambda (num1 num2)
 		(cond 
 			;是 fraction 直接进行计算
 			((__OR__ 
@@ -661,7 +676,7 @@
 			)
 		))
 	;==== substruction ===
-	(define _-_ (lambda (num1 num2)
+	(define $-$ (lambda (num1 num2)
 		(cond 
 			;是 fraction 直接进行计算
 			((__OR__ 
@@ -676,7 +691,7 @@
 			)
 		))	
 	;==== Multplication ===
-	(define _*_ (lambda (num1 num2)
+	(define $*$ (lambda (num1 num2)
 		(cond 
 			;是 fraction 直接进行计算
 			((__OR__ 
@@ -691,616 +706,26 @@
 			)
 		))
 	;==== Divition ===
-	(define _/_ (lambda (num1 num2)
+	(define $/$ (lambda (num1 num2)
 		(cond 
 			;是 fraction 直接进行计算
 			((__OR__ 
-				(eq 'Fraction (typeOfNum num1))
-				(eq 'Fraction (typeOfNum num2))
+				(eq 'Float (typeOfNum num1))
+				(eq 'Float (typeOfNum num2))
 				)
-				(make_rat_string (div-rat (format_number num1) (format_number num2)))
-				)
-			((__AND__
-				(eq 'Integer (typeOfNum num1))
-				(eq 'Integer (typeOfNum num2)))
-				(make_rat_string (div-rat (format_number num1) (format_number num2)))
+				(/ num1 num2)
 				)
 			('1 
-				(/ num1 num2)
+				(make_rat_string (div-rat (format_number num1) (format_number num2)))
 				)
 			)
 		))		
 
 
-	(display (_/_ 3 6))
+	(display ($/$ 3/5 4/5))
 
 
 
-
-;===========下面的代码不要了 ==============================
-
-
-	; 表示数字的方式
-	; 123 (3  2  1  ...)
-	;      个 十  百 ...
-
-	; 1 + 2 -> (0   3)
-	; 3 + 7 -> (1   0) 
-	;          进位 结果
-
-	(define add_two_num (lambda (num1 num2)
-		(cond 
-			; num 0
-			((eq num1 '0)
-				(cond 
-					((eq num2 '0)
-						'(0 0)
-						)
-					((eq num2 '1)
-						'(0 1)
-						)
-					((eq num2 '2)
-						'(0 2)
-						)
-					((eq num2 '3)
-						'(0 3)
-						)
-					((eq num2 '4)
-						'(0 4)
-						)
-					((eq num2 '5)
-						'(0 5)
-						)
-					((eq num2 '6)
-						'(0 6)
-						)
-					((eq num2 '7)
-						'(0 7)
-						)
-					((eq num2 '8)
-						'(0 8)
-						)
-					((eq num2 '9)
-						'(0 9)
-						)
-					)
-				)
-			; num 1
-			((eq num1 '1)
-				(cond 
-					((eq num2 '0)
-						'(0 1)
-						)
-					((eq num2 '1)
-						'(0 2)
-						)
-					((eq num2 '2)
-						'(0 3)
-						)
-					((eq num2 '3)
-						'(0 4)
-						)
-					((eq num2 '4)
-						'(0 5)
-						)
-					((eq num2 '5)
-						'(0 6)
-						)
-					((eq num2 '6)
-						'(0 7)
-						)
-					((eq num2 '7)
-						'(0 8)
-						)
-					((eq num2 '8)
-						'(0 9)
-						)
-					((eq num2 '9)
-						'(1 0)
-						)
-					)
-				)
-						; num 2
-			((eq num1 '2)
-				(cond 
-					((eq num2 '0)
-						'(0 2)
-						)
-					((eq num2 '1)
-						'(0 3)
-						)
-					((eq num2 '2)
-						'(0 4)
-						)
-					((eq num2 '3)
-						'(0 5)
-						)
-					((eq num2 '4)
-						'(0 6)
-						)
-					((eq num2 '5)
-						'(0 7)
-						)
-					((eq num2 '6)
-						'(0 8)
-						)
-					((eq num2 '7)
-						'(0 9)
-						)
-					((eq num2 '8)
-						'(1 0)
-						)
-					((eq num2 '9)
-						'(1 2)
-						)
-					)
-				)
-						; num 3
-			((eq num1 '3)
-				(cond 
-					((eq num2 '0)
-						'(0 3)
-						)
-					((eq num2 '1)
-						'(0 4)
-						)
-					((eq num2 '2)
-						'(0 5)
-						)
-					((eq num2 '3)
-						'(0 6)
-						)
-					((eq num2 '4)
-						'(0 7)
-						)
-					((eq num2 '5)
-						'(0 8)
-						)
-					((eq num2 '6)
-						'(0 9)
-						)
-					((eq num2 '7)
-						'(1 0)
-						)
-					((eq num2 '8)
-						'(1 1)
-						)
-					((eq num2 '9)
-						'(1 2)
-						)
-					)
-				)
-						; num 4
-			((eq num1 '4)
-				(cond 
-					((eq num2 '0)
-						'(0 4)
-						)
-					((eq num2 '1)
-						'(0 5)
-						)
-					((eq num2 '2)
-						'(0 6)
-						)
-					((eq num2 '3)
-						'(0 7)
-						)
-					((eq num2 '4)
-						'(0 8)
-						)
-					((eq num2 '5)
-						'(0 9)
-						)
-					((eq num2 '6)
-						'(1 0)
-						)
-					((eq num2 '7)
-						'(1 1)
-						)
-					((eq num2 '8)
-						'(1 2)
-						)
-					((eq num2 '9)
-						'(1 3)
-						)
-					)
-				)
-						; num 5
-			((eq num1 '5)
-				(cond 
-					((eq num2 '0)
-						'(0 5)
-						)
-					((eq num2 '1)
-						'(0 6)
-						)
-					((eq num2 '2)
-						'(0 7)
-						)
-					((eq num2 '3)
-						'(0 8)
-						)
-					((eq num2 '4)
-						'(0 9)
-						)
-					((eq num2 '5)
-						'(1 0)
-						)
-					((eq num2 '6)
-						'(1 1)
-						)
-					((eq num2 '7)
-						'(1 2)
-						)
-					((eq num2 '8)
-						'(1 3)
-						)
-					((eq num2 '9)
-						'(1 4)
-						)
-					)
-				)
-						; num 6
-			((eq num1 '6)
-				(cond 
-					((eq num2 '0)
-						'(0 6)
-						)
-					((eq num2 '1)
-						'(0 7)
-						)
-					((eq num2 '2)
-						'(0 8)
-						)
-					((eq num2 '3)
-						'(0 9)
-						)
-					((eq num2 '4)
-						'(1 0)
-						)
-					((eq num2 '5)
-						'(1 1)
-						)
-					((eq num2 '6)
-						'(1 2)
-						)
-					((eq num2 '7)
-						'(1 3)
-						)
-					((eq num2 '8)
-						'(1 4)
-						)
-					((eq num2 '9)
-						'(1 5)
-						)
-					)
-				)
-						; num 7
-			((eq num1 '7)
-				(cond 
-					((eq num2 '0)
-						'(0 7)
-						)
-					((eq num2 '1)
-						'(0 8)
-						)
-					((eq num2 '2)
-						'(0 9)
-						)
-					((eq num2 '3)
-						'(1 0)
-						)
-					((eq num2 '4)
-						'(1 1)
-						)
-					((eq num2 '5)
-						'(1 2)
-						)
-					((eq num2 '6)
-						'(1 3)
-						)
-					((eq num2 '7)
-						'(1 4)
-						)
-					((eq num2 '8)
-						'(1 5)
-						)
-					((eq num2 '9)
-						'(1 6)
-						)
-					)
-				)
-						; num 8
-			((eq num1 '8)
-				(cond 
-					((eq num2 '0)
-						'(0 8)
-						)
-					((eq num2 '1)
-						'(0 9)
-						)
-					((eq num2 '2)
-						'(1 0)
-						)
-					((eq num2 '3)
-						'(1 1)
-						)
-					((eq num2 '4)
-						'(1 2)
-						)
-					((eq num2 '5)
-						'(1 3)
-						)
-					((eq num2 '6)
-						'(1 4)
-						)
-					((eq num2 '7)
-						'(1 5)
-						)
-					((eq num2 '8)
-						'(1 6)
-						)
-					((eq num2 '9)
-						'(1 7)
-						)
-					)
-				)
-						; num 9
-			((eq num1 '9)
-				(cond 
-					((eq num2 '0)
-						'(0 9)
-						)
-					((eq num2 '1)
-						'(1 0)
-						)
-					((eq num2 '2)
-						'(1 1)
-						)
-					((eq num2 '3)
-						'(1 2)
-						)
-					((eq num2 '4)
-						'(1 3)
-						)
-					((eq num2 '5)
-						'(1 4)
-						)
-					((eq num2 '6)
-						'(1 5)
-						)
-					((eq num2 '7)
-						'(1 6)
-						)
-					((eq num2 '8)
-						'(1 7)
-						)
-					((eq num2 '9)
-						'(1 8)
-						)
-					)
-				)
-			)
-		))
-	
-	; 9 9 1
-	; 先计算前两个数字
-	; 9+9 -> (1 8)
-	; (1 8)
-	; ＝进位到结果＝
-	; 进位 1 到 8
-	; 8+1 -> (0 9)
-	; ============
-	; =进位计算====
-	; (0 9)中的 0 加上 1
-	; 			$
-	; 进位的 1 加上 新进位的 0 -> 1
-	; 1+0 -> (0 1) -> 1 as 最终进位
-	; ============
-	; 得到进位结果
-	; output ->
-	; 新进位 新结果
-	; (1      9)
-	;
-
-	; (1 9) 2 -> (2 1)
-	(define 进位计算过程 (lambda (计算前两个数字的结果 进位)
-		; 9+2 -> (1 1) 为结果
-		; （1 9） 中的 1 为进位
-		(更新进位 (add_two_num (cadr 计算前两个数字的结果) 进位) (car 计算前两个数字的结果))
-		))
-
-	(define 更新进位 (lambda (结果 进位)
-		(cons (cadr (add_two_num (car 结果) 进位))  (cdr 结果))
-		))
-
-	(define add_three_nums (lambda (num1 num2 num3)
-		(进位计算过程 (add_two_num num1 num2) num3)
-		))
-
-	;========== 计算两个数字 ======================================
-	; 只能计算正整数
-	; this function can be used to calcuate two positive intergers
-	; 12 + 34 format as
-	; (2 1) (4 3) 
-	(define 加上两个数字以及进位数字_iter (lambda (数字1 数字2 进位)
-		(cond 
-			((null? 数字1)
-				(cond 
-					 ;计算完成 
-					((null? 数字2)
-						'())
-					; 位数不一样
-					('1 
-						(辅助_加上两个数字以及进位数字_iter的函数 (add_three_nums '0 (car 数字2) 进位) 数字1 (cdr 数字2))	
-						)
-					)
-				)
-			((null? 数字2)
-				(cond 
-					 ;计算完成 
-					((null? 数字1)
-						'())
-					; 位数不一样
-					('1 
-						(辅助_加上两个数字以及进位数字_iter的函数 (add_three_nums (car 数字1) '0 进位) (cdr 数字1) 数字2)	
-						)
-					)
-				)
-			('1
-				(辅助_加上两个数字以及进位数字_iter的函数 (add_three_nums (car 数字1) (car 数字2) 进位) (cdr 数字1) (cdr 数字2))	
-				)
-			)
-		))
-	(define 辅助_加上两个数字以及进位数字_iter的函数 (lambda (三个数字的计算结果 剩余数字1 剩余数字2)
-		(cons 
-			(cadr 三个数字的计算结果) 
-			(加上两个数字以及进位数字_iter 剩余数字1 剩余数字2 (car 三个数字的计算结果) ) )
-		))
-
-	(define 计算两个数字 (lambda (数字1 数字2)
-		(加上两个数字以及进位数字_iter 数字1 数字2 '0)
-		))
-
-	;============= 补全位数================
-	; 小数点前的补全
-	; eg:
-	;	210 + 15
-	;   2 1 0
-	; + 0 1 5
-	; ------------
-	; ((0 2 1) (5 1 0))
-	;
-
-	; (得到... '(1 2 3)) -> (0 0 0)
-	(define 得到全是0的list (lambda (剩余的参考list)
-		(cond 
-			((null? 剩余的参考list) '())
-			('1 (cons '0 (得到全是0的list (cdr 剩余的参考list))))
-			)
-		))
-	(define 补全位数 (lambda (要被补全的 剩余的参考list)
-		(append 要被补全的 (得到全是0的list 剩余的参考list))
-		))
-	(define 小数点前补全位数_iter (lambda (数字1 数字2 数字1_备份 数字2_备份)
-		(cond 
-			((null? 数字1)
-				(cond 
-					((null? 数字2)
-						(cons 数字1_备份 (cons 数字2_备份 '()))
-						)
-					('1 (cons (补全位数 数字1_备份 数字2) (cons 数字2_备份 '()) ))
-					)
-				)
-			((null? 数字2)
-				(cond 
-					((null? 数字1)
-						(cons 数字1 (cons 数字2_备份 '()))
-						)
-					('1 (cons 数字1_备份 (cons (补全位数 数字2_备份 数字1) '()) ))
-					)
-				)
-			('1 (小数点前补全位数_iter (cdr 数字1) (cdr 数字2) 数字1_备份 数字2_备份))
-			)
-		))
-	(define 小数点前补全位数 (lambda (数字1 数字2)
-		(小数点前补全位数_iter 数字1 数字2 数字1 数字2)
-		))
-
-	;===== 小数点后补全位数 ========
-	; .123 + .1
-	; 	.1 2 3
-	; +	.1 0 0
-	; ((3 2 1) (0 0 1))
-	;=============================
-
-	(define 补全位数_小数点后 (lambda (要被补全的 剩余的参考list)
-		(append (得到全是0的list 剩余的参考list) 要被补全的)
-		))
-	(define 小数点后补全位数_iter (lambda (数字1 数字2 数字1_备份 数字2_备份)
-		(cond 
-			((null? 数字1)
-				(cond 
-					((null? 数字2)
-						(cons 数字1_备份 (cons 数字2_备份 '()))
-						)
-					('1 (cons (补全位数_小数点后 数字1_备份 数字2) (cons 数字2_备份 '()) ))
-					)
-				)
-			((null? 数字2)
-				(cond 
-					((null? 数字1)
-						(cons 数字1 (cons 数字2_备份 '()))
-						)
-					('1 (cons 数字1_备份 (cons (补全位数_小数点后 数字2_备份 数字1) '()) ))
-					)
-				)
-			('1 (小数点后补全位数_iter (cdr 数字1) (cdr 数字2) 数字1_备份 数字2_备份))
-			)
-		))
-	(define 小数点后补全位数 (lambda (数字1 数字2)
-		(小数点后补全位数_iter 数字1 数字2 数字1 数字2)
-		))
-
-	; ======== 格式化 数字 (不是 分数)
-	; 12 -> ( (2 1)     ( )      )
-	;		小数点前   小数点后
-	; 13.04 -> ((3 1)    (4 0)     )
-	;          小数点前   小数点后
-	;
-	;
-
-	(define 格式化没有.的数字_iter (lambda (数字 结果)
-		(cond 
-			((null? 数字) 结果)
-			('1 (格式化没有.的数字_iter (cdr 数字) (cons (car 数字) 结果)))
-			)
-		))
-	; 这个函数将会将 123 －》 （3 2 1）
-	(define 格式化没有.的数字 (lambda (数字)
-		(格式化没有.的数字_iter 数字 '())
-		))
-
-
-	(define 格式化数字_iter (lambda (数字 小数点前部分 小数点后部分)
-		(cond 
-			((null? 数字)
-				(cons 小数点前部分 (cons 小数点后部分 '()))
-				)
-			; 发现小数点
-			((eq (car 数字) '.)
-				(cons 
-					小数点前部分 
-					(cons 
-						(格式化没有.的数字 (cdr 数字)) 
-						'())
-					)
-				)
-			; 未发现小数点的
-			('1 (格式化数字_iter (cdr 数字) (cons (car 数字) 小数点前部分) 小数点后部分))
-
-			)
-		))
-	; 123.12 -> ((3 2 1) (2 1))
-	(define 格式化数字 (lambda (数字)
-		(格式化数字_iter 数字 '() '())
-		))
-
-	; ====== 加法_已格式化的数字
-	; 123.12 + 34
-	; ((3 2 1) (2 1)) + ((4 3) ())
-	(define 加法_已格式化的数字 (lambda (数字1 数字2)
-
-		))
-
-
-	;(display (格式化数字 '1234.56345))
-	;(display (计算两个数字 '(1 0 1) '(9 1) ))
-	;(display (计算两个数字 '(1 0 1) '(9 1) ))
-	;(display (小数点后补全位数 '(2 1 3) '(0 0 1 3)))
-	;(display (add_three_nums '9 '9 '9))
-	;(display (assoc 'a '((a (a b c)))))
-	;(display (toy '(apply cdr '(a b c)) '((a 1) (b (a b c))) ""))
 
 )
 

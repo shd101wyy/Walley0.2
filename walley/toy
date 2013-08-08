@@ -39,20 +39,30 @@ if len(sys.argv)==2:
     string_in_side = file.read()
     string_in_side = "(begin "+string_in_side+")"
     string_in_side = cleanString(string_in_side)
-    #print "\n\nLexer---->\n"
-    #print "--> "+string_in_side
+    
     x=lexer(string_in_side)
-    #print x
     if x[1]==False:
         print "Incomplete Statement"
         exit(0)
     x=parser(x[0])
-
-    #print "\n\nParser---->\n"
-    #print x
-    #print "Parser----> ",
-    #print x
     toy(x,[],"")
+    
+
+# run one file and print env
+elif len(sys.argv)==3 and sys.argv[1]=="env":
+    file_name=sys.argv[2]
+    file=open(file_name)
+    string_in_side = file.read()
+    string_in_side = "(begin "+string_in_side+")"
+    string_in_side = cleanString(string_in_side)
+    
+    x=lexer(string_in_side)
+    if x[1]==False:
+        print "Incomplete Statement"
+        exit(0)
+    x=parser(x[0])
+    env = toy(x,[],"")[1]
+    print env
 
 # compress file
 elif len(sys.argv)==3 and sys.argv[1]=="compress":
