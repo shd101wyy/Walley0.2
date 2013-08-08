@@ -303,18 +303,12 @@ def eq(var_name1, var_name2,env):
         return "0"
     if is_(value1,value2):
         return "1"
-    #if type(value1)==str and  value1[0]=="\"":
-    #    value1 = convertStringToArray(value1[1:len(value1)-1])
-    #if type(value2)==str and value2[0]=="\"":
-    #    value2 = convertStringToArray(value2[1:len(value2)-1])
 
     if stringIsNumber(value1):
         value1=str(eval(value1))
     if stringIsNumber(value2):
         value2=str(eval(value2))
 
-    if type(value1)!=type(value2):
-        return "0"
     if type(value1)==str:
         if value1==value2:
             return "1"
@@ -440,14 +434,11 @@ def toy_language(trees,env,module_name):
 # TRY FUNCTIONAL PROGRAMMING, without global params
 # [return_value,env]
 def toy(tree,env,module_name=""):
-    # string
-    if tree[0]=="\"":
-        return [tree,env]
     # number
-    if stringIsNumber(tree):
-        return [tree,env]
+    #if stringIsNumber(tree):
+    #    return [tree,env]
     # atom
-    elif type(tree)==str:
+    if type(tree)==str:
         return [assoc(tree,env),env]
     else:
         if type(tree[0])==str:
@@ -584,12 +575,6 @@ def toy(tree,env,module_name=""):
                 def pair_params(names,params,env):
                     if names==[]:
                         return []
-                    # calculate params
-                    elif names[0]==".":
-                        return [[names[1],evlis(params,env)]]
-                    # lazy and does not calculate params
-                    elif names[0]=="&":
-                        return [[names[1],params]]
                     else:
                         return cons([names[0],toy(params[0],env)[0]],pair_params(names[1:len(names)],params[1:len(params)],env))
 
