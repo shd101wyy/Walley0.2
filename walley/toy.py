@@ -534,38 +534,12 @@ def toy(tree,env,module_name=""):
                 new_env = return_obj[1]
                 #env.insert(0,[var_name,var_value])   
                 return [var_value,cons([var_name,var_value],new_env)]
-            elif tree[0]=="set!":
-                def set_index(var_name,env,var_value):
-                    if env==[]:
-                        print "Error...In function set! "+var_name+" does not existed"
-                        return []
-                    elif var_name==env[0][0]:
-                        #return count
-                        #    return [var_value, new_env]
-                        return cons([var_name,var_value],cdr(env))
-                    return cons(car(env), set_index(var_name,env[1:len(env)],var_value))
-
-                #let
-                return_obj = toy(tree[2],env)
-                var_value = return_obj[0]
-                new_env = return_obj[1]
-                index = set_index(tree[1],new_env,var_value)
-                #if index==-1:
-                #    print "Error...In function set! var does not existed"
-                #else:
-                    #env[index] = [env[index][0],toy(tree[2],env)]
-                    #return toy(tree[2],env)
-                return [var_value,index]
+            
             elif tree[0]=="lambda":
                 return [tree,env]
             elif tree[0]=="begin":
                 return toy(tree[len(tree)-1], toy_language(tree[1:len(tree)-1],env,module_name),module_name)
                 #return eval_begin(tree[1:len(tree)],env,module_name)
-            elif tree[0]=="let":
-                return_obj = toy(tree[2],eval_let(tree[1],env))
-                return_value = return_obj[0]
-                return_env = return_obj[1]
-                return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
             elif tree[0]=="apply":
                 return toy(cons(tree[1],toy(tree[2],env)[0]),env)
             elif tree[0]=="eval":
@@ -627,16 +601,7 @@ def toy(tree,env,module_name=""):
                 #return toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
             else:
                 return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
-#return new env
-#expr -> ((a 12)(b 13)) 
-#env -> ((c 14))
-#return ((a 12)(b 13)(c 14))
-def eval_let(expr,env):
-    if expr==[]:
-        return env
-    # now ((x 12)(y x)) -> y = 12
-    return eval_let(expr[1:len(expr)], cons( [expr[0][0],toy(expr[0][1],env)[0]] , env) )
-    #return cons([expr[0][0],toy(expr[0][1],env)], eval_let(expr[1:len(expr)],env) )
+
 # ["x","y"] [["x",12],["y",13]] -> [12,13]
 def evlis(params,env):
     if params==[]:
