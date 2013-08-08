@@ -432,6 +432,27 @@
 					((eq (car expr) 'eval)
 						(toy (car (toy (cadr expr) env module_name)) env module_name)
 						)
+					; arithematic
+					((eq (car expr) '+)
+						(cons_env 
+							(+_array (evlis (cdr expr) env module_name))
+							 env)
+						)
+					((eq (car expr) '-)
+						(cons_env 
+							(-_array (evlis (cdr expr) env module_name))
+							 env)
+						)
+					((eq (car expr) '*)
+						(cons_env 
+							(*_array (evlis (cdr expr) env module_name))
+							 env)
+						)
+					((eq (car expr) '/)
+						(cons_env 
+							(/_array (evlis (cdr expr) env module_name))
+							 env)
+						)
 					; (procesdure argv...)
 					('1 
 						(procedure_procedure (car expr) (cdr expr) env module_name)
@@ -638,6 +659,7 @@
 	; 得到数据的类型
 	(define typeOfNum (lambda (input_str)
 		(cond 
+			((eq '0 (atom? input_str)) '0)
 			((eq (car input_str) '-)
 				(checkTypeOfNum (cdr input_str) '0 '0 '0 '0)
 				)
@@ -722,8 +744,89 @@
 			)
 		))		
 
-	;(display (typeOfNum /5))
-	(display ($/$ '3/5 '4/5))
+	;===== arithematic ============
+	; Does not support complex number now
+	; ADDITION
+	(define +_array_iter (lambda (list result)
+		(cond 
+			((null? list) result)
+			('1 
+				(+_array_iter 
+					(cdr list)
+					($+$ result (car list))
+					)
+				)
+			)
+		))
+	; (+_array (1 2 3)) -> 6
+	(define +_array (lambda (list)
+		(+_array_iter (cdr list) (car list))
+		))
+	; ======
+	; SUBSTRACTION
+	(define -_array_iter (lambda (list result)
+		(cond 
+			((null? list) result)
+			('1 
+				(-_array_iter 
+					(cdr list)
+					($-$ result (car list))
+					)
+				)
+			)
+		))
+	; (-_array (1 2 3)) -> -4
+	; (-_array (1)) -> -1
+
+	(define -_array (lambda (list)
+		(cond 
+			;()
+			((null? (cdr list))
+				(cons '- (car list))
+				)
+			('1 (-_array_iter (cdr list) (car list)))
+			)
+		))
+
+	;=======
+	; Mulitipliation
+	(define *_array_iter (lambda (list result)
+		(cond 
+			((null? list) result)
+			('1 
+				(*_array_iter 
+					(cdr list)
+					($*$ result (car list))
+					)
+				)
+			)
+		))
+	; (*_array (1 2 3)) -> 6
+	(define *_array (lambda (list)
+		(*_array_iter (cdr list) (car list))
+		))
+
+	;=======
+	; Division
+	(define /_array_iter (lambda (list result)
+		(cond 
+			((null? list) result)
+			('1 
+				(/_array_iter 
+					(cdr list)
+					($/$ result (car list))
+					)
+				)
+			)
+		))
+	; (/_array (1 2 3)) -> 1/6
+	(define /_array (lambda (list)
+		(/_array_iter (cdr list) (car list))
+		))
+
+	;===== Finish defining arithematic
+	(display (/_array '(3 4 5)))
+	(display (toy '(/ 3 4 (+ 5 6)) '() ""))
 )
 
 
