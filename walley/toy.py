@@ -78,8 +78,10 @@ def checkTypeOfNum(input_str,num_of_e,num_of_dot,num_of_slash,has_digit):
     if input_str=="":
         if has_digit!=True:
             return "Unknown_or_Invalid"
-        elif num_of_slash==1 and num_of_e==0 and num_of_dot==0:
-            return "Fraction"
+        elif num_of_slash==1:
+            if num_of_e==0 and num_of_dot==0:
+                return "Fraction"
+            return "Unknown_or_Invalid"
         elif num_of_slash==0 and num_of_e==0 and num_of_dot==0:
             return "Integer"
         elif num_of_dot==1 or num_of_e==1:
@@ -291,9 +293,6 @@ def atom(arg):
     if type(arg)!=str:
         return "0"
     else:
-        # string is list not atom
-        if arg.find(" ")!=-1:
-            return "0"
         return "1"
 def eq(var_name1, var_name2,env):
     from operator import is_
