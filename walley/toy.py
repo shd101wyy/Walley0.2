@@ -571,7 +571,7 @@ def toy(tree,env,module_name=""):
                 #return eval_begin( tree[0][2:len(tree[0])], append(pair(tree[0][1],evlis(cdr(tree),env)),env))
                 #return toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
             else:
-                return toy(cons(toy(tree[0],env,module_name) , tree[1:len(tree)] ), env,module_name)
+                return toy(cons(toy(tree[0],env,module_name)[0] , tree[1:len(tree)] ), env,module_name)
 
 
 

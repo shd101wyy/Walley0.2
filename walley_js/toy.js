@@ -333,7 +333,6 @@ var toy_language = function(trees,env,module_name){
     else
         return toy_language(cdr(trees), toy(car(trees),env,module_name)[1] , module_name )
 }
-
 // TRY FUNCTIONAL PROGRAMMING, without global params
 // [return_value,env]
 var toy = function(tree,env,module_name){
@@ -521,7 +520,7 @@ var toy = function(tree,env,module_name){
                 return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
             }
             else
-                return toy(cons(toy(tree[0],env,module_name) , cdr(tree)), env,module_name)
+                return toy(cons(toy(tree[0],env,module_name)[0] , cdr(tree)), env,module_name)
         }
 }
 
