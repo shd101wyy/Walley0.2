@@ -23,11 +23,13 @@ if (argv.length==2){
 	rl.prompt()
 
 	var to_run=""
-	var toy_env = []
+	var env = []
 	rl.on('line', function(line) {
 		var parsed_obj = toy.parseString(line)
-		toy_env = toy.Toy_Run(parsed_obj , toy_env, toy.ENV, "" )
-
+		parsed_obj = parsed_obj[0]
+		var return_obj = toy.toy(parsed_obj , env , "" )
+		console.log(return_obj[0])
+		env = return_obj[1]
 		rl.setPrompt('toy> ')
 		rl.prompt()
 	})

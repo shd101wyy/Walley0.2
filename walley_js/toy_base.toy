@@ -707,58 +707,58 @@
 ;==== add ========
 (define $+$ (lambda (num1 num2)
 	(cond 
-		;是 fraction 直接进行计算
 		((__OR__ 
-			(eq 'Fraction (typeOfNum num1))
-			(eq 'Fraction (typeOfNum num2))
+			(eq 'Float (typeOfNum num1))
+			(eq 'Float (typeOfNum num2))
 			)
-			(make_rat_string (add-rat (format_number num1) (format_number num2)))
-			)
-		('1 
 			(+ num1 num2)
+			)
+		;是 fraction 直接进行计算
+		('1 
+			(make_rat_string (add-rat (format_number num1) (format_number num2)))
 			)
 		)
 	))
 ;==== substruction ===
 (define $-$ (lambda (num1 num2)
 	(cond 
-		;是 fraction 直接进行计算
 		((__OR__ 
-			(eq 'Fraction (typeOfNum num1))
-			(eq 'Fraction (typeOfNum num2))
+			(eq 'Float (typeOfNum num1))
+			(eq 'Float (typeOfNum num2))
 			)
-			(make_rat_string (sub-rat (format_number num1) (format_number num2)))
-			)
-		('1 
 			(- num1 num2)
+			)
+		;是 fraction 直接进行计算
+		('1 
+			(make_rat_string (sub-rat (format_number num1) (format_number num2)))
 			)
 		)
 	))	
 ;==== Multplication ===
 (define $*$ (lambda (num1 num2)
 	(cond 
-		;是 fraction 直接进行计算
 		((__OR__ 
-			(eq 'Fraction (typeOfNum num1))
-			(eq 'Fraction (typeOfNum num2))
+			(eq 'Float (typeOfNum num1))
+			(eq 'Float (typeOfNum num2))
 			)
-			(make_rat_string (mul-rat (format_number num1) (format_number num2)))
-			)
-		('1 
 			(* num1 num2)
+			)
+		;是 fraction 直接进行计算
+		('1 
+			(make_rat_string (mul-rat (format_number num1) (format_number num2)))
 			)
 		)
 	))
 ;==== Divition ===
 (define $/$ (lambda (num1 num2)
 	(cond 
-		;是 fraction 直接进行计算
 		((__OR__ 
 			(eq 'Float (typeOfNum num1))
 			(eq 'Float (typeOfNum num2))
 			)
 			(/ num1 num2)
 			)
+		;是 fraction 直接进行计算
 		('1 
 			(make_rat_string (div-rat (format_number num1) (format_number num2)))
 			)
