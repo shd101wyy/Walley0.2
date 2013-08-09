@@ -1,0 +1,121 @@
+<html>
+	<head>
+		<meta charset='utf8'>
+		<title> Toy Language </title>
+		<!-- ACE -->
+		<script src='./src-min-noconflict/ace.js'></script>
+		<!-- Toy -->
+		<script src='./toy.js'></script>
+
+		<style type="text/css">
+			body{
+				background-color: black;
+			}
+			#editor{
+				width: 85%;
+				height: 85%;
+				left: 15%;
+				top: 0%;
+				position: absolute;
+			}
+			#files_panel{
+				width: 15%;
+				height: 100%;
+				left: 0%;
+				top:0%;
+				position: absolute;
+			}
+			#console{
+				width: 100%;
+				height: 15%;
+				top: 90%;
+				left: 15%;
+				position: absolute;
+				background-color: #1D1D1D;
+				color: white;
+				overflow: auto;
+			}
+			#control_panel{
+				width: 100%;
+				height: 5%;
+				top: 85%;
+				left: 15%;
+				position: absolute;
+				background-color: black;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="files_panel"></div>
+		<div id="console">console</br></div>
+		<div id="control_panel">
+			<button id="run_script" onclick="runScript()">
+				Run Toy Script
+			</button>
+		</div>
+		<div id="editor">; Toy Language
+(define x 12)
+		</div>
+		<script type="text/javascript">
+			if (window.localStorage){
+				console.log("Support Local Storage")
+			}
+			else{
+				console.log("Does not support Local Storage")
+			}
+			// ACE part ============================
+			var editor = ace.edit("editor")
+			editor.setTheme("ace/theme/monokai");
+    		editor.getSession().setMode("ace/mode/lisp");
+
+    		editor.commands.addCommand({
+			    name: 'myCommand',
+			    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+			    exec: function(editor) {
+			        //...
+
+			    },
+			    readOnly: true // false if this command should not apply in readOnly mode
+			});
+    		// End ACE part ========================
+			// redefine console.log
+    		console.log = function(input_str){
+    			// modify input_str
+    			input_str = input_str.replace("<","&lt;")
+				input_str = input_str.replace(/\n/g,"<br>")
+				input_str = input_str.replace(/ /g,"&nbsp;")
+
+    			var _console_ = document.getElementById("console")
+    			alert(_console_.innerHTML)
+    			_console_.innerHTML = _console_.innerHTML+input_str
+    		}
+
+    		// clicked run script button
+    		var runScript = function(){
+    			var content = editor.getValue()
+    			
+
+    			var _console_ = document.getElementById("console")
+    			_console_.innerHTML = ""
+    			console.log("Hi")
+    		}
+
+		</script>
+
+	</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
