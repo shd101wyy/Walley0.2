@@ -86,18 +86,18 @@
 				input_str = input_str.replace(/ /g,"&nbsp;")
 
     			var _console_ = document.getElementById("console")
-    			alert(_console_.innerHTML)
     			_console_.innerHTML = _console_.innerHTML+input_str
     		}
 
     		// clicked run script button
     		var runScript = function(){
-    			var content = editor.getValue()
-    			
-
+    			// clean console
     			var _console_ = document.getElementById("console")
     			_console_.innerHTML = ""
-    			console.log("Hi")
+
+    			var content = editor.getValue()
+    			var parsed_obj = parseString(content)
+    			toy_language(parsed_obj,[],"")
     		}
 
 		</script>

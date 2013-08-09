@@ -807,10 +807,12 @@ var _ge_array_ = function(arr,env,module_name){
 }
 // 
 // exports to Nodejs 
-module.exports.parseString = parseString
-module.exports.toy = toy 
-module.exports.toy_language =toy_language
-module.exports.printArray = printArray
+if (typeof(module)!="undefined"){
+    module.exports.parseString = parseString
+    module.exports.toy = toy 
+    module.exports.toy_language =toy_language
+    module.exports.printArray = printArray
+    }
 
 
 
