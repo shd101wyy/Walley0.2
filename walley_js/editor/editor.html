@@ -52,6 +52,9 @@
 			<button id="run_script" onclick="runScript()">
 				Run Toy Script
 			</button>
+			<button id="save_script" onclick="saveScript()">
+				Save Toy Script
+			</button>
 		</div>
 		<div id="editor">; Toy Language
 (define x 12)
@@ -68,22 +71,34 @@
 			editor.setTheme("ace/theme/monokai");
     		editor.getSession().setMode("ace/mode/lisp");
 
+    		if (window.localStorage["default"]==undefined){
+				editor.setValue(";Toy Language\n(define x 15)\n")
+			}
+			else{
+				editor.setValue(window.localStorage["default"])
+			}
+
+			// save script
+			var saveScript = function(){
+				window.localStorage["default"] = editor.getValue()
+			}
     		editor.commands.addCommand({
 			    name: 'myCommand',
 			    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
 			    exec: function(editor) {
-			        //...
-
+			        saveScript()
 			    },
 			    readOnly: true // false if this command should not apply in readOnly mode
 			});
+
     		// End ACE part ========================
 			// redefine console.log
     		console.log = function(input_str){
     			// modify input_str
-    			input_str = input_str.replace("<","&lt;")
-				input_str = input_str.replace(/\n/g,"<br>")
+				input_str = input_str.replace(/\\n/g,"<br>")
+				input_str = input_str.replace(/\\t/g,"    ")
 				input_str = input_str.replace(/ /g,"&nbsp;")
+
 
     			var _console_ = document.getElementById("console")
     			_console_.innerHTML = _console_.innerHTML+input_str
