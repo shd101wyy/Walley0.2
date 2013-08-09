@@ -54,7 +54,7 @@
 	(cond 
 		; Error can not find value
 		((null? y) 
-				(display 'Error_Cannot_Find)
+				(display (cons "Error cannot find " x))
 			)
 		((eq (caar y) x) (cadar y))
 		('1 (assoc x (cdr y)) )
@@ -853,9 +853,9 @@
 
 
 
+(show_env)
 
-
-
+;(define f (lambda (n) (cond ((eq n 0) 1) (1 (* n (f (- n 1)))))))
 
 
 
