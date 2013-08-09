@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+var fs=require("fs")
+var toy=require("./toy.js")
+var argv = process.argv
+console.log(argv)
+
+// run file
+if (argv.length==3){
+	var file_name = argv[2]
+	if (typeof(file_name)=="undefined"){
+		console.log("No input file..")
+		process.exit(0)
+	}
+	// get content of file
+	var content_in_file=fs.readFileSync(file_name,"utf8")
+	// parse
+	var parsed_obj = toy.parseString(content_in_file)
+	// run string
+	toy.toy_language(parsed_obj, [] ,"" )
+}
+
+// show env
+if (argv.length==4 && argv[2]=="env"){
+	var file_name = argv[3]
+	if (typeof(file_name)=="undefined"){
+		console.log("No input file..")
+		process.exit(0)
+	}
+	// get content of file
+	var content_in_file=fs.readFileSync(file_name,"utf8")
+	// parse
+	var parsed_obj = toy.parseString(content_in_file)
+	// run string
+	var env = toy.toy_language(parsed_obj, [] ,"" )
+	toy.printArray(env)
+}

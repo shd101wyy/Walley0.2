@@ -1,0 +1,863 @@
+
+
+;==============================================
+;==============================================
+;==============================================
+;===== Begin to construct Toy Language ========
+;==============================================
+;
+;
+;
+;	 I will only write this in 
+;	'quote car cdr cons cond eq atom' 
+;	====
+;   and + - * / define __LT__ __AND__ __OR__ function
+(define cadr (lambda (_list_)
+	(car (cdr _list_))
+	))
+(define caar (lambda (_list_)
+	(car (car _list_))
+	))
+(define cdar (lambda (_list_)
+	(cdr (car _list_))
+	))
+(define cadar (lambda (_list_)
+	(car (cdr (car _list_)))
+	))
+(define caddr (lambda (_list_)
+	(car (cdr (cdr _list_)))
+	))
+(define caddar (lambda (_list_)
+	(car (cdr (cdr (car _list_))))
+	))
+
+(define null? (lambda (x)
+	(eq x '())
+	))
+; '(a b) '(c d) -> (a b c d)
+(define append (lambda (x y)
+	(cond 
+		((null? x) y)
+		('1 (cons (car x) (append (cdr x) y)))
+		)
+	))
+; '(a b) '(3 4) -> ((a 3) (b 4))
+(define pair (lambda (x y)
+	(cond
+		((and (null? x) (null? y) )  '() )
+		('1 (cons (cons (car x) (cons (car y) '())) (pair (cdr x) (cdr y))))
+		)
+	))
+; get value according to key
+; (assoc 'x '((x  a) (y  b) )) -> a
+(define assoc (lambda (x y)
+	(cond 
+		; Error can not find value
+		((null? y) 
+				(display 'Error_Cannot_Find)
+			)
+		((eq (caar y) x) (cadar y))
+		('1 (assoc x (cdr y)) )
+		)
+	))
+
+; Toy Language iteration
+(define toy_language (lambda (trees env module_name)
+	(cond
+		; finish toy_language
+		((null? trees) env)
+		; iteration
+		('1
+			(toy_language 
+				; next tree
+				(cdr trees)
+				; update environment
+				(cdar (toy (car trees) env module_name))
+				; module_name
+				module_name)
+			)
+		)
+	))
+
+; [value , env]
+(define cons_env (lambda (value env)
+	(cons value (cons env '()))
+	))
+
+; =========================
+; for define function
+;check whether var existed
+(define var_existed(lambda (var_name env)
+	(cond 
+		((null? env) '0)
+		((eq var_name (caar env)) '1)
+		('1 (var_existed var_name (cdr env)))
+		)
+	))
+; update var_name
+; add module_name
+(define var_name_update (lambda (var_name module_name)
+	(cond 
+		((eq module_name "") var_name)
+		('1 (cons (module_name '.) var_name))
+		)
+	))
+; deal with return object
+; where return object is toy
+; return_obj[0] = var_value
+; return_obj[1] = new_env
+
+(define deal_with_return_obj (lambda (return_obj var_name)
+	(cons 
+		; add var_value
+		(car return_obj)
+	(cons 
+	(cons 
+		; [var_name var_value]
+		(cons var_name (cons (car return_obj) '()))
+		(cadr return_obj)
+		)  '())
+		)
+	))
+
+;define function procedure
+(define define_procedure (lambda (updated_var_name uncalculated_var_value env module_name)
+	(cond 
+		((var_existed updated_var_name env)
+			(display (cons (cons "Error " updated_var_name) " Has already be defined") )
+			)
+		('1 (deal_with_return_obj (toy uncalculated_var_value env module_name) updated_var_name))
+		)
+	))
+
+;=================== END define function procedure ==========
+;============================================================
+
+;========= set! function procedure ==========
+
+; return new environment
+(define set_index (lambda (var_name var_value env)
+	(cond
+		((null? env) 
+			((lambda (a b) b) 
+				(display (cons (cons "Error...In function set! " var_name) " does not exist")) '()
+				)
+			)
+		; find var
+		((eq var_name (caar env))
+			(cons 
+				; (var_name var_value)
+				(cons 
+					var_name
+					(cons var_value '())
+					)
+				; rest of env
+				(cdr env))
+			)
+		('1 (cons (car env) (set_index var_name var_value (cdr env))))
+		)
+	))
+
+(define set!_procedure (lambda (var_name return_obj)
+	;(var_value new_env)
+	(cons (car return_obj) (cons (set_index var_name (car return_obj) (cadr return_obj)) '()))
+	))
+
+
+;========= End set! function procedure ======
+
+;========= let function procedure ===========
+;============================================
+;return new env
+;expr -> ((a 12)(b 13)) 
+;env -> ((c 14))
+;return ((a 12)(b 13)(c 14))
+(define eval_let (lambda (expr env module_name)
+	(cond 
+		((null? expr)
+			env)
+		; now ((x 12)(y x)) -> y = 12
+		('1 
+			(eval_let (cdr expr) 
+				(cons 
+				; (var_name var_value)
+					; var_name
+					(cons (caar expr)
+					(cons 
+					; var_value... this place has problem.. env maybe updated
+					(car (toy (cadar expr) env module_name)) '())
+					)
+					env
+				)
+				module_name				
+				)
+			)
+		)
+	))
+; restore new_env to old_env length
+(define restore_env (lambda (old_env new_env new_env_copy)
+	(cond 
+		((null? old_env)
+			(cond 
+				((null? new_env) new_env_copy)
+				('1 (restore_env old_env (cdr new_env) (cdr new_env_copy)))
+				)
+			)
+		('1 (restore_env (cdr old_env) (cdr new_env) new_env_copy))
+		)
+	))
+(define let_procedure (lambda (return_obj env)
+	(cons 
+		(car return_obj)
+		(cons
+			(restore_env env (cadr return_obj) (cadr return_obj))
+			'()
+			)
+		)
+	))
+;=================== END let function procedure =============
+;============================================================
+
+;====== function begin ======
+;============================
+(define eval_begin (lambda (expr env module_name)
+	(cond 
+		((null? expr) (display "Error...begin function params num error"))
+		((null? (cdr expr))
+			(toy (car expr) env module_name)
+			)
+		('1 (eval_begin (cdr expr) (cadr (toy (car expr) env module_name)) module_name))
+		)
+	))
+
+;============================
+
+;======= procedure ==========
+;(toy (cons (assoc (car expr) env) (cdr expr)) env)
+; eg: (add 3 4)-> (+ 3 4) replace add with +
+(define procedure_procedure (lambda (func_name params env module_name)
+	(cond 
+		; error... cannot deal with that procedure
+		((null? env) 
+			(display (cons "Undefined Function " func_name))
+			)
+		; find assoc function
+		((eq func_name (car (car env)))
+			(toy (cons (cadar env) params) env module_name)
+			)
+		; iteration
+		('1 (procedure_procedure func_name params (cdr env) module_name))
+		)
+	))
+;============================
+;======== function lambda ===
+; compute function params
+; ["x","y"] [["x",12],["y",13]] -> [12,13]
+(define evlis (lambda (params env module_name)
+	(cond 
+		((null? params) '())
+		('1 (cons (car (toy (car params) env module_name)) (evlis (cdr params) env module_name)))
+		)
+	))
+
+; pair_params
+; ["a","b"] ["1","2"] -> [["a","1"],["b","2"]]
+; [". args"] ["1","2"] -> [["args", ["1","2"]]] 
+(define pair_params (lambda (names params env module_name)
+	(cond 
+		((null? names) '())
+		; calculate params
+		;==
+		;variadic params
+		((eq (car names) '.)
+			(cons 
+			(cons 
+				(cadr names)
+				(cons 
+					(evlis params env module_name)
+					'())
+				)
+			'())
+			)
+		; lazy evaluation->does not calculate params
+		((eq (car names) '&)
+			(cons 
+			(cons 
+				(cadr names)
+				(cons 
+				params
+				'())
+				)
+			'())
+			)
+		('1 	
+			(cons 
+				;calcuate param
+				(cons 
+					;参数名字 
+					(car names)
+					(cons 
+						;得到计算好的参数的数值
+						(car (toy (car params) env module_name))
+						'()
+						)
+					)
+				
+				(pair_params (cdr names) (cdr params) env module_name)
+				)
+			)
+		)
+	))
+
+    ;return[return_value, return_env[len(return_env)-len(env):len(return_env)]]
+	(define deal_with_return_obj_for_lambda_procedure (lambda (return_value return_env env)
+		(cons 
+			return_value
+			(cons 
+				(restore_env env return_env return_env)
+				'())
+			)
+		))
+	; return_obj -> toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+	(define lambda_procedure (lambda (return_obj env module_name)
+		(deal_with_return_obj_for_lambda_procedure (car return_obj) (cadr return_obj) env)
+		))
+
+            
+    ;==============
+	; eval cond function
+	(define eval_cond (lambda (expr env module_name)
+		(cond 
+			((car (toy (caar expr) env module_name))
+			 (toy (cadar expr) env module_name)
+				)
+			('1 (eval_cond (cdr expr) env module_name))
+			)
+		))
+	;==============
+
+;============================
+
+; Toy Language
+; (toy 'x  '((x . a)) ) -> x
+; expr is the expression that need to be evaluated
+; env is the environment
+(define toy (lambda (expr env module_name)
+	(cond
+		; it is number
+		((number? expr) (cons_env expr env))
+		; it is atom
+		;				[value,env]
+		((atom? expr) (cons (assoc expr env) (cons env '())) )
+		((atom? (car expr))
+			(cond
+				; seven primitive functions
+				; (quote x) -> x
+				;						 [value,env]
+				((eq (car expr) 'quote) (cons (cadr expr) (cons env '()) ))
+				; (atom? 'x) -> 1
+				((eq (car expr) 'atom?) 
+					(cons_env (atom? (car (toy (cadr expr) env module_name))) env)
+					)
+				; (eq 'x 'x) -> 1
+				((eq (car expr) 'eq)  
+					(cons_env
+						(eq 
+							(car (toy (cadr expr) env module_name))
+							(car (toy (caddr expr) env module_name))
+							)
+						env
+					)
+					)
+				; (car '(a b))->a
+				((eq (car expr) 'car) 
+					(cons_env 
+						(car (car (toy (cadr expr) env module_name)))
+						env
+					)
+
+					)
+				; (cdr '(a b)) -> (b)
+				((eq (car expr) 'cdr) 
+					(cons_env
+						(cdr (car (toy (cadr expr) env module_name) ) )
+						env
+						)
+					)
+				; (cons 'a '(a) ) -> (a a)
+				((eq (car expr) 'cons)
+					(cons_env
+						(cons 
+							(car (toy (car (cdr expr)) env module_name))
+							(car (toy (car (cdr (cdr expr))) env module_name))
+							)
+						env
+						)
+					)
+				; (cond (judge1 stm1) (judge2 stm2) ) 
+				((eq (car expr) 'cond) (eval_cond (cdr expr) env module_name))
+
+				; builtin functions
+				; define function
+				((eq (car expr) 'define)
+					(define_procedure 
+						(var_name_update (cadr expr) module_name)
+						(caddr expr)
+						env 
+						module_name
+						)
+					)
+				; set! function
+				((eq (car expr) 'set!) 
+					(set!_procedure
+						(cadr expr)
+						(toy (caddr expr) env module_name)
+						)
+					)
+				;=== my idea ====
+				((eq (car expr) 'lambda)
+					(cons_env expr env)
+					)
+				; (begin stm1 stm2)
+				((eq (car expr) 'begin)
+					(eval_begin (cdr expr) env module_name)
+					)
+				; (let ((var value) (var value) ... ) stm )
+				((eq (car expr) 'let)
+					(let_procedure (toy (caddr expr) (eval_let (cadr expr) env module_name) module_name) env)
+					)
+				; (apply func_name '(params ...))
+				((eq (car expr) 'apply)
+					(toy (cons (cadr expr) (cdr (cdr expr))) env module_name)
+					)
+				((eq (car expr) 'eval)
+					(toy (car (toy (cadr expr) env module_name)) env module_name)
+					)
+				; arithematic
+				((eq (car expr) '+)
+					(cons_env 
+						(+_array (evlis (cdr expr) env module_name))
+						 env)
+					)
+				((eq (car expr) '-)
+					(cons_env 
+						(-_array (evlis (cdr expr) env module_name))
+						 env)
+					)
+				((eq (car expr) '*)
+					(cons_env 
+						(*_array (evlis (cdr expr) env module_name))
+						 env)
+					)
+				((eq (car expr) '/)
+					(cons_env 
+						(/_array (evlis (cdr expr) env module_name))
+						 env)
+					)
+				((eq (car expr) '__LT__)
+					(cons_env
+						(__LT__ 
+							(car (toy (car (cdr expr)) env module_name))
+							(car (toy (car (cdr (cdr expr))) env module_name))
+							)
+						env)
+					)
+				((eq (car expr) 'display)
+					(cons_env (display (car (toy (cadr expr) env module_name))) env)
+					)
+				; (if condtion stm1 stm2)
+				((eq (car expr) 'if)
+					(cond 
+						((car (toy (cadr expr) env module_name))
+							(toy (caddr expr) env module_name)
+							)
+						('1 (toy (car (cdr (cdr (cdr expr)))) env module_name))
+						)
+					)
+				; (procesdure argv...)
+				('1 
+					(procedure_procedure (car expr) (cdr expr) env module_name)
+					)
+				)
+			)
+		; label function
+		; well... I don not want to support label function
+		;((eq (caar expr) 'label)
+		;	(toy (cons (caddar expr) (cdr expr))
+		;		(cons (list (cadar expr) (car expr)) env )
+		;		)
+		;	)
+		; lambda function
+		((eq (caar expr) 'lambda)
+			;return_obj -> toy(tree[0][2], append(pair_params(tree[0][1],cdr(tree),env),env))
+			;(define lambda_procedure (lambda (return_obj env module_name)
+			(lambda_procedure  
+				(toy (caddr (car expr)) (append (pair_params (cadr (car expr)) (cdr expr) env module_name) env) module_name)
+				env 
+				module_name)
+			)
+		)
+	))
+
+
+
+; =========== implement + - * / ========================
+; === for real number and fraction only
+;
+;
+; ====format number funtion
+; 12 -> (  12     1  )
+;        numerator   denominator
+;
+; 12.04 -> ( 12.04 1 )
+; 13.04/5 -> (13.04 5)
+; 
+
+; remainder function
+(define remainder (lambda (a b) 
+	(cond 
+		((__LT__ a b) a)
+		('1 (remainder (- a b) b))
+		)	
+	))
+
+; GCD
+; General Common Divisor
+(define gcd (lambda (a b)
+	(cond 
+		((eq b '0) a)
+		('1 (gcd b (remainder a b)))
+		)
+		))
+
+; fraction arithematic
+(define add-rat (lambda (x y) 
+	(make-rat 
+		(+ 
+			(* (numer x) (denom y))  
+			(* (numer y) (denom x))
+		)
+		(* (denom x) (denom y)) )
+	))
+(define sub-rat (lambda (x y) 
+	(make-rat
+		(- 
+			(* (numer x) (denom y))  
+			(* (numer y) (denom x))
+		)
+		(* (denom x) (denom y)) )
+	))
+
+; (a/b)*(c/d) = (a*c) / (b*d)
+(define mul-rat (lambda (x y) 
+	(make-rat
+		(* (numer x) (numer y)) 
+		(* (denom x) (denom y)) 
+		)
+	))
+; (a/b)/(c/d) -> (a*d)/(b*c)
+(define div-rat (lambda (x y)
+	(make-rat
+		(* (numer x) (denom y))
+		(* (denom x) (numer y))
+		)
+	))
+; a/b c/d
+(define equal-rat? (lambda (x y)
+	(= 
+		(* (numer x) (denom y))
+		(* (denom x) (numer y))
+		)
+	))
+(define removeDot_iter (lambda (num)
+	(cond 
+		((null? num) "")
+		((eq (car num) '.) "")
+		('1 (cons (car num) (removeDot_iter (cdr num)) ))
+		)
+	))
+; 12.000 -> 12
+; 12.4500 -> 12
+(define removeDot (lambda (num)
+	(removeDot_iter num)
+	))
+(define 约分函数根据gcd (lambda (n d g)
+	(cons (removeDot (/ n g)) (cons (removeDot (/ d g)) '()) )
+	))
+(define make-rat (lambda (n d) 
+	(约分函数根据gcd n d (gcd n d))
+	))
+(define numer (lambda (x) (car x)))
+(define denom (lambda (x) (cadr x)))
+(define make_rat_string (lambda (rat)
+	(cons (car rat) (cons '/ (cadr rat)))
+	))
+
+
+;============ format number ====================
+(define get_numerator (lambda (num)
+	(cond
+		((null? num) "")
+		((eq (car num) '/) "")
+		('1 (cons (car num) (get_numerator (cdr num))))
+		)
+	))
+(define get_denominator (lambda (num)
+	(cond 
+		((null? num) '1)
+		((eq (car num) '/) (cdr num))
+		('1 (get_denominator (cdr num)))
+		)
+	))
+
+(define format_number (lambda (num)
+	(cons (get_numerator num) (cons (get_denominator num) '()))
+	))
+; check whether one char is digit
+(define 这个数字是整数 (lambda (value)
+	(cond
+		((eq value '0) '1) 
+		((eq value '1) '1)
+		((eq value '2) '1)
+		((eq value '3) '1)
+		((eq value '4) '1)
+		((eq value '5) '1)
+		((eq value '6) '1)
+		((eq value '7) '1)
+		((eq value '8) '1)
+		((eq value '9) '1)
+		('1 '0)
+		)
+	))
+
+; Integer Float Fraction Unknown_or_Invalid
+(define checkTypeOfNum (lambda (input_str num_of_e num_of_. num_of_/ hasDigit)
+	(cond 
+		; finish
+		((null? input_str)
+			(cond 
+				; it is not num
+				((eq hasDigit '0) 'Unknown_or_Invalid)
+				;check fraction
+				((eq num_of_/ '1) 
+					(cond 
+						((eq num_of_e '0)
+							(cond 
+								((eq num_of_. '0)
+									'Fraction
+									)
+								('1 'Unknown_or_Invalid)
+								)
+							)
+						('1 'Unknown_or_Invalid)
+						)
+					)
+				; check integer
+				((__AND__ (eq num_of_/ '0) (__AND__ (eq num_of_e '0) (eq num_of_. '0)))
+					'Integer
+					)
+				((__OR__ (eq num_of_e '1) (eq num_of_. '1))
+					'Float
+					)
+				('1  'Unknown_or_Invalid)
+				)
+			)
+		((eq (car input_str) 'e)
+			(checkTypeOfNum (cdr input_str) (+ num_of_e '1) num_of_. num_of_/ hasDigit)
+			)
+		((eq (car input_str) '.)
+			(checkTypeOfNum (cdr input_str) num_of_e (+ num_of_. '1) num_of_/ hasDigit)
+			)
+		((eq (car input_str) '/)
+			(checkTypeOfNum (cdr input_str) num_of_e num_of_. (+ num_of_/ '1) hasDigit)
+			)
+		((这个数字是整数 (car input_str)) 
+			(checkTypeOfNum (cdr input_str) num_of_e num_of_. num_of_/ '1)
+			)
+		('1 'Unknown_or_Invalid)
+		)
+	))
+; 得到数据的类型
+(define typeOfNum (lambda (input_str)
+	(cond 
+		((eq '0 (atom? input_str)) '0)
+		((eq (car input_str) '-)
+			(checkTypeOfNum (cdr input_str) '0 '0 '0 '0)
+			)
+		('1 
+			(checkTypeOfNum input_str '0 '0 '0 '0))
+		)
+	))
+
+;@@@@@@
+(define number?_accordint_to_type (lambda (type)
+	(cond 
+		((eq type 'Float) '1)
+		((eq type 'Fraction) '1)
+		((eq type 'Integer) '1)
+		('1 '0)
+		)
+	))
+; check whether input is number
+(define number? (lambda (input_str)
+	(number?_accordint_to_type (typeOfNum input_str))
+	))
+;@@@@@@
+
+;==== add ========
+(define $+$ (lambda (num1 num2)
+	(cond 
+		;是 fraction 直接进行计算
+		((__OR__ 
+			(eq 'Fraction (typeOfNum num1))
+			(eq 'Fraction (typeOfNum num2))
+			)
+			(make_rat_string (add-rat (format_number num1) (format_number num2)))
+			)
+		('1 
+			(+ num1 num2)
+			)
+		)
+	))
+;==== substruction ===
+(define $-$ (lambda (num1 num2)
+	(cond 
+		;是 fraction 直接进行计算
+		((__OR__ 
+			(eq 'Fraction (typeOfNum num1))
+			(eq 'Fraction (typeOfNum num2))
+			)
+			(make_rat_string (sub-rat (format_number num1) (format_number num2)))
+			)
+		('1 
+			(- num1 num2)
+			)
+		)
+	))	
+;==== Multplication ===
+(define $*$ (lambda (num1 num2)
+	(cond 
+		;是 fraction 直接进行计算
+		((__OR__ 
+			(eq 'Fraction (typeOfNum num1))
+			(eq 'Fraction (typeOfNum num2))
+			)
+			(make_rat_string (mul-rat (format_number num1) (format_number num2)))
+			)
+		('1 
+			(* num1 num2)
+			)
+		)
+	))
+;==== Divition ===
+(define $/$ (lambda (num1 num2)
+	(cond 
+		;是 fraction 直接进行计算
+		((__OR__ 
+			(eq 'Float (typeOfNum num1))
+			(eq 'Float (typeOfNum num2))
+			)
+			(/ num1 num2)
+			)
+		('1 
+			(make_rat_string (div-rat (format_number num1) (format_number num2)))
+			)
+		)
+	))		
+
+;===== arithematic ============
+; Does not support complex number now
+; ADDITION
+(define +_array_iter (lambda (list result)
+	(cond 
+		((null? list) result)
+		('1 
+			(+_array_iter 
+				(cdr list)
+				($+$ result (car list))
+				)
+			)
+		)
+	))
+; (+_array (1 2 3)) -> 6
+(define +_array (lambda (list)
+	(+_array_iter (cdr list) (car list))
+	))
+; ======
+; SUBSTRACTION
+(define -_array_iter (lambda (list result)
+	(cond 
+		((null? list) result)
+		('1 
+			(-_array_iter 
+				(cdr list)
+				($-$ result (car list))
+				)
+			)
+		)
+	))
+; (-_array (1 2 3)) -> -4
+; (-_array (1)) -> -1
+
+(define -_array (lambda (list)
+	(cond 
+		;()
+		((null? (cdr list))
+			(cons '- (car list))
+			)
+		('1 (-_array_iter (cdr list) (car list)))
+		)
+	))
+
+;=======
+; Mulitipliation
+(define *_array_iter (lambda (list result)
+	(cond 
+		((null? list) result)
+		('1 
+			(*_array_iter 
+				(cdr list)
+				($*$ result (car list))
+				)
+			)
+		)
+	))
+; (*_array (1 2 3)) -> 6
+(define *_array (lambda (list)
+	(*_array_iter (cdr list) (car list))
+	))
+
+;=======
+; Division
+(define /_array_iter (lambda (list result)
+	(cond 
+		((null? list) result)
+		('1 
+			(/_array_iter 
+				(cdr list)
+				($/$ result (car list))
+				)
+			)
+		)
+	))
+; (/_array (1 2 3)) -> 1/6
+(define /_array (lambda (list)
+	(/_array_iter (cdr list) (car list))
+	))
+
+;(display "Hello World")
+;===== Finish defining arithematic
+;=====
+;(display (/_array '(3 4 5)))
+;(display (toy '(if 0 2 3) '() ""))
+
+
+
+
+
+
+
+
+
+
+

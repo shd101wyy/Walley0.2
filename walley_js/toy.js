@@ -63,7 +63,7 @@ var parseString = function(input_str){
 
 			var rest_result = dealWith_Quote_Unquote_Quasiquote(cdr(input_str) ,"" , 0, 0 )
 			var _rest_ = rest_result[0]
-			var _result_ = [quote,new_lexer(rest_result[1])[0]]
+			var _result_ = [quote,parseString(rest_result[1])[0]]
 			result.push(_result_)
 			return new_lexer_iter(_rest_,result)
 		}
@@ -118,22 +118,28 @@ var atom = function( input_str ){
 	return "0"
 }
 var eq = function(arg0, arg1){
+	// "" eq [] 
+	if (arg0.length==0 && arg1.length==0)
+		return "1"
 	var type0 = typeof(arg0)
-	var tyoe1 = typeof(arg1)
+	var type1 = typeof(arg1)
 	if (type0!=type1)
 		return "0"
 	else if (arg0==arg1)
-		return "1"
-	// "" eq [] 
-	else if (arg0.length==0 && arg1.length==0)
 		return "1"
 	else
 		return "0"
 }
 var car = function ( arg ){ 
+	if (arg.length==0){
+		console.log("Error...cannot get car of empty list")
+	}
 	return arg[0]
 }
 var cdr = function ( arg ){
+	if (arg.length==0){
+		console.log("Error...cannot get cdr of empty list")
+	}
 	return arg.slice(1,arg.length)
 }
 var cons = function (value1, value2){
@@ -240,7 +246,7 @@ var printArray = function(list){
 	var convert_array_to_string = function(list){
 		var output;
 		if (typeof(list)!="object"){
-			output = list
+			output = "'"+list+"'"
 		}
 		else{
 			output = "[ "
@@ -250,7 +256,8 @@ var printArray = function(list){
 				output = output+", "
 				i=i+1
 			}
-			output = output + convert_array_to_string(list[i])
+			if (list.length!=0)
+				output = output + convert_array_to_string(list[i])
 			output = output+" ]"
 		}
 		return output
@@ -307,6 +314,7 @@ var stringIsNumber = function(input_str){
 }
 
 var str=function(input_s){return input_s+""}
+var len=function(obj){return obj.length}
 // ...
 //
 //=======================================
@@ -337,7 +345,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="atom?")
                 return [atom(toy(tree[1],env,module_name)[0]),env]
             else if (tree[0]=="eq")
-                return [eq(toy(tree[1],env,module_name)[0],toy(tree[2],env,module_name)),env]
+                return [eq(toy(tree[1],env,module_name)[0],toy(tree[2],env,module_name)[0]),env]
             else if (tree[0]=="car")
                 return [car(toy(tree[1],env,module_name)[0]),env]
             else if (tree[0]=="cdr")
@@ -357,7 +365,7 @@ var toy = function(tree,env,module_name){
                 if (stringIsNumber(value2))
                     value2=eval(value2)
 
-                if (tyoeof(value1)!=tyoeof(value2))
+                if (typeof(value1)!=typeof(value2))
                 	return ["0",env]
                 if (value1<value2)
                     return ["1",env]
@@ -402,8 +410,12 @@ var toy = function(tree,env,module_name){
                     console.log( "you could use set! function to modify the value.")
                     return ["",env]
                 }
-                return_obj = toy(tree[2],env)
+                return_obj = toy(tree[2],env,module_name)
                 var_value = return_obj[0]
+                if (var_value == false){
+                	console.log("Invalid value")
+                	console.log(tree[2])
+                }
                 new_env = return_obj[1]
                 return [var_value,cons([var_name,var_value],new_env)]
             }
@@ -425,35 +437,42 @@ var toy = function(tree,env,module_name){
             # a -> (define x 12)
             # (load a a) will cons ((a.x 12)) as env
             # (load a) will cons ((x 12)) as env
-            elif tree[0]=="load":
-                if len(tree)==2:
+            */
+            else if (tree[0]=="load"){
+                if (tree.length==2)
                     module_name = ""
-                else:
+                else
                     module_name = tree[2]
-                return toy(parser(lexer(VirtualFileSystem[tree[1]])[0]) , env , module_name)
-               */
+                return toy_language(VirtualFileSystem[tree[1]], env , module_name)
+         	}
             // io function
             else if (tree[0]=="display")
-                return [display_(toy(tree[1],env)[0]),env]
+                return [display_(toy(tree[1],env,module_name)[0]),env]
+            // show defined variables in env
+            else if (tree[0]=="show_env"){
+            	printArray(env)
+            	return ["",env]
+            }
             //procedure value
             else{
                 value = assoc(tree[0],env)
-                if (value == false)
+                if (value == false){
                     console.log("Error...Undefined function "+tree[0])
                     return ["",env]
-                return toy(cons(value , cdr(tree)),env)
+                }
+                return toy(cons(value , cdr(tree)),env,module_name)
             }
         }
         else{
             if (tree[0][0]=="lambda"){
                 // ["a","b"] ["1","2"] [["c","12"]] -> [["a","1"],["b","2"],["c","12"]]
-                var pair_params = function(names,params,env){
+                var pair_params = function(names,params,env,module_name){
                     if (names.length==0)
                         return env
                     else
-                        return cons([names[0],toy(params[0],env)[0]],pair_params(cdr(names),cdr(params),env))
+                        return cons([names[0],toy(params[0],env,module_name)[0]],pair_params(cdr(names),cdr(params),env,module_name))
                 }
-                return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env))
+                return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
                 return_value = return_array[0]
                 return_env = return_array[1]
                 return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
@@ -463,21 +482,43 @@ var toy = function(tree,env,module_name){
         }
 }
 
+// exports to Nodejs 
+module.exports.parseString = parseString
+module.exports.toy = toy 
+module.exports.toy_language =toy_language
+module.exports.printArray = printArray
 
 
+var ENV = [ [ '/_array', [ 'lambda', [ 'list' ], [ '/_array_iter', [ 'cdr', 'list' ], [ 'car', 'list' ] ] ] ], [ '/_array_iter', [ 'lambda', [ 'list', 'result' ], [ 'cond', [ [ 'null?', 'list' ], 'result' ], [ [ 'quote', '1' ], [ '/_array_iter', [ 'cdr', 'list' ], [ '$/$', 'result', [ 'car', 'list' ] ] ] ] ] ] ], [ '*_array', [ 'lambda', [ 'list' ], [ '*_array_iter', [ 'cdr', 'list' ], [ 'car', 'list' ] ] ] ], [ '*_array_iter', [ 'lambda', [ 'list', 'result' ], [ 'cond', [ [ 'null?', 'list' ], 'result' ], [ [ 'quote', '1' ], [ '*_array_iter', [ 'cdr', 'list' ], [ '$*$', 'result', [ 'car', 'list' ] ] ] ] ] ] ], [ '-_array', [ 'lambda', [ 'list' ], [ 'cond', [ [ 'null?', [ 'cdr', 'list' ] ], [ 'cons', [ 'quote', '-' ], [ 'car', 'list' ] ] ], [ [ 'quote', '1' ], [ '-_array_iter', [ 'cdr', 'list' ], [ 'car', 'list' ] ] ] ] ] ], [ '-_array_iter', [ 'lambda', [ 'list', 'result' ], [ 'cond', [ [ 'null?', 'list' ], 'result' ], [ [ 'quote', '1' ], [ '-_array_iter', [ 'cdr', 'list' ], [ '$-$', 'result', [ 'car', 'list' ] ] ] ] ] ] ], [ '+_array', [ 'lambda', [ 'list' ], [ '+_array_iter', [ 'cdr', 'list' ], [ 'car', 'list' ] ] ] ], [ '+_array_iter', [ 'lambda', [ 'list', 'result' ], [ 'cond', [ [ 'null?', 'list' ], 'result' ], [ [ 'quote', '1' ], [ '+_array_iter', [ 'cdr', 'list' ], [ '$+$', 'result', [ 'car', 'list' ] ] ] ] ] ] ], [ '$/$', [ 'lambda', [ 'num1', 'num2' ], [ 'cond', [ [ '__OR__', [ 'eq', [ 'quote', 'Float' ], [ 'typeOfNum', 'num1' ] ], [ 'eq', [ 'quote', 'Float' ], [ 'typeOfNum', 'num2' ] ] ], [ '/', 'num1', 'num2' ] ], [ [ 'quote', '1' ], [ 'make_rat_string', [ 'div-rat', [ 'format_number', 'num1' ], [ 'format_number', 'num2' ] ] ] ] ] ] ], [ '$*$', [ 'lambda', [ 'num1', 'num2' ], [ 'cond', [ [ '__OR__', [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num1' ] ], [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num2' ] ] ], [ 'make_rat_string', [ 'mul-rat', [ 'format_number', 'num1' ], [ 'format_number', 'num2' ] ] ] ], [ [ 'quote', '1' ], [ '*', 'num1', 'num2' ] ] ] ] ], [ '$-$', [ 'lambda', [ 'num1', 'num2' ], [ 'cond', [ [ '__OR__', [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num1' ] ], [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num2' ] ] ], [ 'make_rat_string', [ 'sub-rat', [ 'format_number', 'num1' ], [ 'format_number', 'num2' ] ] ] ], [ [ 'quote', '1' ], [ '-', 'num1', 'num2' ] ] ] ] ], [ '$+$', [ 'lambda', [ 'num1', 'num2' ], [ 'cond', [ [ '__OR__', [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num1' ] ], [ 'eq', [ 'quote', 'Fraction' ], [ 'typeOfNum', 'num2' ] ] ], [ 'make_rat_string', [ 'add-rat', [ 'format_number', 'num1' ], [ 'format_number', 'num2' ] ] ] ], [ [ 'quote', '1' ], [ '+', 'num1', 'num2' ] ] ] ] ], [ 'number?', [ 'lambda', [ 'input_str' ], [ 'number?_accordint_to_type', [ 'typeOfNum', 'input_str' ] ] ] ], [ 'number?_accordint_to_type', [ 'lambda', [ 'type' ], [ 'cond', [ [ 'eq', 'type', [ 'quote', 'Float' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'type', [ 'quote', 'Fraction' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'type', [ 'quote', 'Integer' ] ], [ 'quote', '1' ] ], [ [ 'quote', '1' ], [ 'quote', '0' ] ] ] ] ], [ 'typeOfNum', [ 'lambda', [ 'input_str' ], [ 'cond', [ [ 'eq', [ 'quote', '0' ], [ 'atom?', 'input_str' ] ], [ 'quote', '0' ] ], [ [ 'eq', [ 'car', 'input_str' ], [ 'quote', '-' ] ], [ 'checkTypeOfNum', [ 'cdr', 'input_str' ], [ 'quote', '0' ], [ 'quote', '0' ], [ 'quote', '0' ], [ 'quote', '0' ] ] ], [ [ 'quote', '1' ], [ 'checkTypeOfNum', 'input_str', [ 'quote', '0' ], [ 'quote', '0' ], [ 'quote', '0' ], [ 'quote', '0' ] ] ] ] ] ], [ 'checkTypeOfNum', [ 'lambda', [ 'input_str', 'num_of_e', 'num_of_.', 'num_of_/', 'hasDigit' ], [ 'cond', [ [ 'null?', 'input_str' ], [ 'cond', [ [ 'eq', 'hasDigit', [ 'quote', '0' ] ], [ 'quote', 'Unknown_or_Invalid' ] ], [ [ 'eq', 'num_of_/', [ 'quote', '1' ] ], [ 'cond', [ [ 'eq', 'num_of_e', [ 'quote', '0' ] ], [ 'cond', [ [ 'eq', 'num_of_.', [ 'quote', '0' ] ], [ 'quote', 'Fraction' ] ], [ [ 'quote', '1' ], [ 'quote', 'Unknown_or_Invalid' ] ] ] ], [ [ 'quote', '1' ], [ 'quote', 'Unknown_or_Invalid' ] ] ] ], [ [ '__AND__', [ 'eq', 'num_of_/', [ 'quote', '0' ] ], [ '__AND__', [ 'eq', 'num_of_e', [ 'quote', '0' ] ], [ 'eq', 'num_of_.', [ 'quote', '0' ] ] ] ], [ 'quote', 'Integer' ] ], [ [ '__OR__', [ 'eq', 'num_of_e', [ 'quote', '1' ] ], [ 'eq', 'num_of_.', [ 'quote', '1' ] ] ], [ 'quote', 'Float' ] ], [ [ 'quote', '1' ], [ 'quote', 'Unknown_or_Invalid' ] ] ] ], [ [ 'eq', [ 'car', 'input_str' ], [ 'quote', 'e' ] ], [ 'checkTypeOfNum', [ 'cdr', 'input_str' ], [ '+', 'num_of_e', [ 'quote', '1' ] ], 'num_of_.', 'num_of_/', 'hasDigit' ] ], [ [ 'eq', [ 'car', 'input_str' ], [ 'quote', '.' ] ], [ 'checkTypeOfNum', [ 'cdr', 'input_str' ], 'num_of_e', [ '+', 'num_of_.', [ 'quote', '1' ] ], 'num_of_/', 'hasDigit' ] ], [ [ 'eq', [ 'car', 'input_str' ], [ 'quote', '/' ] ], [ 'checkTypeOfNum', [ 'cdr', 'input_str' ], 'num_of_e', 'num_of_.', [ '+', 'num_of_/', [ 'quote', '1' ] ], 'hasDigit' ] ], [ [ '这个数字是整数', [ 'car', 'input_str' ] ], [ 'checkTypeOfNum', [ 'cdr', 'input_str' ], 'num_of_e', 'num_of_.', 'num_of_/', [ 'quote', '1' ] ] ], [ [ 'quote', '1' ], [ 'quote', 'Unknown_or_Invalid' ] ] ] ] ], [ '这个数字是整数', [ 'lambda', [ 'value' ], [ 'cond', [ [ 'eq', 'value', [ 'quote', '0' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '1' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '2' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '3' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '4' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '5' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '6' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '7' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '8' ] ], [ 'quote', '1' ] ], [ [ 'eq', 'value', [ 'quote', '9' ] ], [ 'quote', '1' ] ], [ [ 'quote', '1' ], [ 'quote', '0' ] ] ] ] ], [ 'format_number', [ 'lambda', [ 'num' ], [ 'cons', [ 'get_numerator', 'num' ], [ 'cons', [ 'get_denominator', 'num' ], [ 'quote', [  ] ] ] ] ] ], [ 'get_denominator', [ 'lambda', [ 'num' ], [ 'cond', [ [ 'null?', 'num' ], [ 'quote', '1' ] ], [ [ 'eq', [ 'car', 'num' ], [ 'quote', '/' ] ], [ 'cdr', 'num' ] ], [ [ 'quote', '1' ], [ 'get_denominator', [ 'cdr', 'num' ] ] ] ] ] ], [ 'get_numerator', [ 'lambda', [ 'num' ], [ 'cond', [ [ 'null?', 'num' ], [ 'quote', '' ] ], [ [ 'eq', [ 'car', 'num' ], [ 'quote', '/' ] ], [ 'quote', '' ] ], [ [ 'quote', '1' ], [ 'cons', [ 'car', 'num' ], [ 'get_numerator', [ 'cdr', 'num' ] ] ] ] ] ] ], [ 'make_rat_string', [ 'lambda', [ 'rat' ], [ 'cons', [ 'car', 'rat' ], [ 'cons', [ 'quote', '/' ], [ 'cadr', 'rat' ] ] ] ] ], [ 'denom', [ 'lambda', [ 'x' ], [ 'cadr', 'x' ] ] ], [ 'numer', [ 'lambda', [ 'x' ], [ 'car', 'x' ] ] ], [ 'make-rat', [ 'lambda', [ 'n', 'd' ], [ '约分函数根据gcd', 'n', 'd', [ 'gcd', 'n', 'd' ] ] ] ], [ '约分函数根据gcd', [ 'lambda', [ 'n', 'd', 'g' ], [ 'cons', [ 'removeDot', [ '/', 'n', 'g' ] ], [ 'cons', [ 'removeDot', [ '/', 'd', 'g' ] ], [ 'quote', [  ] ] ] ] ] ], [ 'removeDot', [ 'lambda', [ 'num' ], [ 'removeDot_iter', 'num' ] ] ], [ 'removeDot_iter', [ 'lambda', [ 'num' ], [ 'cond', [ [ 'null?', 'num' ], [ 'quote', '' ] ], [ [ 'eq', [ 'car', 'num' ], [ 'quote', '.' ] ], [ 'quote', '' ] ], [ [ 'quote', '1' ], [ 'cons', [ 'car', 'num' ], [ 'removeDot_iter', [ 'cdr', 'num' ] ] ] ] ] ] ], [ 'equal-rat?', [ 'lambda', [ 'x', 'y' ], [ '=', [ '*', [ 'numer', 'x' ], [ 'denom', 'y' ] ], [ '*', [ 'denom', 'x' ], [ 'numer', 'y' ] ] ] ] ], [ 'div-rat', [ 'lambda', [ 'x', 'y' ], [ 'make-rat', [ '*', [ 'numer', 'x' ], [ 'denom', 'y' ] ], [ '*', [ 'denom', 'x' ], [ 'numer', 'y' ] ] ] ] ], [ 'mul-rat', [ 'lambda', [ 'x', 'y' ], [ 'make-rat', [ '*', [ 'numer', 'x' ], [ 'numer', 'y' ] ], [ '*', [ 'denom', 'x' ], [ 'denom', 'y' ] ] ] ] ], [ 'sub-rat', [ 'lambda', [ 'x', 'y' ], [ 'make-rat', [ '-', [ '*', [ 'numer', 'x' ], [ 'denom', 'y' ] ], [ '*', [ 'numer', 'y' ], [ 'denom', 'x' ] ] ], [ '*', [ 'denom', 'x' ], [ 'denom', 'y' ] ] ] ] ], [ 'add-rat', [ 'lambda', [ 'x', 'y' ], [ 'make-rat', [ '+', [ '*', [ 'numer', 'x' ], [ 'denom', 'y' ] ], [ '*', [ 'numer', 'y' ], [ 'denom', 'x' ] ] ], [ '*', [ 'denom', 'x' ], [ 'denom', 'y' ] ] ] ] ], [ 'gcd', [ 'lambda', [ 'a', 'b' ], [ 'cond', [ [ 'eq', 'b', [ 'quote', '0' ] ], 'a' ], [ [ 'quote', '1' ], [ 'gcd', 'b', [ 'remainder', 'a', 'b' ] ] ] ] ] ], [ 'remainder', [ 'lambda', [ 'a', 'b' ], [ 'cond', [ [ '__LT__', 'a', 'b' ], 'a' ], [ [ 'quote', '1' ], [ 'remainder', [ '-', 'a', 'b' ], 'b' ] ] ] ] ], [ 'toy', [ 'lambda', [ 'expr', 'env', 'module_name' ], [ 'cond', [ [ 'number?', 'expr' ], [ 'cons_env', 'expr', 'env' ] ], [ [ 'atom?', 'expr' ], [ 'cons', [ 'assoc', 'expr', 'env' ], [ 'cons', 'env', [ 'quote', [  ] ] ] ] ], [ [ 'atom?', [ 'car', 'expr' ] ], [ 'cond', [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'quote' ] ], [ 'cons', [ 'cadr', 'expr' ], [ 'cons', 'env', [ 'quote', [  ] ] ] ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'atom?' ] ], [ 'cons_env', [ 'atom?', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'eq' ] ], [ 'cons_env', [ 'eq', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ], [ 'car', [ 'toy', [ 'caddr', 'expr' ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'car' ] ], [ 'cons_env', [ 'car', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'cdr' ] ], [ 'cons_env', [ 'cdr', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'cons' ] ], [ 'cons_env', [ 'cons', [ 'car', [ 'toy', [ 'car', [ 'cdr', 'expr' ] ], 'env', 'module_name' ] ], [ 'car', [ 'toy', [ 'car', [ 'cdr', [ 'cdr', 'expr' ] ] ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'cond' ] ], [ 'eval_cond', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'define' ] ], [ 'define_procedure', [ 'var_name_update', [ 'cadr', 'expr' ], 'module_name' ], [ 'caddr', 'expr' ], 'env', 'module_name' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'set!' ] ], [ 'set!_procedure', [ 'cadr', 'expr' ], [ 'toy', [ 'caddr', 'expr' ], 'env', 'module_name' ] ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'lambda' ] ], [ 'cons_env', 'expr', 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'begin' ] ], [ 'eval_begin', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'let' ] ], [ 'let_procedure', [ 'toy', [ 'caddr', 'expr' ], [ 'eval_let', [ 'cadr', 'expr' ], 'env', 'module_name' ], 'module_name' ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'apply' ] ], [ 'toy', [ 'cons', [ 'cadr', 'expr' ], [ 'cdr', [ 'cdr', 'expr' ] ] ], 'env', 'module_name' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'eval' ] ], [ 'toy', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ], 'env', 'module_name' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', '+' ] ], [ 'cons_env', [ '+_array', [ 'evlis', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', '-' ] ], [ 'cons_env', [ '-_array', [ 'evlis', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', '*' ] ], [ 'cons_env', [ '*_array', [ 'evlis', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', '/' ] ], [ 'cons_env', [ '/_array', [ 'evlis', [ 'cdr', 'expr' ], 'env', 'module_name' ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', '__LT__' ] ], [ 'cons_env', [ '__LT__', [ 'car', [ 'toy', [ 'car', [ 'cdr', 'expr' ] ], 'env', 'module_name' ] ], [ 'car', [ 'toy', [ 'car', [ 'cdr', [ 'cdr', 'expr' ] ] ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'display' ] ], [ 'cons_env', [ 'display', [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ] ], 'env' ] ], [ [ 'eq', [ 'car', 'expr' ], [ 'quote', 'if' ] ], [ 'cond', [ [ 'car', [ 'toy', [ 'cadr', 'expr' ], 'env', 'module_name' ] ], [ 'toy', [ 'caddr', 'expr' ], 'env', 'module_name' ] ], [ [ 'quote', '1' ], [ 'toy', [ 'car', [ 'cdr', [ 'cdr', [ 'cdr', 'expr' ] ] ] ], 'env', 'module_name' ] ] ] ], [ [ 'quote', '1' ], [ 'procedure_procedure', [ 'car', 'expr' ], [ 'cdr', 'expr' ], 'env', 'module_name' ] ] ] ], [ [ 'eq', [ 'caar', 'expr' ], [ 'quote', 'lambda' ] ], [ 'lambda_procedure', [ 'toy', [ 'caddr', [ 'car', 'expr' ] ], [ 'append', [ 'pair_params', [ 'cadr', [ 'car', 'expr' ] ], [ 'cdr', 'expr' ], 'env', 'module_name' ], 'env' ], 'module_name' ], 'env', 'module_name' ] ] ] ] ], [ 'eval_cond', [ 'lambda', [ 'expr', 'env', 'module_name' ], [ 'cond', [ [ 'car', [ 'toy', [ 'caar', 'expr' ], 'env', 'module_name' ] ], [ 'toy', [ 'cadar', 'expr' ], 'env', 'module_name' ] ], [ [ 'quote', '1' ], [ 'eval_cond', [ 'cdr', 'expr' ], 'env', 'module_name' ] ] ] ] ], [ 'lambda_procedure', [ 'lambda', [ 'return_obj', 'env', 'module_name' ], [ 'deal_with_return_obj_for_lambda_procedure', [ 'car', 'return_obj' ], [ 'cadr', 'return_obj' ], 'env' ] ] ], [ 'deal_with_return_obj_for_lambda_procedure', [ 'lambda', [ 'return_value', 'return_env', 'env' ], [ 'cons', 'return_value', [ 'cons', [ 'restore_env', 'env', 'return_env', 'return_env' ], [ 'quote', [  ] ] ] ] ] ], [ 'pair_params', [ 'lambda', [ 'names', 'params', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'names' ], [ 'quote', [  ] ] ], [ [ 'eq', [ 'car', 'names' ], [ 'quote', '.' ] ], [ 'cons', [ 'cons', [ 'cadr', 'names' ], [ 'cons', [ 'evlis', 'params', 'env', 'module_name' ], [ 'quote', [  ] ] ] ], [ 'quote', [  ] ] ] ], [ [ 'eq', [ 'car', 'names' ], [ 'quote', '&' ] ], [ 'cons', [ 'cons', [ 'cadr', 'names' ], [ 'cons', 'params', [ 'quote', [  ] ] ] ], [ 'quote', [  ] ] ] ], [ [ 'quote', '1' ], [ 'cons', [ 'cons', [ 'car', 'names' ], [ 'cons', [ 'car', [ 'toy', [ 'car', 'params' ], 'env', 'module_name' ] ], [ 'quote', [  ] ] ] ], [ 'pair_params', [ 'cdr', 'names' ], [ 'cdr', 'params' ], 'env', 'module_name' ] ] ] ] ] ], [ 'evlis', [ 'lambda', [ 'params', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'params' ], [ 'quote', [  ] ] ], [ [ 'quote', '1' ], [ 'cons', [ 'car', [ 'toy', [ 'car', 'params' ], 'env', 'module_name' ] ], [ 'evlis', [ 'cdr', 'params' ], 'env', 'module_name' ] ] ] ] ] ], [ 'procedure_procedure', [ 'lambda', [ 'func_name', 'params', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'env' ], [ 'display', [ 'cons', [ 'quote', 'Undefined Function ' ], 'func_name' ] ] ], [ [ 'eq', 'func_name', [ 'car', [ 'car', 'env' ] ] ], [ 'toy', [ 'cons', [ 'cadar', 'env' ], 'params' ], 'env', 'module_name' ] ], [ [ 'quote', '1' ], [ 'procedure_procedure', 'func_name', 'params', [ 'cdr', 'env' ], 'module_name' ] ] ] ] ], [ 'eval_begin', [ 'lambda', [ 'expr', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'expr' ], [ 'display', [ 'quote', 'Error...begin function params num error' ] ] ], [ [ 'null?', [ 'cdr', 'expr' ] ], [ 'toy', [ 'car', 'expr' ], 'env', 'module_name' ] ], [ [ 'quote', '1' ], [ 'eval_begin', [ 'cdr', 'expr' ], [ 'cadr', [ 'toy', [ 'car', 'expr' ], 'env', 'module_name' ] ], 'module_name' ] ] ] ] ], [ 'let_procedure', [ 'lambda', [ 'return_obj', 'env' ], [ 'cons', [ 'car', 'return_obj' ], [ 'cons', [ 'restore_env', 'env', [ 'cadr', 'return_obj' ], [ 'cadr', 'return_obj' ] ], [ 'quote', [  ] ] ] ] ] ], [ 'restore_env', [ 'lambda', [ 'old_env', 'new_env', 'new_env_copy' ], [ 'cond', [ [ 'null?', 'old_env' ], [ 'cond', [ [ 'null?', 'new_env' ], 'new_env_copy' ], [ [ 'quote', '1' ], [ 'restore_env', 'old_env', [ 'cdr', 'new_env' ], [ 'cdr', 'new_env_copy' ] ] ] ] ], [ [ 'quote', '1' ], [ 'restore_env', [ 'cdr', 'old_env' ], [ 'cdr', 'new_env' ], 'new_env_copy' ] ] ] ] ], [ 'eval_let', [ 'lambda', [ 'expr', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'expr' ], 'env' ], [ [ 'quote', '1' ], [ 'eval_let', [ 'cdr', 'expr' ], [ 'cons', [ 'cons', [ 'caar', 'expr' ], [ 'cons', [ 'car', [ 'toy', [ 'cadar', 'expr' ], 'env', 'module_name' ] ], [ 'quote', [  ] ] ] ], 'env' ], 'module_name' ] ] ] ] ], [ 'set!_procedure', [ 'lambda', [ 'var_name', 'return_obj' ], [ 'cons', [ 'car', 'return_obj' ], [ 'cons', [ 'set_index', 'var_name', [ 'car', 'return_obj' ], [ 'cadr', 'return_obj' ] ], [ 'quote', [  ] ] ] ] ] ], [ 'set_index', [ 'lambda', [ 'var_name', 'var_value', 'env' ], [ 'cond', [ [ 'null?', 'env' ], [ [ 'lambda', [ 'a', 'b' ], 'b' ], [ 'display', [ 'cons', [ 'cons', [ 'quote', 'Error...In function set! ' ], 'var_name' ], [ 'quote', ' does not exist' ] ] ], [ 'quote', [  ] ] ] ], [ [ 'eq', 'var_name', [ 'caar', 'env' ] ], [ 'cons', [ 'cons', 'var_name', [ 'cons', 'var_value', [ 'quote', [  ] ] ] ], [ 'cdr', 'env' ] ] ], [ [ 'quote', '1' ], [ 'cons', [ 'car', 'env' ], [ 'set_index', 'var_name', 'var_value', [ 'cdr', 'env' ] ] ] ] ] ] ], [ 'define_procedure', [ 'lambda', [ 'updated_var_name', 'uncalculated_var_value', 'env', 'module_name' ], [ 'cond', [ [ 'var_existed', 'updated_var_name', 'env' ], [ 'display', [ 'cons', [ 'cons', [ 'quote', 'Error ' ], 'updated_var_name' ], [ 'quote', ' Has already be defined' ] ] ] ], [ [ 'quote', '1' ], [ 'deal_with_return_obj', [ 'toy', 'uncalculated_var_value', 'env', 'module_name' ], 'updated_var_name' ] ] ] ] ], [ 'deal_with_return_obj', [ 'lambda', [ 'return_obj', 'var_name' ], [ 'cons', [ 'car', 'return_obj' ], [ 'cons', [ 'cons', [ 'cons', 'var_name', [ 'cons', [ 'car', 'return_obj' ], [ 'quote', [  ] ] ] ], [ 'cadr', 'return_obj' ] ], [ 'quote', [  ] ] ] ] ] ], [ 'var_name_update', [ 'lambda', [ 'var_name', 'module_name' ], [ 'cond', [ [ 'eq', 'module_name', [ 'quote', '' ] ], 'var_name' ], [ [ 'quote', '1' ], [ 'cons', [ 'module_name', [ 'quote', '.' ] ], 'var_name' ] ] ] ] ], [ 'var_existed', [ 'lambda', [ 'var_name', 'env' ], [ 'cond', [ [ 'null?', 'env' ], [ 'quote', '0' ] ], [ [ 'eq', 'var_name', [ 'caar', 'env' ] ], [ 'quote', '1' ] ], [ [ 'quote', '1' ], [ 'var_existed', 'var_name', [ 'cdr', 'env' ] ] ] ] ] ], [ 'cons_env', [ 'lambda', [ 'value', 'env' ], [ 'cons', 'value', [ 'cons', 'env', [ 'quote', [  ] ] ] ] ] ], [ 'toy_language', [ 'lambda', [ 'trees', 'env', 'module_name' ], [ 'cond', [ [ 'null?', 'trees' ], 'env' ], [ [ 'quote', '1' ], [ 'toy_language', [ 'cdr', 'trees' ], [ 'cdar', [ 'toy', [ 'car', 'trees' ], 'env', 'module_name' ] ], 'module_name' ] ] ] ] ], [ 'assoc', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'y' ], [ 'display', [ 'quote', 'Error_Cannot_Find' ] ] ], [ [ 'eq', [ 'caar', 'y' ], 'x' ], [ 'cadar', 'y' ] ], [ [ 'quote', '1' ], [ 'assoc', 'x', [ 'cdr', 'y' ] ] ] ] ] ], [ 'pair', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'and', [ 'null?', 'x' ], [ 'null?', 'y' ] ], [ 'quote', [  ] ] ], [ [ 'quote', '1' ], [ 'cons', [ 'cons', [ 'car', 'x' ], [ 'cons', [ 'car', 'y' ], [ 'quote', [  ] ] ] ], [ 'pair', [ 'cdr', 'x' ], [ 'cdr', 'y' ] ] ] ] ] ] ], [ 'append', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'x' ], 'y' ], [ [ 'quote', '1' ], [ 'cons', [ 'car', 'x' ], [ 'append', [ 'cdr', 'x' ], 'y' ] ] ] ] ] ], [ 'null?', [ 'lambda', [ 'x' ], [ 'eq', 'x', [ 'quote', [  ] ] ] ] ], [ 'caddar', [ 'lambda', [ '_list_' ], [ 'car', [ 'cdr', [ 'cdr', [ 'car', '_list_' ] ] ] ] ] ], [ 'caddr', [ 'lambda', [ '_list_' ], [ 'car', [ 'cdr', [ 'cdr', '_list_' ] ] ] ] ], [ 'cadar', [ 'lambda', [ '_list_' ], [ 'car', [ 'cdr', [ 'car', '_list_' ] ] ] ] ], [ 'cdar', [ 'lambda', [ '_list_' ], [ 'cdr', [ 'car', '_list_' ] ] ] ], [ 'caar', [ 'lambda', [ '_list_' ], [ 'car', [ 'car', '_list_' ] ] ] ], [ 'cadr', [ 'lambda', [ '_list_' ], [ 'car', [ 'cdr', '_list_' ] ] ] ] ]
+var Toy_Base = function(tree,toy_env){
+	console.log("Toy_Base")
+	console.log(tree)
+	console.log(toy_env)
+	return ['toy',["quote",tree],["quote",toy_env],["quote",""]]
+}
 
+// env is ENV
+// return value  [0][0]
+// return env [0][1]
+var Toy_Run = function(trees,toy_env,env,module_name){
+    if (trees.length==0)
+        return toy_env
+    else{
+    	var toy_base = ['toy',["quote",trees[0]],["quote",toy_env],["quote",""]]
+    	var return_obj = toy(toy_base,env,module_name)
+    	//var return_value = return_obj[0][0]
+    	var toy_env = return_obj[0][1]
+        return Toy_Run(cdr(trees), toy_env, return_obj[1],module_name )
+    }
+}
+x = parseString("(define x 'abc)(define y 'bcd)(display x)(define c (/ 4 6 7))(display c)")
+Toy_Run(x,[],ENV,"")
+/*
+console.log("=============")
 
-
-x = parseString("12 (define x \"Hello World\" ) ;(define y 15) ")
-printArray(x)
-console.log(stringIsNumber("1.2e12"))
-
-
-
-
-
-
-
+x = parseString("( display 'HelloWorld )")
+console.log(toy_language(x,[],""))
+*/
 
 
 
