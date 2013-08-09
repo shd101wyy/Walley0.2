@@ -24,6 +24,7 @@
 				left: 0%;
 				top:0%;
 				position: absolute;
+				color: white;
 			}
 			#console{
 				width: 100%;
@@ -43,10 +44,40 @@
 				position: absolute;
 				background-color: black;
 			}
+			ul{
+				color: white;
+			}
+
+			li{
+				list-style-position:inside;
+				border: 1px solid #1D1D1D;
+				text-align:
+			}
+			#file_list{
+				height: 70%;
+				width: 70%;
+			}
 		</style>
 	</head>
 	<body>
-		<div id="files_panel"></div>
+		<div id="files_panel">
+			<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;file system
+			<ul id="file_list">
+			  <li onclick="clickListItem()">
+			  	<img src='./Folder-icon.png'/ width="25px" height="30px">
+			  		Coffee
+			  </li>
+			  <li>
+			  	<img src='./Document-icon.png'/ width="25px" height="30px">
+			  	Tea
+			  </li>
+			  <li>Milk</li>
+			</ul>
+
+			<button onclick="createNewFile()"> new file </button>
+
+		</div>
 		<div id="console">console</br></div>
 		<div id="control_panel">
 			<button id="run_script" onclick="runScript()">
@@ -81,6 +112,7 @@
 			// save script
 			var saveScript = function(){
 				window.localStorage["default"] = editor.getValue()
+				console.log("Successfully saved file")
 			}
     		editor.commands.addCommand({
 			    name: 'myCommand',
@@ -113,6 +145,13 @@
     			var content = editor.getValue()
     			var parsed_obj = parseString(content)
     			toy_language(parsed_obj,[],"")
+    		}
+    		var createNewFile = function(){
+    			var file_list = document.getElementById("file_list")
+    			file_list.innerHTML = file_list.innerHTML + "<li> append </li>"
+    		}
+    		var clickListItem = function(){
+    			alert("clicked")
     		}
 
 		</script>
