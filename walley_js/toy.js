@@ -369,41 +369,26 @@ var toy = function(tree,env,module_name){
             	return [ _sub_array_(evlis(cdr(tree),env,module_name)) , env]
             else if (tree[0]=="*")
             	return [ _mul_array_(evlis(cdr(tree),env,module_name)) , env]
-            else if (tree[0]=="//")
+            else if (tree[0]=="/")
             	return [ _div_array_(evlis(cdr(tree),env,module_name)) , env]
-            
-            else if (tree[0]=="__LT__"){
-                value1=toy(tree[1],env,module_name)[0]
-                if (stringIsNumber(value1))
-                    value1=eval(value1)
-                value2=toy(tree[2],env,module_name)[0]
-                if (stringIsNumber(value2))
-                    value2=eval(value2)
-
-                if (typeof(value1)!=typeof(value2))
-                	return ["0",env]
-                if (value1<value2)
-                    return ["1",env]
-                else
-                    return ["0",env]    
+            else if (tree[0]=="<")
+              	return [ _lt_array_(cdr(tree),env,module_name),env]
+            else if (tree[0]==">")
+              	return [ _gt_array_(cdr(tree),env,module_name),env]
+            else if (tree[0]=="=")
+              	return [ _equal_array_(cdr(tree),env,module_name),env]
+            else if (tree[0]==">=")
+            	return [_ge_array_(cdr(tree),env,module_name),env]
+            else if (tree[0]=="<=")
+            	return [_le_array_(cdr(tree),env,module_name),env]
+            else if (tree[0]=="or"){
+                return [_or_array_(cdr(tree),env,module_name),env]
             }
-            else if (tree[0]=="__OR__"){
-                value1=toy(tree[1],env,module_name)[0]
-                if (value1!="0")
-                    return "1"
-                value2=toy(tree[2],env,module_name)[0]
-                if (value2!="0")
-                    return "1"
-                return "0"
+            else if (tree[0]=="and"){
+                return [_and_array_(cdr(tree),env,module_name),env]
             }
-            else if (tree[0]=="__AND__"){
-                value1=toy(tree[1],env,module_name)[0]
-                if (value1=="0")
-                    return "0"
-                value2=toy(tree[2],env,module_name)[0]
-                if (value2=="0")
-                    return "0"
-                return "1"
+            else if (tree[0]=="not"){
+            	return [_not_(tree[1],env,module_name),env]
             }
             // (define var_name var_value)
             else if (tree[0]=="define"){
@@ -425,14 +410,51 @@ var toy = function(tree,env,module_name){
                     console.log( "you could use set! function to modify the value.")
                     return ["",env]
                 }
-                return_obj = toy(tree[2],env,module_name)
-                var_value = return_obj[0]
+                var return_obj = toy(tree[2],env,module_name)
+                var var_value = return_obj[0]
                 if (var_value == false){
                 	console.log("Invalid value")
                 	console.log(tree[2])
                 }
-                new_env = return_obj[1]
+                var new_env = return_obj[1]
                 return [var_value,cons([var_name,var_value],new_env)]
+            }
+            // (set! var_name var_value)
+            else if (tree[0]=="set!"){
+                var set_index = function(var_name,env,var_value){
+                    if (env.length==0){
+                        console.log("Error...In function set! "+var_name+" does not existed")
+                        return false
+                    }
+                    else if (var_name==env[0][0])
+                        return cons([var_name,var_value],cdr(env))
+                    return cons(car(env), set_index(var_name,cdr(env),var_value))
+                }
+                var return_obj = toy(tree[2],env)
+                var var_value = return_obj[0]
+                var new_env = return_obj[1]
+                var index = set_index(tree[1],new_env,var_value)
+                // var does not exist
+                if (index==false)
+                	return ["",env]
+                return [var_value,index]
+			}
+
+            else if (tree[0]=="let"){
+            	//return new env
+				//expr -> ((a 12)(b 13)) 
+				//env -> ((c 14))
+				//return ((a 12)(b 13)(c 14))
+				var eval_let = function(expr,env){
+				    if (expr.length==0)
+				        return env
+				    // now ((x 12)(y x)) -> y = 12
+				    return eval_let(cdr(expr), cons( [expr[0][0],toy(expr[0][1],env)[0]] , env) )
+				}
+                var return_obj = toy(tree[2],eval_let(tree[1],env))
+                var return_value = return_obj[0]
+                var return_env = return_obj[1]
+                return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
             }
             else if (tree[0]=="lambda")
                 return [tree,env]
@@ -484,6 +506,12 @@ var toy = function(tree,env,module_name){
                 var pair_params = function(names,params,env,module_name){
                     if (names.length==0)
                         return env
+                    // calculate params
+                    else if (names[0]==".")
+                        return cons([names[1],evlis(params,env)],env)
+                    // lazy and does not calculate params
+                    else if (names[0]=="&")
+                        return cons([names[1],params],env)
                     else
                         return cons([names[0],toy(params[0],env,module_name)[0]],pair_params(cdr(names),cdr(params),env,module_name))
                 }
@@ -512,19 +540,13 @@ var gcd = function(a,b){
 		return a
 	return gcd(b,a%b)
 }
-var removeDot = function(num){
-	var index_of_dot = num.indexOf(".")
-	if (index_of_dot==-1)
-		return num
-	return num.slice(0,index_of_dot)
-}
 // 创建分数
 // n is numerator
 // d is denominator
 // simplify the fraction 
 var make_rat = function(n,d){
 	var g = gcd(n,d)
-	return [removeDot(n/g),removeDot(d/g)]
+	return [(n/g),(d/g)]
 }
 var numer = function(rat){return rat[0]}
 var denom = function(rat){return rat[1]}
@@ -545,7 +567,7 @@ var div_rat = function (x,y){
 var get_numerator = function(num){
 	if (num.length==0)
 		return ""
-	else if (num[0]=="//")
+	else if (num[0]=="/")
 		return ""
 	return num[0]+get_numerator(cdr(num))
 }
@@ -553,18 +575,18 @@ var get_numerator = function(num){
 var get_denominator = function(num){
 	if (num.length==0)
 		return "1"
-	else if (num[0]=="//")
+	else if (num[0]=="/")
 		return cdr(num)
 	return get_denominator(cdr(num))
 }
 // format number
 // 3/4 -> ['3','4']
-var format_number = function(num){return [get_numerator(num),get_denominator(num)]}
+var format_number = function(num){return [parseInt(get_numerator(num)),parseInt(get_denominator(num))]}
 // ['3','4'] -> 3/4
 var make_rat_string = function(rat){
-	if (rat[1]=="1")
-		return rat[0]
-	return rat[0]+"//"+rat[1]
+	if (rat[1]==1)
+		return str(rat[0])
+	return rat[0]+"/"+rat[1]
 }
 // calculate two numbers only
 //==== add ========
@@ -588,7 +610,7 @@ var _mul_ = function(num1,num2){
 //==== Division ====
 var _div_ = function(num1,num2){
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
-		return calculateTwoNum(num1,num2,"//")
+		return calculateTwoNum(num1,num2,"/")
 	return make_rat_string(div_rat(format_number(num1),format_number(num2)))
 }
 // add array
@@ -616,7 +638,7 @@ var _mul_array_ = function(arr){
 	var _mul_array_iter_ = function(list,result){
 		if (list.length==0)
 			return result
-		return _mul_array_iter_(cdr(list),_mult_(result,list[0]))
+		return _mul_array_iter_(cdr(list),_mul_(result,list[0]))
 	}
 	return _mul_array_iter_(cdr(arr),arr[0])
 }
@@ -628,12 +650,180 @@ var _div_array_ = function(arr){
 	}
 	return _div_array_iter_(cdr(arr),arr[0])
 }
+// ======== 结束定义 数学计算 ================
+
+var _and_array_ = function(arr,env,module_name){
+		// pass
+		if (arr.length==0)
+			return "1"
+		else if (toy(arr[0],env,module_name)[0]=="0")
+			return "0"
+		return _and_array_(cdr(arr),env,module_name)
+}
+var _or_array_ = function(arr,env,module_name){
+		// pass
+		if (arr.length==0)
+			return "0"
+		else if (toy(arr[0],env,module_name)[0]!="0")
+			return "1"
+		return _or_array_(cdr(arr),env,module_name)
 	
+}
+var _not_ = function(value,env,module_name){
+	var value = toy(value,env,module_name)[0]
+	if (value=="0")
+		return "1"
+	return "0"
+}
+// 结束定义 and or
+// ======= 比较 =============================
+// <
+var _lt_two_values = function(value1,value2){
+	if (typeof(value1)!=typeof(value2))
+		return "0"
+	if (value1<value2)
+	    return "1"
+	else
+	    return "0"   
+}
+// eg ["3","4","5"] -> "1"
+var _lt_array_ = function(arr,env,module_name){
+	var _lt_array_iter_ = function(ahead,rest,env,module_name){
+		// finish
+		if (rest.length==0)
+			return "1"
+		else{
+			value2 = toy(rest[0],env,module_name)[0]
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_lt_two_values(ahead,value2)=="0")
+				return "0"
+			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
+		}
+	}
+	if (arr.length<2){
+		console.log("Error...< or > invalid num of params")
+		return "0"
+	}
+	var value1 = toy(arr[0],env,module_name)[0]
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
+	return _lt_array_iter_(value1,cdr(arr),env,module_name)
+}
+// >
+var _gt_array_ = function(arr,env,module_name){
+	return _lt_array_(arr.reverse(),env,module_name)
+}
+
+// =
+// value equal
+var _equal_two_values = function(value1,value2){
+	// check whether two arrays equal
+	var _equal_two_arrays_ = function(arr1,arr2){
+		var i=0
+		var length1 = arr1.length
+		var length2 = arr2.length
+		if (length1!=length2)
+			return "0"
+		while (i<arr1.length){
+			var value1 = arr1[i]
+			var value2 = arr2[i]
+			var result = _equal_two_values(value1,value2)
+			if (result=="0")
+				return "0"
+			i=i+1
+		}
+		return "1"
+	}
+	var type1 = typeof(value1)
+	var type2 = typeof(value2)
+	if (type1!=type2)
+		return "0"
+	else{
+		if (type1=="object" || type1=="array"){
+			return _equal_two_arrays_(value1,value2)
+		}
+		if (value1 == value2)
+			return "1"
+		return "0"
+	}
+}
+// values equal , not objects equal
+// [[1,2],[1,2]] = "1"
+var _equal_array_ = function(arr,env,module_name){
+	var _equal_array_iter_ = function(ahead,rest,env,module_name){
+		// finish
+		if (rest.length==0)
+			return "1"
+		else{
+			value2 = toy(rest[0],env,module_name)[0]
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_equal_two_values(ahead,value2)=="0")
+				return "0"
+			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
+		}
+	}
+	if (arr.length<2){
+		console.log("Error...= invalid num of params")
+		return "0"
+	}
+	var value1 = toy(arr[0],env,module_name)[0]
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
+	return _equal_array_iter_(value1,cdr(arr),env,module_name)
+}
+// <=
+var _le_two_values = function(value1,value2){
+	if (_lt_two_values(value1,value2)!="0" || _equal_two_values(value1,value2)!="0")
+		return "1"
+	return "0"
+}
+var _le_array_ = function(arr,env,module_name){
+	var _le_array_iter_ = function(ahead,rest,env,module_name){
+		// finish
+		if (rest.length==0)
+			return "1"
+		else{
+			value2 = toy(rest[0],env,module_name)[0]
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_le_two_values(ahead,value2)=="0")
+				return "0"
+			return _le_array_iter_(value2 , cdr(rest), env, module_name)
+		}
+	}
+	if (arr.length<2){
+		console.log("Error...<= or >= invalid num of params")
+		return "0"
+	}
+	var value1 = toy(arr[0],env,module_name)[0]
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
+	return _le_array_iter_(value1,cdr(arr),env,module_name)
+}
+// >=
+var _ge_array_ = function(arr,env,module_name){
+	return _le_array_(arr.reverse(),env,module_name)
+}
+// 
 // exports to Nodejs 
 module.exports.parseString = parseString
 module.exports.toy = toy 
 module.exports.toy_language =toy_language
 module.exports.printArray = printArray
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
