@@ -6,10 +6,13 @@
 		<script src='./src-min-noconflict/ace.js'></script>
 		<!-- Toy -->
 		<script src='./toy.js'></script>
+		<!-- Virtual File System -->
+		<script src="./virtual_file_system.js"></script>
 
 		<style type="text/css">
 			body{
 				background-color: black;
+				font-family: monospace;
 			}
 			#editor{
 				width: 85%;
@@ -28,7 +31,7 @@
 			}
 			#console{
 				width: 100%;
-				height: 15%;
+				height: 13%;
 				top: 90%;
 				left: 15%;
 				position: absolute;
@@ -62,20 +65,17 @@
 	<body>
 		<div id="files_panel">
 			<br>
-			&nbsp;&nbsp;&nbsp;&nbsp;file system
+			<span id="title_for_files_panel">
+			&nbsp;&nbsp;&nbsp;&nbsp;Packages List
+			</span>
 			<ul id="file_list">
-			  <li onclick="clickListItem()">
-			  	<img src='./Folder-icon.png'/ width="25px" height="30px">
-			  		Coffee
-			  </li>
 			  <li>
-			  	<img src='./Document-icon.png'/ width="25px" height="30px">
-			  	Tea
-			  </li>
-			  <li>Milk</li>
+			  	<img src='./Folder-icon.png'/ width="25px" height="30px">
+			  		math
+			  </li>			  
 			</ul>
 
-			<button onclick="createNewFile()"> new file </button>
+			<button id="files_panel_button" onclick="createNewPackage()"> new package </button>
 
 		</div>
 		<div id="console">console</br></div>
@@ -91,28 +91,51 @@
 (define x 12)
 		</div>
 		<script type="text/javascript">
+
+			// Check local storage
 			if (window.localStorage){
 				console.log("Support Local Storage")
 			}
 			else{
 				console.log("Does not support Local Storage")
 			}
+
 			// ACE part ============================
 			var editor = ace.edit("editor")
 			editor.setTheme("ace/theme/monokai");
     		editor.getSession().setMode("ace/mode/lisp");
+    		// auto pair brackets ...
+    		editor.setBehavioursEnabled(true);
 
-    		if (window.localStorage["default"]==undefined){
-				editor.setValue(";Toy Language\n(define x 15)\n")
+    		// 初始化 editor
+    		// 从 local storage中得到信息
+    		// 并且 更新 VirtualFileSystem
+    		if (window.localStorage["virtual_file_system"]==undefined){
+				editor.setValue(";Toy Language\n;all you want to run should be write here\n(define x 15)\n")
 			}
 			else{
-				editor.setValue(window.localStorage["default"])
+				VirtualFileSystem = JSON.parse(window.localStorage["virtual_file_system"])
+				editor.setValue(VirtualFileSystem["toy_default"]["run"]  )
 			}
+
+
+			// load package list
+			var inner_html_in_file_list = createListForPackage(VirtualFileSystem)
+			//alert(inner_html_in_file_list)
+			document.getElementById("file_list").innerHTML = inner_html_in_file_list
 
 			// save script
 			var saveScript = function(){
-				window.localStorage["default"] = editor.getValue()
-				console.log("Successfully saved file")
+				//alert(Current_File[0] + " : " + Current_File[1])
+				// update VirtualFileSystem
+				VirtualFileSystem[Current_File[0]][Current_File[1]] = editor.getValue()
+
+				var string_virtual_file_system = JSON.stringify(VirtualFileSystem)
+				//alert(string_virtual_file_system)
+
+				window.localStorage["virtual_file_system"] = string_virtual_file_system
+				console.log("\n\nSuccessfully saved file")
+
 			}
     		editor.commands.addCommand({
 			    name: 'myCommand',
@@ -140,19 +163,91 @@
     		var runScript = function(){
     			// clean console
     			var _console_ = document.getElementById("console")
-    			_console_.innerHTML = ""
+    			//_console_.innerHTML = ""
+    			_console_.innerHTML = _console_.innerHTML+"<br>"
 
     			var content = editor.getValue()
     			var parsed_obj = parseString(content)
     			toy_language(parsed_obj,[],"")
+
+    			// scroll to bottom
+    			_console_.scrollTop = _console_.scrollHeight;
+
     		}
-    		var createNewFile = function(){
+    		// 在界面中创建新的 package
+    		var createNewPackage = function(){
+    			var package_name_you_want_to_create = prompt("Create Package with name:\n")
+    			// package已经存在了
+    			if (package_name_you_want_to_create in VirtualFileSystem){
+    				alert("Package already existed...\nPlease choose another name")
+    				return;
+    			}
+    			makePackage(VirtualFileSystem,package_name_you_want_to_create)
+
     			var file_list = document.getElementById("file_list")
-    			file_list.innerHTML = file_list.innerHTML + "<li> append </li>"
+    			file_list.innerHTML = createListForPackage(VirtualFileSystem)
+
     		}
-    		var clickListItem = function(){
-    			alert("clicked")
+    		// 在界面中创建新的 file
+    		var createNewFile = function(){
+    			var file_name_you_want_to_create = prompt("Create file with name:\n")
+    			if (file_name_you_want_to_create in VirtualFileSystem[Current_Package]){
+    				alert("File already existed...\nPlease choose another name")
+    				return;
+    			}
+    			VirtualFileSystem[Current_Package][file_name_you_want_to_create] = ";File Name: "+file_name_you_want_to_create
+    			var file_list = document.getElementById("file_list")
+    								 // add return button to package list
+    			file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
     		}
+
+    		// 当前所在 package
+    		var Current_Package = ""
+    		// 当前正在被编辑的文件
+    		var Current_File = ["toy_default","run"]
+    		// 点击了 package 文件夹按钮
+    		var clickPackageItem = function(package_name){
+    			// 更新全局变量 Current_Package
+    			Current_Package = package_name
+    			// enter package and show all files inside package
+    			var files_inside = VirtualFileSystem[package_name]
+
+    			// update file list
+    			var file_list = document.getElementById("file_list")
+    			    				 // add return button to package list
+    			file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(files_inside)
+
+    			// 更改 button 信息
+    			var _button_ = document.getElementById("files_panel_button")
+    			_button_.innerHTML = "new file"
+    			_button_.onclick = createNewFile
+
+    			var _title_ = document.getElementById("title_for_files_panel")
+    			_title_.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;Files List"
+    		}
+    		var returnToPackageList = function(){
+    			// load package list
+				var inner_html_in_file_list = createListForPackage(VirtualFileSystem)
+				//alert(inner_html_in_file_list)
+				document.getElementById("file_list").innerHTML = inner_html_in_file_list
+
+				// 更改 button 信息
+    			var _button_ = document.getElementById("files_panel_button")
+    			_button_.innerHTML = "new package"
+    			_button_.onclick = createNewPackage
+
+    			var _title_ = document.getElementById("title_for_files_panel")
+    			_title_.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;Packages List"
+    		}
+
+    		var clickFileItem = function(file_name){
+    			// 更新 Current_File 来储存现在正在被编辑的文件信息
+    			Current_File = [Current_Package,file_name]
+
+    			var content_in_file = VirtualFileSystem[Current_Package][file_name]
+    			editor.setValue(content_in_file)
+    		}
+
 
 		</script>
 
