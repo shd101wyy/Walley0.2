@@ -1,6 +1,8 @@
 <html>
 	<head>
 		<meta charset='utf8'>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 		<title> Toy Language </title>
 		<!-- ACE -->
 		<script src='./src-min-noconflict/ace.js'></script>
@@ -105,6 +107,8 @@
     		var Current_Package = ""
     		// 当前正在被编辑的文件
     		var Current_File = ["toy_default","run"]
+    		// 但前正在被编辑的文件所处package名字
+    		var Current_Editing_File_In_Package = "toy_default"
     		// 正在编辑文件，例如删除，copy等
     		var File_Edit_Mode = false
     		var Selected_Files_or_Packages = []
@@ -187,7 +191,7 @@
     			// 如果是 run 文件，则自动读取其他的files
     			if (Current_File[1]=="run"){
     				var content = ""
-    				for(var i in VirtualFileSystem[Current_Package]){
+    				for(var i in VirtualFileSystem[Current_Editing_File_In_Package]){
     					// 编译文件
     					//VirtualFileSystem[Current_Package][i+".toyc"] = parseString(VirtualFileSystem[Current_Package][i])
 
@@ -195,9 +199,10 @@
     					if (i=="run"){
     						continue
     					}
-    					content = content +"\n" + VirtualFileSystem[Current_Package][i]
+    					content = content +"\n" + VirtualFileSystem[Current_Editing_File_In_Package][i]
     				}
-    				content = content + "\n" + VirtualFileSystem[Current_Package]["run"]
+    				
+    				content = content + "\n" + VirtualFileSystem[Current_Editing_File_In_Package]["run"]
     				var parsed_obj = parseString(content)
 	    			toy_language(parsed_obj,[],"")
 
@@ -278,6 +283,7 @@
 
     			// 更新全局变量 Current_Package
     			Current_Package = package_name
+    			Current_Editing_File_In_Package = package_name
     			// enter package and show all files inside package
     			var files_inside = VirtualFileSystem[package_name]
 
