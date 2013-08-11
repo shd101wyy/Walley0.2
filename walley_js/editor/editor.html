@@ -74,8 +74,9 @@
 			  		math
 			  </li>			  
 			</ul>
-
+			<button id="edit" onclick="turnOnFileEditMode()"> edit </button>
 			<button id="files_panel_button" onclick="createNewPackage()"> new package </button>
+			<div id="files_edit_panel"></div>
 
 		</div>
 		<div id="console">console</br></div>
@@ -91,6 +92,13 @@
 (define x 12)
 		</div>
 		<script type="text/javascript">
+			// 当前所在 package
+    		var Current_Package = ""
+    		// 当前正在被编辑的文件
+    		var Current_File = ["toy_default","run"]
+    		// 正在编辑文件，例如删除，copy等
+    		var File_Edit_Mode = false
+    		var Selected_Files_or_Packages = []
 
 			// Check local storage
 			if (window.localStorage){
@@ -177,9 +185,12 @@
     		// 在界面中创建新的 package
     		var createNewPackage = function(){
     			var package_name_you_want_to_create = prompt("Create Package with name:\n")
+    			if (package_name_you_want_to_create == null || package_name_you_want_to_create=="") {
+    				return;
+    			};
     			// package已经存在了
     			if (package_name_you_want_to_create in VirtualFileSystem){
-    				alert("Package already existed...\nPlease choose another name")
+    				alert("Package "+package_name_you_want_to_create+" already existed...\nPlease choose another name")
     				return;
     			}
     			makePackage(VirtualFileSystem,package_name_you_want_to_create)
@@ -201,12 +212,28 @@
     			file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
     		}
 
-    		// 当前所在 package
-    		var Current_Package = ""
-    		// 当前正在被编辑的文件
-    		var Current_File = ["toy_default","run"]
     		// 点击了 package 文件夹按钮
     		var clickPackageItem = function(package_name){
+
+    			// file edit mode
+    			if (File_Edit_Mode){
+
+    				var file = document.getElementById(package_name)
+    				// 选中后改变颜色
+    				if (file.style.border=="3px solid white"){
+    					file.style.border="1px solid #1D1D1D"
+    					// remove from Selected_Files_or_Packages
+    					var index = Selected_Files_or_Packages.indexOf(package_name);
+						Selected_Files_or_Packages.splice(index, 1);
+    				}
+    				else {
+    					file.style.border="3px solid white"
+    					Selected_Files_or_Packages.push(package_name)
+    				}
+    				printArray(Selected_Files_or_Packages)
+    				return 
+    			}
+
     			// 更新全局变量 Current_Package
     			Current_Package = package_name
     			// enter package and show all files inside package
@@ -226,10 +253,15 @@
     			_title_.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;Files List"
     		}
     		var returnToPackageList = function(){
+    			// 关闭 file edit mode
+    			turnOffFileEditMode()
     			// load package list
 				var inner_html_in_file_list = createListForPackage(VirtualFileSystem)
 				//alert(inner_html_in_file_list)
 				document.getElementById("file_list").innerHTML = inner_html_in_file_list
+
+				// restore Current_Package
+				Current_Package = ""
 
 				// 更改 button 信息
     			var _button_ = document.getElementById("files_panel_button")
@@ -241,6 +273,25 @@
     		}
 
     		var clickFileItem = function(file_name){
+
+    			// file edit mode
+    			if (File_Edit_Mode){
+
+    				var file = document.getElementById(file_name)
+    				// 选中后改变颜色
+    				if (file.style.border=="3px solid white"){
+    					file.style.border="1px solid #1D1D1D"
+    					// remove from Selected_Files_or_Packages
+    					var index = Selected_Files_or_Packages.indexOf(file_name);
+						Selected_Files_or_Packages.splice(index, 1);
+    				}
+    				else {
+    					file.style.border="3px solid white"
+    					Selected_Files_or_Packages.push(file_name)
+    				}
+    				printArray(Selected_Files_or_Packages)
+    				return 
+    			}
     			// 更新 Current_File 来储存现在正在被编辑的文件信息
     			Current_File = [Current_Package,file_name]
 
@@ -248,6 +299,143 @@
     			editor.setValue(content_in_file)
     		}
 
+
+    		var turnOnFileEditMode = function(){
+    			// 开启 file 编辑模式
+    			File_Edit_Mode = true
+    			document.getElementById("edit").innerHTML = "x edit" 
+    			document.getElementById("edit").onclick = turnOffFileEditMode
+
+    			Selected_Files_or_Packages = []
+
+    			// 添加按钮
+    			var files_edit_panel = document.getElementById('files_edit_panel')
+    			files_edit_panel.innerHTML = "<button id='delete' onclick = 'deleteFileOrPackage()'>delete</button> \
+    										  <button id='rename' onclick = 'renameFileOrPackage()'>rename</button>"
+
+    			//<button id='delete' onclick = "deleteFileOrPackage()">delete</button> 
+    			//<button id='rename' onclick = 'renameFileOrPackage()'>rename</button>
+
+    		}
+    		var turnOffFileEditMode = function(){
+    			// turn off file edit mode
+    			File_Edit_Mode = false
+    			document.getElementById("edit").innerHTML = "edit" 
+				document.getElementById("edit").onclick = turnOnFileEditMode
+
+				var files_edit_panel = document.getElementById('files_edit_panel')
+				files_edit_panel.innerHTML=""
+
+				//恢复 li 的 style
+				for(var i in Selected_Files_or_Packages){
+					var file_or_package = document.getElementById(Selected_Files_or_Packages[i])
+					file_or_package.style.border="1px solid #1D1D1D"
+				}
+				Selected_Files_or_Packages = []
+
+    		}
+
+    		// 删除 packages 或者 files
+    		// delete packages or files
+    		var deleteFileOrPackage = function(){
+    			// 在总的package目录
+    			if (Current_Package == ""){
+    				for (var i in Selected_Files_or_Packages){
+    					// toy_default package cannot be deleted
+    					if (Selected_Files_or_Packages[i]=="toy_default"){
+    						continue;
+    					}
+    					// 删除 package
+    					delete(VirtualFileSystem[Selected_Files_or_Packages[i]])
+    					// 恢复 Selected_Files_or_Packages
+    					Selected_Files_or_Packages = []
+    					// 更新 localStorage
+    					window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+    				}
+    				//更新 list
+    				var file_list = document.getElementById("file_list")
+    				file_list.innerHTML = createListForPackage(VirtualFileSystem)
+    			}
+    			// 在 package 内部
+    			else{
+    				for (var i in Selected_Files_or_Packages){
+    					// run file cannot be deleted
+    					if (Selected_Files_or_Packages[i]=="run"){
+    						continue;
+    					}
+    					// 删除 package
+    					delete(VirtualFileSystem[Current_Package][Selected_Files_or_Packages[i]])
+    					// 恢复 Selected_Files_or_Packages
+    					Selected_Files_or_Packages = []
+    					// 更新 localStorage
+    					window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+
+    				}
+    				var file_list = document.getElementById("file_list")
+    								 // add return button to package list
+    				file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
+    			}
+    		}
+
+    		// 更改 package 或 file 的 名字
+    		var renameFileOrPackage = function(){
+    			// 在总的package目录
+    			if (Current_Package == ""){
+    				for (var i in Selected_Files_or_Packages){
+    					// toy_default package cannot be deleted
+    					if (Selected_Files_or_Packages[i]=="toy_default"){
+    						continue;
+    					}
+
+    					// 得到新的命名
+    					var change_to_name = prompt("Change package name :"+Selected_Files_or_Packages[i]+" to \n")
+    					while (change_to_name==null || change_to_name==""){
+    						change_to_name = prompt("Change package name :"+Selected_Files_or_Packages[i]+" to \n")
+    					}
+    					// 加入新的命名
+    					VirtualFileSystem[change_to_name] = VirtualFileSystem[Selected_Files_or_Packages[i]]
+
+
+    					// 删除 package
+    					delete(VirtualFileSystem[Selected_Files_or_Packages[i]])
+    					// 恢复 Selected_Files_or_Packages
+    					Selected_Files_or_Packages = []
+    					// 更新 localStorage
+    					window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+    				}
+    				//更新 list
+    				var file_list = document.getElementById("file_list")
+    				file_list.innerHTML = createListForPackage(VirtualFileSystem)
+    			}
+    			// 在 package 内部
+    			else{
+    				for (var i in Selected_Files_or_Packages){
+    					// run file cannot be deleted
+    					if (Selected_Files_or_Packages[i]=="run"){
+    						continue;
+    					}
+
+    					// 得到新的命名
+    					var change_to_name = prompt("Change file name :"+Selected_Files_or_Packages[i]+" to \n")
+    					while (change_to_name==null || change_to_name==""){
+    						change_to_name = prompt("Change file name :"+Selected_Files_or_Packages[i]+" to \n")
+    					}
+    					// 加入新的命名
+    					VirtualFileSystem[Current_Package][change_to_name] = VirtualFileSystem[Current_Package][Selected_Files_or_Packages[i]]
+
+    					// 删除 package
+    					delete(VirtualFileSystem[Current_Package][Selected_Files_or_Packages[i]])
+    					// 恢复 Selected_Files_or_Packages
+    					Selected_Files_or_Packages = []
+    					// 更新 localStorage
+    					window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+
+    				}
+    				var file_list = document.getElementById("file_list")
+    								 // add return button to package list
+    				file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
+    			}
+    		}
 
 		</script>
 
