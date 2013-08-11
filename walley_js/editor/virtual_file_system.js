@@ -95,7 +95,7 @@ var createListForPackage = function(virtual_file_system){
 	*/			  
 	var output=""
 	for (var i in virtual_file_system){
-		output = output+"<li id=\"" + i + "\" onclick=\"clickPackageItem('" + i + "')\"mV><img src='./Folder-icon.png'/ width='25px' height='30px'>&nbsp;"
+		output = output+"<li id=\"" + i + "\" onclick=\"clickPackageItem('" + i + "')\"><img src='./Folder-icon.png'/ width='25px' height='30px'>&nbsp;"
 		output = output + i 
 		output = output + "</li>"
 	}
@@ -113,7 +113,7 @@ var createListForFiles = function(virtual_file_system){
 	*/			  
 	var output=""
 	for (var i in virtual_file_system){
-		output = output+"<li id=\"" + i + "\" onclick=\"clickFileItem('" + i + "')\"mV><img src='./Document-icon.png'/ width='25px' height='30px'>&nbsp;"
+		output = output+"<li id=\"" + i + "\" onclick=\"clickFileItem('" + i + "')\"><img src='./Document-icon.png'/ width='25px' height='30px'>&nbsp;"
 		output = output + i 
 		output = output + "</li>"
 	}
