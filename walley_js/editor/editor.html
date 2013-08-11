@@ -174,9 +174,25 @@
     			//_console_.innerHTML = ""
     			_console_.innerHTML = _console_.innerHTML+"<br>"
 
-    			var content = editor.getValue()
-    			var parsed_obj = parseString(content)
-    			toy_language(parsed_obj,[],"")
+    			// if it is "run" file， then read other files
+    			// 如果是 run 文件，则自动读取其他的files
+    			if (Current_File[1]=="run"){
+    				var content = ""
+    				for(var i in VirtualFileSystem[Current_Package]){
+    					if (i=="run"){
+    						continue
+    					}
+    					content = content +"\n" + VirtualFileSystem[Current_Package][i]
+    				}
+    				content = content + "\n" + VirtualFileSystem[Current_Package]["run"]
+    				var parsed_obj = parseString(content)
+	    			toy_language(parsed_obj,[],"")
+    			}
+    			else{
+	    			var content = editor.getValue()
+	    			var parsed_obj = parseString(content)
+	    			toy_language(parsed_obj,[],"")
+    			}
 
     			// scroll to bottom
     			_console_.scrollTop = _console_.scrollHeight;
@@ -198,10 +214,16 @@
     			var file_list = document.getElementById("file_list")
     			file_list.innerHTML = createListForPackage(VirtualFileSystem)
 
+    			// 更新 localStorage
+    			window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+
     		}
     		// 在界面中创建新的 file
     		var createNewFile = function(){
     			var file_name_you_want_to_create = prompt("Create file with name:\n")
+    			if (file_name_you_want_to_create == null || file_name_you_want_to_create=="") {
+    				return;
+    			};
     			if (file_name_you_want_to_create in VirtualFileSystem[Current_Package]){
     				alert("File already existed...\nPlease choose another name")
     				return;
@@ -210,6 +232,9 @@
     			var file_list = document.getElementById("file_list")
     								 // add return button to package list
     			file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
+    	
+    			// 更新 localStorage
+    			window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
     		}
 
     		// 点击了 package 文件夹按钮
@@ -230,7 +255,6 @@
     					file.style.border="3px solid white"
     					Selected_Files_or_Packages.push(package_name)
     				}
-    				printArray(Selected_Files_or_Packages)
     				return 
     			}
 
@@ -289,7 +313,6 @@
     					file.style.border="3px solid white"
     					Selected_Files_or_Packages.push(file_name)
     				}
-    				printArray(Selected_Files_or_Packages)
     				return 
     			}
     			// 更新 Current_File 来储存现在正在被编辑的文件信息
