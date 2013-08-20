@@ -176,13 +176,15 @@ var quasiquote = function(arg,env,module_name){
         // a
         if (typeof(quote_value)=="string")
             return quote_value
-        // [quote a]
-        else if (quote_value.length!=0 && typeof(quote_value[0])==="string" && quote_value[0]=="unquote" && quote_value.length==2)
+        // [unquote a]
+        else if (quote_value.length==2 && typeof(quote_value[0])==="string" && quote_value[0]=="unquote" )
             return toy(quote_value[1],env,module_name)[0]
         else{
-            output=[]
-            for (var i in quote_value){
+            var output=[]
+            i = 0
+            while (i<quote_value.length){
             	output.push(calculateQuote(quote_value[i],env,module_name))
+                i = i + 1
             }
             return output
         }
