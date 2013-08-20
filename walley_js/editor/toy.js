@@ -487,13 +487,27 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="display")
                 return [display_(toy(tree[1],env,module_name)[0]),env]
             // show defined variables in env
-            else if (tree[0]=="show_env"){
+            else if (tree[0]=="show-env"){
             	printArray(env)
             	return ["",env]
             }
+            // defmacro
+            /*
+
+            (defmacro square (x) @(* ,x ,x)  )
+            square : macro name
+            (x) : params
+            @(* ,x ,x) : return value that will run when calling macro
+            */
+            else if (tree[0]=="defmacro"){
+                var macro_name = tree[1]
+                var macro_value = ["run-macro",tree[2],tree[3]]
+                var new_env = cons( [macro_name , macro_value] , env)
+                return [macro_value,new_env]
+            }
             //procedure value
             else{
-                value = assoc(tree[0],env)
+                var value = assoc(tree[0],env)
                 if (value == false){
                     console.log("Error...Undefined function "+tree[0])
                     return ["",env]
@@ -509,17 +523,41 @@ var toy = function(tree,env,module_name){
                         return env
                     // calculate params
                     else if (names[0]==".")
-                        return cons([names[1],evlis(params,env)],env)
+                        return cons([names[1],evlis(params,env,module_name)],env)
                     // lazy and does not calculate params
                     else if (names[0]=="&")
                         return cons([names[1],params],env)
                     else
                         return cons([names[0],toy(params[0],env,module_name)[0]],pair_params(cdr(names),cdr(params),env,module_name))
                 }
-                return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
+
+                var return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
                 return_value = return_array[0]
                 return_env = return_array[1]
                 return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
+            }
+            /* macro
+            
+((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+                expand
+                -> (* 3 3)
+                run
+                -> 9
+
+            */
+            else if (tree[0][0]=="run-macro"){
+                var pairs = function(a,b,env){
+                    if (a.length == 0)
+                        return env
+                    return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
+                }
+                var vars = tree[0][1]
+                var stm = tree[0][2]
+                var params = cdr(tree)
+                var new_env = pairs(vars,params,env)
+                var return_obj = toy(stm,new_env,module_name)
+                var to_run = return_obj[0]
+                return toy(to_run,env,module_name)
             }
             else
                 return toy(cons(toy(tree[0],env,module_name)[0] , cdr(tree)), env,module_name)
