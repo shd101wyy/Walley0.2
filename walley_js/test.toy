@@ -1,19 +1,12 @@
-(define str (lambda (. stm)
-    (let 
-        (
-            (str-iter (lambda (stms)
-                (cond 
-                    ((eq stms '()) "")
-                    (1 (cons (car stms) (str-iter (cdr stms))))
-                    )
-                ))
-            (consequence (str-iter stm))
+(defmacro defun (func stm)
+    (let
+        (   
+            (func_name (car func))
+            (params  (cdr func))
             )
-            consequence
+        @(define ,func_name (lambda ,params ,stm))
         )
-    ))
-
-
-(define test (lambda (a) a))
-(display "Hello World")
-(display (str "a" "b"))
+    )
+(display defun)
+(defun (add a b) (+ a b))
+(display (add 3 4))

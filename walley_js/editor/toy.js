@@ -181,7 +181,7 @@ var quasiquote = function(arg,env,module_name){
             return toy(quote_value[1],env,module_name)[0]
         else{
             var output=[]
-            i = 0
+            var i = 0
             while (i<quote_value.length){
             	output.push(calculateQuote(quote_value[i],env,module_name))
                 i = i + 1
@@ -191,7 +191,11 @@ var quasiquote = function(arg,env,module_name){
     }
     return calculateQuote(arg,env,module_name)
 }
-
+var pairs = function(a,b,env){
+    if (a.length == 0)
+        return env
+    return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
+}
 /*
 # get value of var_name in env
 # assoc("x",[["x",12],["y",13]])->12
@@ -273,6 +277,20 @@ var printArray = function(list){
 		return output
 	}
 	console.log(convert_array_to_string(list))
+}
+/*
+((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+                expand to 
+                -> (* 3 3)
+*/
+var macroexpand = function(tree,env,module_name){
+    var vars = tree[0][1]
+    var stm = tree[0][2]
+    var params = cdr(tree)
+    var new_env = pairs(vars,params,env)
+    var return_obj = toy(stm,new_env,module_name)
+    var to_run = return_obj[0]
+    return to_run
 }
 
 // check char is digit
@@ -505,6 +523,16 @@ var toy = function(tree,env,module_name){
                 var new_env = cons( [macro_name , macro_value] , env)
                 return [macro_value,new_env]
             }
+            /*
+                (macroexpand '(square 3))
+                -> (* 3 3)
+            */
+            else if (tree[0]=="macroexpand"){
+                var value = toy(tree[1],env,module_name)[0]
+                value[0]  = toy(value[0],env,module_name)[0]
+                var expanded = macroexpand(value,env,module_name)
+                return [expanded,env]
+            }
             //procedure value
             else{
                 var value = assoc(tree[0],env)
@@ -546,17 +574,7 @@ var toy = function(tree,env,module_name){
 
             */
             else if (tree[0][0]=="run-macro"){
-                var pairs = function(a,b,env){
-                    if (a.length == 0)
-                        return env
-                    return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
-                }
-                var vars = tree[0][1]
-                var stm = tree[0][2]
-                var params = cdr(tree)
-                var new_env = pairs(vars,params,env)
-                var return_obj = toy(stm,new_env,module_name)
-                var to_run = return_obj[0]
+                var to_run = macroexpand(tree,env,module_name)
                 return toy(to_run,env,module_name)
             }
             else
