@@ -1,0 +1,19 @@
+(define str (lambda (. stm)
+    (let 
+        (
+            (str-iter (lambda (stms)
+                (cond 
+                    ((eq stms '()) "")
+                    (1 (cons (car stms) (str-iter (cdr stms))))
+                    )
+                ))
+            (consequence (str-iter stm))
+            )
+            consequence
+        )
+    ))
+
+
+(define test (lambda (a) a))
+(display "Hello World")
+(display (str "a" "b"))

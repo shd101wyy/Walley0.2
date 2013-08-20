@@ -493,7 +493,7 @@ var toy = function(tree,env,module_name){
             }
             //procedure value
             else{
-                value = assoc(tree[0],env)
+                var value = assoc(tree[0],env)
                 if (value == false){
                     console.log("Error...Undefined function "+tree[0])
                     return ["",env]
@@ -509,14 +509,15 @@ var toy = function(tree,env,module_name){
                         return env
                     // calculate params
                     else if (names[0]==".")
-                        return cons([names[1],evlis(params,env)],env)
+                        return cons([names[1],evlis(params,env,module_name)],env)
                     // lazy and does not calculate params
                     else if (names[0]=="&")
                         return cons([names[1],params],env)
                     else
                         return cons([names[0],toy(params[0],env,module_name)[0]],pair_params(cdr(names),cdr(params),env,module_name))
                 }
-                return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
+
+                var return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
                 return_value = return_array[0]
                 return_env = return_array[1]
                 return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
