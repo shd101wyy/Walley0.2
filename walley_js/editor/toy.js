@@ -160,7 +160,7 @@ var cons = function (value1, value2){
 }
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
-		return "0"
+		return ["0",env]
 	if (toy(tree[0][0],env,module_name)[0]!='0')
 		return toy(tree[0][1],env,module_name)
 	return cond(cdr(tree),env,module_name)
@@ -208,8 +208,9 @@ var assoc = function(var_name , env_list){
         }
     var assoc_list_iter = function(var_name , env_list){
         if (env_list.length == 0 ){
-            console.log("Error...Var "+var_name+" does not existed")
-            return false
+            //console.log("Error...Var "+var_name+" does not existed")
+            // add undefined support
+            return "undefined"
         }
         var result = assoc_iter(var_name, env_list[0])
         if (result===-1)
@@ -437,7 +438,8 @@ var ENV_LIST = [[
     ['display','display'],
     ['show-env','show-env'],
     ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro'],
-    ['ref','ref'],['len','len'],['slice','slice']
+    ['ref','ref'],['len','len'],['slice','slice'],
+    ['while','while'],['for','for']
     ]]
 
 var toy = function(tree,env,module_name){
@@ -572,7 +574,7 @@ var toy = function(tree,env,module_name){
                 // 添加新的空 env
                                                // 添加新的 [] 到 env
                 var new_env = eval_let(tree[1],cons([],env))
-                var return_obj = toy(tree[2],new_env)
+                var return_obj = toy(tree[2],new_env,module_name)
                 var return_value = return_obj[0]
                 var return_env = return_obj[1]
                 // delete 新加入的 env
@@ -629,6 +631,49 @@ var toy = function(tree,env,module_name){
                 return [toy(tree[1],env,module_name)[0].slice(parseInt(toy(tree[2],env,module_name)[0]),parseInt(toy(tree[3],env,module_name)[0])),env]
             }
 
+            /*
+                for while statements
+
+                for:
+                    (for i in obj stm1, stm2 ...)
+                
+                while:
+                    (while judge stm1, stm2 ...)
+                
+                does not create new env for env_list
+                */
+            else if (tree[0]=="while"){
+                var return_obj = toy(tree[1],env,module_name)
+                var judge = return_obj[0]
+                var env_ = return_obj[1]
+                while(judge!="0"){
+                    var stms = tree.slice(2,tree.length)
+                    env_ = toy_language(stms,env_,module_name)
+                    var return_obj = toy(tree[1],env_,module_name)
+                    judge = return_obj[0]
+                    env_ = return_obj[1]
+                }
+                return ["",env]
+            }
+
+            else if (tree[0]=="for"){
+                var var_name = tree[1]
+                var value = assoc(var_name, env)
+                if (value === 'undefined'){
+                    env = toy(['define',var_name,'0'],env,module_name)[1]
+                }
+                var in_value = toy(tree[3],env,module_name)[0]
+                var i = 0
+                while (i<in_value.length){
+                    // update var_name value
+                    env = toy(['set!',var_name,['quote',in_value[i]]],env,module_name)[1]
+                    env = toy(cons('begin',tree.slice(4,tree.length)),env,module_name)[1]
+                    i=i+1
+                }
+                return ["",env]
+            }
+            
+
             // defmacro
             /*
 
@@ -656,7 +701,7 @@ var toy = function(tree,env,module_name){
             //procedure value
             else{
                 var value = assoc(tree[0],env)
-                if (value === false){
+                if (value === "undefined"){
                     console.log("Error...Undefined function "+tree[0])
                     return ["",env]
                 }
