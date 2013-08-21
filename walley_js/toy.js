@@ -415,7 +415,7 @@ var ENV_LIST = [[
     ["cons","cons"],
     ["cond","cond"],
     ["+","+"],
-    ["-",'-'],
+    ['-','-'],
     ['*','*'],
     ['/','/'],
     ['<','<'],
@@ -436,7 +436,8 @@ var ENV_LIST = [[
     ['load','load'],
     ['display','display'],
     ['show-env','show-env'],
-    ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro']
+    ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro'],
+    ['ref','ref'],['len','len'],['slice','slice']
     ]]
 
 var toy = function(tree,env,module_name){
@@ -612,6 +613,22 @@ var toy = function(tree,env,module_name){
             	printArray(env)
             	return ["",env]
             }
+            // ref len slice functions
+            // ref (ref '(a b c) 0) get 'a
+            // (ref value index)
+            else if (tree[0]=="ref"){
+                return [ toy(tree[1],env,module_name)[0][parseInt(toy(tree[2],env,module_name)[0])], env]
+            }
+            // (len '(a b c)) ->3
+            // get length of value
+            else if (tree[0]=="len"){
+                return [str(toy(tree[1],env,module_name)[0].length), env]
+            }
+            // (slice '(a b c) 0 2) -> '(a b)
+            else if (tree[0]=="slice"){
+                return [toy(tree[1],env,module_name)[0].slice(parseInt(toy(tree[2],env,module_name)[0]),parseInt(toy(tree[3],env,module_name)[0])),env]
+            }
+
             // defmacro
             /*
 
