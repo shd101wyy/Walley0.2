@@ -607,12 +607,13 @@ var toy = function(tree,env,module_name){
                 }
                 var temp_env = pair_params(tree[0][1],cdr(tree),env,module_name)
                 var new_env = cons(temp_env, env)
-                var return_array = toy(tree[0][2], new_env, module_name)
+                var stms = tree[0].slice(2,tree[0].length)
+                var return_array = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length-1), new_env, module_name) , module_name)
                 var return_value = return_array[0]
                 var return_env = return_array[1]
                 // delete 新加入的 env
                 return_env = cdr(return_env)
-                return[return_value, return_env]
+                return [return_value, return_env]
             }
             /* macro
             
