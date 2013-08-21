@@ -191,11 +191,7 @@ var quasiquote = function(arg,env,module_name){
     }
     return calculateQuote(arg,env,module_name)
 }
-var pairs = function(a,b){
-    if (a.length == 0)
-        return []
-    return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
-}
+
 /*
 # get value of var_name in env
 # assoc("x",[["x",12],["y",13]])->12
@@ -205,7 +201,7 @@ var pairs = function(a,b){
 var assoc = function(var_name , env_list){
     var assoc_iter = function(var_name, env){
 	    if (env.length==0)
-		    return false
+		    return -1
 	    if (env[0][0]==var_name)
 		    return env[0][1]
 	    return assoc_iter(var_name,cdr(env))
@@ -216,7 +212,7 @@ var assoc = function(var_name , env_list){
             return false
         }
         var result = assoc_iter(var_name, env_list[0])
-        if (result==false)
+        if (result===-1)
             return assoc_list_iter(var_name, cdr(env_list))
         return result
         }
@@ -299,6 +295,14 @@ var printArray = function(list){
                 -> (* 3 3)
 */
 var macroexpand = function(tree,env_list,module_name){
+    var pairs = function(a,b){
+        if (a.length == 0)
+            return []
+        // rest
+        if (a[0]=="&")
+            return [[a[1],b]]
+        return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
+    }
     var vars = tree[0][1]
     var stm = tree[0][2]
     var params = cdr(tree)
@@ -583,7 +587,7 @@ var toy = function(tree,env,module_name){
             //procedure value
             else{
                 var value = assoc(tree[0],env)
-                if (value == false){
+                if (value === false){
                     console.log("Error...Undefined function "+tree[0])
                     return ["",env]
                 }
