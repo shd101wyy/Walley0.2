@@ -387,6 +387,58 @@ var toy_language = function(trees,env,module_name){
 */
 // TRY FUNCTIONAL PROGRAMMING, without global params
 // [return_value,env]
+/*
+    Toy Language embed function
+
+    quote atom? eq car cdr cons cond
+    + - * /
+    < > = >= <=
+    or and not
+    define set!
+    let
+    lambda
+    begin 
+    apply eval
+    quasiquote
+    load
+    display 
+    show-env
+    defmacro macroexpand run-macro
+*/
+// init env_list
+var ENV_LIST = [[
+    ["quote","quote"],
+    ["atom?","atom?"],
+    ["eq","eq"],
+    ["car","car"],
+    ["cdr","cdr"],
+    ["cons","cons"],
+    ["cond","cond"],
+    ["+","+"],
+    ["-",'-'],
+    ['*','*'],
+    ['/','/'],
+    ['<','<'],
+    ['>','>'],
+    ['=','='],
+    ['>=','>='],
+    ['<=','<='],
+    ['or','or'],
+    ['and','and'],
+    ['not','not'],
+    ['define','define'],
+    ['set!','set!'],
+    ['let','let'],
+    ['lambda','lambda'],
+    ['begin','begin'],
+    ['apply','apply'],['eval','eval'],
+    ['quasiquote','quasiquote'],
+    ['load','load'],
+    ['display','display'],
+    ['show-env','show-env'],
+    ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro']
+    ]]
+
 var toy = function(tree,env,module_name){
 	if (typeof(module_name)==="undefined")
 		module_name = ""
@@ -925,6 +977,7 @@ if (typeof(module)!="undefined"){
     module.exports.toy = toy 
     module.exports.toy_language =toy_language
     module.exports.printArray = printArray
+    module.exports.ENV_LIST = ENV_LIST
     }
 
 

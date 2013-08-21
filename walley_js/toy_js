@@ -23,7 +23,7 @@ if (argv.length==2){
 	rl.prompt()
 
 	var to_run=""
-	var env = [[]]
+	var env = toy.ENV_LIST
 	rl.on('line', function(line) {
 		var parsed_obj = toy.parseString(line)
 		parsed_obj = parsed_obj[0]
@@ -52,7 +52,7 @@ if (argv.length==3){
 	// parse
 	var parsed_obj = toy.parseString(content_in_file)
 	// run string
-	toy.toy_language(parsed_obj, [[]] ,"" )
+	toy.toy_language(parsed_obj, toy.ENV_LIST ,"" )
 }
 
 // show env
@@ -67,6 +67,6 @@ if (argv.length==4 && argv[2]=="env"){
 	// parse
 	var parsed_obj = toy.parseString(content_in_file)
 	// run string
-	var env = toy.toy_language(parsed_obj, [[]] ,"" )
+	var env = toy.toy_language(parsed_obj, toy.ENV_LIST ,"" )
 	toy.printArray(env)
 }
