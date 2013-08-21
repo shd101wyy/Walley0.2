@@ -191,21 +191,36 @@ var quasiquote = function(arg,env,module_name){
     }
     return calculateQuote(arg,env,module_name)
 }
-var pairs = function(a,b,env){
+var pairs = function(a,b){
     if (a.length == 0)
-        return env
+        return []
     return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
 }
 /*
 # get value of var_name in env
 # assoc("x",[["x",12],["y",13]])->12
+
+    new assoc function deals with env_list
 */
-var assoc = function(var_name , env){
-	if (env.length==0)
-		return false
-	if (env[0][0]==var_name)
-		return env[0][1]
-	return assoc(var_name,cdr(env))
+var assoc = function(var_name , env_list){
+    var assoc_iter = function(var_name, env){
+	    if (env.length==0)
+		    return false
+	    if (env[0][0]==var_name)
+		    return env[0][1]
+	    return assoc_iter(var_name,cdr(env))
+        }
+    var assoc_list_iter = function(var_name , env_list){
+        if (env_list.length == 0 ){
+            console.log("Error...Var "+var_name+" does not existed")
+            return false
+        }
+        var result = assoc_iter(var_name, env_list[0])
+        if (result==false)
+            return assoc_list_iter(var_name, cdr(env_list))
+        return result
+        }
+    return assoc_list_iter(var_name, env_list)
 }
 // compute function params
 // ["x","y"] [["x",12],["y",13]] -> [12,13]
@@ -283,11 +298,11 @@ var printArray = function(list){
                 expand to 
                 -> (* 3 3)
 */
-var macroexpand = function(tree,env,module_name){
+var macroexpand = function(tree,env_list,module_name){
     var vars = tree[0][1]
     var stm = tree[0][2]
     var params = cdr(tree)
-    var new_env = pairs(vars,params,env)
+    var new_env = cons(pairs(vars,params), env_list)
     var return_obj = toy(stm,new_env,module_name)
     var to_run = return_obj[0]
     return to_run
@@ -353,6 +368,19 @@ var toy_language = function(trees,env,module_name){
     else
         return toy_language(cdr(trees), toy(car(trees),env,module_name)[1] , module_name )
 }
+// I will change the way to express env on Aug 21st
+/*
+  now env is not [[var_name, var_value] , ..... ] anymore
+  it is now as
+
+        < --------
+        right to left
+
+      [..., [ var_list1] , [ var_list0]]
+      where [var_list0] is -> [[var_name, var_value], [var_name, var_value] ...]
+
+
+*/
 // TRY FUNCTIONAL PROGRAMMING, without global params
 // [return_value,env]
 var toy = function(tree,env,module_name){
@@ -411,69 +439,88 @@ var toy = function(tree,env,module_name){
             }
             // (define var_name var_value)
             else if (tree[0]=="define"){
-                var var_existed = function(var_name,env){
-                    if (env.length==0)
-                        return false
-                    else if (var_name == env[0][0])
-                        return true
-                    return var_existed(var_name,cdr(env))
+                // return new env_list
+                var define = function(var_name, var_value, env_list){
+                    var define_iter = function(var_name, var_value, env){
+                        // var does not existed in env
+                        if (env.length == 0)
+                            return [[var_name, var_value]]
+                        // var existed
+                        else if (env[0][0] == var_name){
+                            console.log( "Error... "+var_name+" with value has been defined")
+                            console.log( "In toy language, it is not allowed to redefine var.")
+                            console.log( "While not recommended to change value of a defined var,")
+                            console.log( "you could use set! function to modify the value.")
+                            return env
+                        }
+                        else
+                            return cons(env[0], define_iter(var_name, var_value, cdr(env)))
+                    }   
+                    var new_env = define_iter(var_name, var_value, env_list[0])
+                    env_list[0] = new_env
+                    return [var_value, env_list]
                 }
-                if (module_name=="")
-                    var_name = tree[1]
-                else
-                    var_name = module_name+"."+tree[1]
-                if (var_existed(var_name,env)){
-                    console.log( "Error... "+var_name+" with value has been defined")
-                    console.log( "In toy language, it is not allowed to redefine var.")
-                    console.log( "While not recommended to change value of a defined var,")
-                    console.log( "you could use set! function to modify the value.")
-                    return ["",env]
-                }
-                var return_obj = toy(tree[2],env,module_name)
-                var var_value = return_obj[0]
-                if (var_value == false){
-                	console.log("Invalid value")
-                	console.log(tree[2])
-                }
-                var new_env = return_obj[1]
-                return [var_value,cons([var_name,var_value],new_env)]
+                var var_value = toy(tree[2],env,module_name)[0]
+                return define(tree[1], var_value, env)
             }
             // (set! var_name var_value)
             else if (tree[0]=="set!"){
-                var set_index = function(var_name,env,var_value){
-                    if (env.length==0){
-                        console.log("Error...In function set! "+var_name+" does not existed")
-                        return false
+                // return new env_list
+                var set_ = function(var_name, var_value, env_list){
+                    // if var_name does not existed, return -1
+                    // else return index
+                    var set__check = function(var_name, env, count){
+                        if (env.length == 0)
+                            return -1
+                        // find var
+                        else if (env[0][0] === var_name){
+                            return count
+                        }
+                        return set__check(var_name, cdr(env), count+1)
                     }
-                    else if (var_name==env[0][0])
-                        return cons([var_name,var_value],cdr(env))
-                    return cons(car(env), set_index(var_name,cdr(env),var_value))
+
+                    // error does not find var
+                    if (env_list.length == 0){
+                        console.log("Error...In function set! "+var_name+" does not existed")
+                        return []
+                    }
+                    var index = set__check(var_name, env_list[0], 0)
+                    // 0 == false -> true, so use === instead
+                    if (index === -1)
+                        return cons(env_list[0], set_(var_name, var_value, cdr(env_list)))
+                    else{
+                        env_list[0][index][1] = var_value
+                        return env_list
+                    }
                 }
-                var return_obj = toy(tree[2],env)
-                var var_value = return_obj[0]
-                var new_env = return_obj[1]
-                var index = set_index(tree[1],new_env,var_value)
-                // var does not exist
-                if (index==false)
-                	return ["",env]
-                return [var_value,index]
+
+                var var_value = toy(tree[2],env,module_name)[0]
+                var new_env = set_(tree[1], var_value, env)
+                return [var_value, new_env]
 			}
 
             else if (tree[0]=="let"){
-            	//return new env
-				//expr -> ((a 12)(b 13)) 
-				//env -> ((c 14))
-				//return ((a 12)(b 13)(c 14))
-				var eval_let = function(expr,env){
+                // add new env to env_list
+            	// return new env_list
+				var eval_let = function(expr,env_list){
 				    if (expr.length==0)
-				        return env
+				        return env_list
 				    // now ((x 12)(y x)) -> y = 12
-				    return eval_let(cdr(expr), cons( [expr[0][0],toy(expr[0][1],env)[0]] , env) )
+                    var var_name = expr[0][0]
+                    var return_obj = toy(expr[0][1],env_list)
+                    var var_value = return_obj[0]
+                    env_list[0].push([var_name,var_value])
+                    return eval_let(cdr(expr), env_list) 
 				}
-                var return_obj = toy(tree[2],eval_let(tree[1],env))
+                // 添加新的空 env
+                                               // 添加新的 [] 到 env
+                var new_env = eval_let(tree[1],cons([],env))
+                var return_obj = toy(tree[2],new_env)
                 var return_value = return_obj[0]
                 var return_env = return_obj[1]
-                return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
+                // delete 新加入的 env
+                return_env = cdr(return_env)
+                return[return_value, return_env]
             }
             else if (tree[0]=="lambda")
                 return [tree,env]
@@ -520,7 +567,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="defmacro"){
                 var macro_name = tree[1]
                 var macro_value = ["run-macro",tree[2],tree[3]]
-                var new_env = cons( [macro_name , macro_value] , env)
+                var new_env = cons( cons([macro_name , macro_value], env[0]) , cdr(env))
                 return [macro_value,new_env]
             }
             /*
@@ -545,24 +592,27 @@ var toy = function(tree,env,module_name){
         }
         else{
             if (tree[0][0]=="lambda"){
-                // ["a","b"] ["1","2"] [["c","12"]] -> [["a","1"],["b","2"],["c","12"]]
-                var pair_params = function(names,params,env,module_name){
+                // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
+                var pair_params = function(names,params,env_list,module_name){
                     if (names.length==0)
-                        return env
+                        return []
                     // calculate params
                     else if (names[0]==".")
-                        return cons([names[1],evlis(params,env,module_name)],env)
+                        return cons([names[1],evlis(params,env_list,module_name)],[])
                     // lazy and does not calculate params
                     else if (names[0]=="&")
-                        return cons([names[1],params],env)
+                        return cons([names[1],params],[])
                     else
-                        return cons([names[0],toy(params[0],env,module_name)[0]],pair_params(cdr(names),cdr(params),env,module_name))
+                        return cons([names[0],toy(params[0],env_list,module_name)[0]],pair_params(cdr(names),cdr(params),env_list,module_name))
                 }
-
-                var return_array = toy(tree[0][2], pair_params(tree[0][1],cdr(tree),env,module_name),module_name)
-                return_value = return_array[0]
-                return_env = return_array[1]
-                return[return_value, return_env.slice(return_env.length-env.length,return_env.length)]
+                var temp_env = pair_params(tree[0][1],cdr(tree),env,module_name)
+                var new_env = cons(temp_env, env)
+                var return_array = toy(tree[0][2], new_env, module_name)
+                var return_value = return_array[0]
+                var return_env = return_array[1]
+                // delete 新加入的 env
+                return_env = cdr(return_env)
+                return[return_value, return_env]
             }
             /* macro
             
