@@ -27,9 +27,8 @@ if (argv.length==2){
 	rl.on('line', function(line) {
 		var parsed_obj = toy.parseString(line)
 		parsed_obj = parsed_obj[0]
-		var return_obj = toy.toy(parsed_obj , env , "" )
-		console.log(return_obj[0])
-		env = return_obj[1]
+		var return_value = toy.toy(parsed_obj , env , "" )
+		console.log(return_value)
 		rl.setPrompt('toy> ')
 		rl.prompt()
 	})
