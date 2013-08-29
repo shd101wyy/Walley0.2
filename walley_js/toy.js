@@ -841,7 +841,11 @@ var make_rat_string = function(rat){
 // calculate two numbers only
 //==== add ========
 var _add_ = function(num1,num2){
-	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
+    var type1 = typeOfNum(num1)
+    var type2 = typeOfNum(num2)
+    if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
+        return num1+num2
+	if (type1 == "Float" || type2 == "Float")
 		return calculateTwoNum(num1,num2,"+")
 	return make_rat_string(add_rat(format_number(num1),format_number(num2)))
 }
