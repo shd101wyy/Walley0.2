@@ -471,7 +471,7 @@ var ENV_LIST = [{
     'load':'load',
     'display':'display',
     'show-env':'show-env',
-    'defmacro':'defmacro','macroexpand':'macroexpand','run-macro':'run-macro',
+    'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'ref':'ref','len':'len','slice':'slice',
     'while':'while','for':'for'
     }]
@@ -594,6 +594,9 @@ var toy = function(tree,env,module_name){
             }
             else if (tree[0]=="lambda")
                 return tree
+            else if (tree[0]=='macro'){
+                return ["macro",tree[1],tree[2]]
+            }
             else if (tree[0]=="begin")
                 return toy(tree[tree.length-1], toy_language(tree.slice(1,tree.length-1),env,module_name),module_name)
             else if (tree[0]=="apply")
@@ -631,7 +634,13 @@ var toy = function(tree,env,module_name){
             // ref (ref '(a b c) 0) get 'a
             // (ref value index)
             else if (tree[0]=="ref"){
-                return toy(tree[1],env,module_name)[parseInt(toy(tree[2],env,module_name))]
+                var index = parseInt(toy(tree[2],env,module_name))
+                var value = toy(tree[1],env,module_name)
+                if (index<0 || index>=value.length){
+                    console.log("Error...ref index out of boundary")
+                    return 'undefined'
+                }
+                return value[index]
             }
             // (len '(a b c)) ->3
             // get length of value
@@ -640,7 +649,18 @@ var toy = function(tree,env,module_name){
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="slice"){
-                return toy(tree[1],env,module_name).slice(parseInt(toy(tree[2],env,module_name)),parseInt(toy(tree[3],env,module_name)))
+                var left = parseInt(toy(tree[2],env,module_name))
+                var right = parseInt(toy(tree[3],env,module_name))
+                var value = toy(tree[1],env,module_name)
+                if (left<0){
+                    console.log("Error...slice left index < 0")
+                    return 'undefined'
+                }
+                if (right >= value.length){
+                    console.log("Error...slice right index out of boundary")
+                    return 'undefined'
+                }
+                return value.slice(left,right)
             }
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
             else if (tree[0]=="set-ref!"){
@@ -672,7 +692,7 @@ var toy = function(tree,env,module_name){
                     toy_language(stms,env,module_name)
                     judge = toy(tree[1],env,module_name)
                 }
-                return ""
+                return "undefined"
             }
 
             else if (tree[0]=="for"){
@@ -689,7 +709,7 @@ var toy = function(tree,env,module_name){
                     toy(cons('begin',tree.slice(4,tree.length)),env,module_name)
                     i=i+1
                 }
-                return ""
+                return "undefined"
             }
             
 
@@ -703,7 +723,7 @@ var toy = function(tree,env,module_name){
             */
             else if (tree[0]=="defmacro"){
                 var macro_name = tree[1]
-                var macro_value = ["run-macro",tree[2],tree[3]]
+                var macro_value = ["macro",tree[2],tree[3]]
                 env[env.length - 1][macro_name] = macro_value
                 return macro_value
             }
@@ -766,7 +786,7 @@ var toy = function(tree,env,module_name){
                 -> 9
 
             */
-            else if (tree[0][0]=="run-macro"){
+            else if (tree[0][0]=="macro"){
                 var to_run = macroexpand(tree,env,module_name)
                 return toy(to_run,env,module_name)
             }
