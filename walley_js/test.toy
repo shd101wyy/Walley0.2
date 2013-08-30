@@ -186,5 +186,88 @@
     )  
   )
 
-(display (range 20 10 -2))
-(display (if 0 12 13))
+(define null? 
+  (lambda (x)
+    (cond
+     ((eq x '()) 1)
+     (1 0)
+     )
+    )
+  )
+(define empty? null?)
+
+;; (1 2) (3 4) -> (1 2 3 4)
+(define append 
+  (lambda (x y)
+    (cond
+     ((null? x) y)
+     (1 (cons (car x) (append (cdr x) y)))
+     )
+    )
+  )
+
+;; function dolist
+;; (dolist var_name list body)
+
+(define dolist
+  (macro (& params)
+    (let
+        (
+         (var-name (car params))
+         (iter-list (ref params 1) )
+         (body (slice params 2 (len params)))
+         
+        )
+      
+      (append @(for ,var-name in ,iter-list) body)
+     ;; @(for ,var-name in ,iter-list ,body)
+
+      )
+    )
+  )
+
+(define list 
+  (lambda (. args)
+    args
+    )
+  )
+
+;; (1 2) + (3 4) -> (4 6) 
+(define list-add
+  (lambda (x y)
+    (define list-add-iter
+      (lambda (x y result)
+        (cond
+         ((or (null? x) (null? y))
+          result
+          )
+         (1 
+            (list-add-iter (cdr x) (cdr y) (push result (apply + (list (car x) (car y)))))
+          )
+         )
+        )
+      )
+    (list-add-iter x y '())
+    )
+  )
+
+(define factorial 
+  (lambda (n)
+    (define factorial-iter
+      (lambda (n result)
+        (cond
+         ((eq n 1) result)
+         (1 (factorial-iter (- n 1) (* result n) ))
+         )
+        )
+      )
+    (factorial-iter n 1)
+    )
+  )
+
+(define add (lambda (a b) (+ a b)))
+(display (add 3 4))
+;; (display (null? '()))
+(display (list-add '(1 5) '(2 3)))
+;; (display (or (null? '()) (null? '(123)) ))
+;; (display (factorial 4))

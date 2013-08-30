@@ -133,6 +133,7 @@ var eq = function(arg0, arg1){
 var car = function ( arg ){ 
 	if (arg.length==0){
 		console.log("Error...cannot get car of empty list")
+        console.log(arg)
 	}
 	return arg[0]
 }
@@ -676,7 +677,7 @@ var toy = function(tree,env,module_name){
                     console.log("Error...slice left index < 0")
                     return 'undefined'
                 }
-                if (right >= value.length){
+                if (right > value.length){
                     console.log("Error...slice right index out of boundary")
                     return 'undefined'
                 }
@@ -783,27 +784,28 @@ var toy = function(tree,env,module_name){
         else{
             if (tree[0][0]=="lambda"){
                 // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
-                var pair_params = function(names,params,env,module_name){
+                var pair_params = function(names,params,env,module_name,output){
                     if (names.length==0)
-                        return 
+                        return output
                     // calculate params
                     else if (names[0]=="."){
-                        env[env.length - 1][names[1]] =  evlis(params,env,module_name)
-                        return 
+                        output[names[1]] =  evlis(params,env,module_name)
+                        return output
                     }
                     // lazy and does not calculate params
                     else if (names[0]=="&"){
-                        env[env.length - 1][names[1]] = params
+                        output[names[1]] = params
                     }
-                    else{
-                        env[env.length - 1][names[0]] = toy(params[0],env,module_name)
-                        return pair_params(cdr(names) , cdr(params) , env , module_name )
+                    else{                        
+                        output[names[0]] = toy(params[0],env,module_name)
+                        return pair_params(cdr(names) , cdr(params) , env , module_name ,output)
                     }
                 }
 
                 // add local env
-                env.push({})
-                pair_params(tree[0][1],cdr(tree),env,module_name)
+                var output = pair_params(tree[0][1],cdr(tree),env,module_name,{})
+                env.push(output)
+                
                 var stms = tree[0].slice(2,tree[0].length)
                 var return_value = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length-1), env, module_name) , module_name)
                 // delete 新加入的 env
