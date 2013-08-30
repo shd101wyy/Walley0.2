@@ -148,9 +148,20 @@ var cons = function (value1, value2){
 	if (type1=="string" && type2=="string")
 		return value1+value2
 	else if (type2!="string"){
-		var output = [value1]
-		for (var i in value2)
-			output.push(value2[i])
+        /*
+        var output = new Array(1 + value2.length)
+        output[0] = value1 
+        var i = 0
+        while (i < value2.length){
+            output[1 + i] = value2[i]
+            i = i + 1
+        }
+        */ 
+        // For Google V8 push is faster
+        var output = [value1]
+        for (var i in value2){
+            output.push(value2[i])
+        }
 		return output
 	}
 	else{
@@ -274,7 +285,7 @@ var printArray = function(list){
 	console.log(convert_array_to_string(list))
 }
 /*
-((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
                 expand to 
                 -> (* 3 3)
 */
@@ -472,7 +483,7 @@ var ENV_LIST = [{
     'display':'display',
     'show-env':'show-env',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
-    'ref':'ref','len':'len','slice':'slice',
+    'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
     'while':'while','for':'for'
     }]
 
@@ -594,6 +605,13 @@ var toy = function(tree,env,module_name){
             }
             else if (tree[0]=="lambda")
                 return tree
+                /*
+
+            (define square (macro (x) @(* ,x ,x)  ))
+            square : macro name
+            (x) : params
+            @(* ,x ,x) : return value that will run when calling macro
+            */
             else if (tree[0]=='macro'){
                 return ["macro",tree[1],tree[2]]
             }
@@ -630,7 +648,9 @@ var toy = function(tree,env,module_name){
                 // here has some problem ... 
             	return env
             }
-            // ref len slice functions
+            // FOR LISP LIST OPERATION
+            // ref len slice set-ref! functions
+            // push pop functions for mutable data
             // ref (ref '(a b c) 0) get 'a
             // (ref value index)
             else if (tree[0]=="ref"){
@@ -662,6 +682,7 @@ var toy = function(tree,env,module_name){
                 }
                 return value.slice(left,right)
             }
+
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
             else if (tree[0]=="set-ref!"){
                 // i can not do it now...
@@ -673,6 +694,20 @@ var toy = function(tree,env,module_name){
                 var_ref[index0] = set_value
                 return var_ref
             }
+            else if (tree[0] == 'push'){
+                var value = toy(tree[1],env,module_name)
+                var push_value = toy(tree[2],env,module_name)
+                value.push(push_value)
+                return value
+            }
+            else if (tree[0] == 'pop'){
+                var value = toy(tree[1],env,module_name)
+                if (value == [])
+                    return 'undefined'
+                var pop_value = value.pop()
+                return pop_value
+            }
+
 
             /*
                 for while statements
@@ -779,7 +814,7 @@ var toy = function(tree,env,module_name){
             }
             /* macro
             
-((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
                 expand
                 -> (* 3 3)
                 run
