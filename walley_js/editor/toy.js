@@ -148,9 +148,20 @@ var cons = function (value1, value2){
 	if (type1=="string" && type2=="string")
 		return value1+value2
 	else if (type2!="string"){
-		var output = [value1]
-		for (var i in value2)
-			output.push(value2[i])
+        /*
+        var output = new Array(1 + value2.length)
+        output[0] = value1 
+        var i = 0
+        while (i < value2.length){
+            output[1 + i] = value2[i]
+            i = i + 1
+        }
+        */ 
+        // For Google V8 push is faster
+        var output = [value1]
+        for (var i in value2){
+            output.push(value2[i])
+        }
 		return output
 	}
 	else{
@@ -160,8 +171,8 @@ var cons = function (value1, value2){
 }
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
-		return ["0",env]
-	if (toy(tree[0][0],env,module_name)[0]!='0')
+		return "0"
+	if (toy(tree[0][0],env,module_name)!='0')
 		return toy(tree[0][1],env,module_name)
 	return cond(cdr(tree),env,module_name)
 }
@@ -178,7 +189,7 @@ var quasiquote = function(arg,env,module_name){
             return quote_value
         // [unquote a]
         else if (quote_value.length==2 && typeof(quote_value[0])==="string" && quote_value[0]=="unquote" )
-            return toy(quote_value[1],env,module_name)[0]
+            return toy(quote_value[1],env,module_name)
         else{
             var output=[]
             var i = 0
@@ -192,32 +203,15 @@ var quasiquote = function(arg,env,module_name){
     return calculateQuote(arg,env,module_name)
 }
 
-/*
-# get value of var_name in env
-# assoc("x",[["x",12],["y",13]])->12
-
-    new assoc function deals with env_list
-*/
+// get var_value according to var_name
 var assoc = function(var_name , env_list){
-    var assoc_iter = function(var_name, env){
-	    if (env.length==0)
-		    return -1
-	    if (env[0][0]==var_name)
-		    return env[0][1]
-	    return assoc_iter(var_name,cdr(env))
-        }
-    var assoc_list_iter = function(var_name , env_list){
-        if (env_list.length == 0 ){
-            //console.log("Error...Var "+var_name+" does not existed")
-            // add undefined support
-            return "undefined"
-        }
-        var result = assoc_iter(var_name, env_list[0])
-        if (result===-1)
-            return assoc_list_iter(var_name, cdr(env_list))
-        return result
-        }
-    return assoc_list_iter(var_name, env_list)
+    var i = env_list.length - 1
+    while (i >= 0){
+        if (var_name in env_list[i])
+            return env_list[i][var_name]
+        i = i - 1
+    }
+    return "undefined"
 }
 // compute function params
 // ["x","y"] [["x",12],["y",13]] -> [12,13]
@@ -225,7 +219,7 @@ var evlis = function(params,env,module_name){
 	if (params.length==0){
 		return []
 	}
-	return cons(toy(params[0],env,module_name)[0] , evlis(cdr(params),env,module_name))
+	return cons(toy(params[0],env,module_name) , evlis(cdr(params),env,module_name))
 }
 
 // [a,b] [c,d] -> [a,b,c,d]
@@ -291,26 +285,31 @@ var printArray = function(list){
 	console.log(convert_array_to_string(list))
 }
 /*
-((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
                 expand to 
                 -> (* 3 3)
 */
-var macroexpand = function(tree,env_list,module_name){
-    var pairs = function(a,b){
+var macroexpand = function(tree,env,module_name){
+    var pairs = function(a,b,env){
         if (a.length == 0)
-            return []
+            return
         // rest
-        if (a[0]=="&")
-            return [[a[1],b]]
-        return cons([a[0],b[0]], pairs(cdr(a),cdr(b)))
+        if (a[0]=="&"){
+            env[env.length - 1][a[1]] = b
+            return 
+        }
+        env[env.length - 1][a[0]] = b[0]
+        return pairs(cdr(a),cdr(b),env)
     }
     var vars = tree[0][1]
     var stm = tree[0][2]
     var params = cdr(tree)
-    var new_env = cons(pairs(vars,params), env_list)
-    var return_obj = toy(stm,new_env,module_name)
-    var to_run = return_obj[0]
-    return to_run
+    
+    env.push({})
+    pairs(vars,params,env)
+    var return_value = toy(stm,env,module_name)
+    env.pop()
+    return return_value
 }
 
 // check char is digit
@@ -371,7 +370,8 @@ var toy_language = function(trees,env,module_name){
     if (trees.length==0)
         return env
     else
-        return toy_language(cdr(trees), toy(car(trees),env,module_name)[1] , module_name )
+        toy(trees[0],env,module_name)
+        return toy_language(cdr(trees), env , module_name )
 }
 // I will change the way to express env on Aug 21st
 /*
@@ -383,6 +383,16 @@ var toy_language = function(trees,env,module_name){
 
       [..., [ var_list1] , [ var_list0]]
       where [var_list0] is -> [[var_name, var_value], [var_name, var_value] ...]
+
+
+  now env is [{env0},{env1},{env2},{env3}]
+  
+  where {env0} is 
+    object(dict) {
+        var_name0 : var_value0,
+        var_name1 : var_value1,
+        ...
+    }
 
 
 */
@@ -407,6 +417,7 @@ var toy_language = function(trees,env,module_name){
     defmacro macroexpand run-macro
 */
 // init env_list
+/*
 var ENV_LIST = [[
     ["quote","quote"],
     ["atom?","atom?"],
@@ -440,157 +451,178 @@ var ENV_LIST = [[
     ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro'],
     ['ref','ref'],['len','len'],['slice','slice'],
     ['while','while'],['for','for']
-    ]]
+    ]]*/
+var ENV_LIST = [{
+    "quote":"quote",
+    "atom?":"atom?",
+    "eq":"eq",
+    "car":"car",
+    "cdr":"cdr",
+    "cons":"cons",
+    "cond":"cond",
+    "+":"+",
+    '-':'-',
+    '*':'*',
+    '/':'/',
+    '<':'<',
+    '>':'>',
+    '=':'=',
+    '>=':'>=',
+    '<=':'<=',
+    'or':'or',
+    'and':'and',
+    'not':'not',
+    'define':'define',
+    'set!':'set!',
+    'let':'let',
+    'lambda':'lambda',
+    'begin':'begin',
+    'apply':'apply','eval':'eval',
+    'quasiquote':'quasiquote',
+    'load':'load',
+    'display':'display',
+    'show-env':'show-env',
+    'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
+    'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
+    'while':'while','for':'for'
+    }]
 
 var toy = function(tree,env,module_name){
 	if (typeof(module_name)==="undefined")
 		module_name = ""
     // number
     if (stringIsNumber(tree))
-        return [tree,env]
+        return tree
     // atom
     else if (typeof(tree)=="string")
-        return [assoc(tree,env),env]
+        return assoc(tree,env)
     else
         if (typeof(tree[0])=='string'){
             // seven primitive functions
             if (tree[0]=="quote")
-                return [tree[1],env]
+                return tree[1]
             else if (tree[0]=="atom?")
-                return [atom(toy(tree[1],env,module_name)[0]),env]
+                return atom(toy(tree[1],env,module_name))
             else if (tree[0]=="eq")
-                return [eq(toy(tree[1],env,module_name)[0],toy(tree[2],env,module_name)[0]),env]
+                return eq(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="car")
-                return [car(toy(tree[1],env,module_name)[0]),env]
+                return car(toy(tree[1],env,module_name))
             else if (tree[0]=="cdr")
-                return [cdr(toy(tree[1],env,module_name)[0]),env]
+                return cdr(toy(tree[1],env,module_name))
             else if (tree[0]=="cons")
-                return [cons(toy(tree[1],env,module_name)[0],toy(tree[2],env,module_name)[0]),env]
+                return cons(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers
             else if (tree[0]=="+")
-            	return [ _add_array_(evlis(cdr(tree),env,module_name)) , env]
+            	return _add_array_(evlis(cdr(tree),env,module_name)) 
             else if (tree[0]=="-")
-            	return [ _sub_array_(evlis(cdr(tree),env,module_name)) , env]
+            	return _sub_array_(evlis(cdr(tree),env,module_name)) 
             else if (tree[0]=="*")
-            	return [ _mul_array_(evlis(cdr(tree),env,module_name)) , env]
+            	return _mul_array_(evlis(cdr(tree),env,module_name)) 
             else if (tree[0]=="/")
-            	return [ _div_array_(evlis(cdr(tree),env,module_name)) , env]
+            	return _div_array_(evlis(cdr(tree),env,module_name))
             else if (tree[0]=="<")
-              	return [ _lt_array_(cdr(tree),env,module_name),env]
+              	return _lt_array_(cdr(tree),env,module_name)
             else if (tree[0]==">")
-              	return [ _gt_array_(cdr(tree),env,module_name),env]
+              	return _gt_array_(cdr(tree),env,module_name)
             else if (tree[0]=="=")
-              	return [ _equal_array_(cdr(tree),env,module_name),env]
+              	return _equal_array_(cdr(tree),env,module_name)
             else if (tree[0]==">=")
-            	return [_ge_array_(cdr(tree),env,module_name),env]
+            	return _ge_array_(cdr(tree),env,module_name)
             else if (tree[0]=="<=")
-            	return [_le_array_(cdr(tree),env,module_name),env]
+            	return _le_array_(cdr(tree),env,module_name)
             else if (tree[0]=="or"){
-                return [_or_array_(cdr(tree),env,module_name),env]
+                return _or_array_(cdr(tree),env,module_name)
             }
             else if (tree[0]=="and"){
-                return [_and_array_(cdr(tree),env,module_name),env]
+                return _and_array_(cdr(tree),env,module_name)
             }
             else if (tree[0]=="not"){
-            	return [_not_(tree[1],env,module_name),env]
+            	return _not_(tree[1],env,module_name)
             }
             // (define var_name var_value)
             else if (tree[0]=="define"){
-                // return new env_list
-                var define = function(var_name, var_value, env_list){
-                    var define_iter = function(var_name, var_value, env){
-                        // var does not existed in env
-                        if (env.length == 0)
-                            return [[var_name, var_value]]
-                        // var existed
-                        else if (env[0][0] == var_name){
-                            console.log( "Error... "+var_name+" with value has been defined")
-                            console.log( "In toy language, it is not allowed to redefine var.")
-                            console.log( "While not recommended to change value of a defined var,")
-                            console.log( "you could use set! function to modify the value.")
-                            return env
-                        }
-                        else
-                            return cons(env[0], define_iter(var_name, var_value, cdr(env)))
-                    }   
-                    var new_env = define_iter(var_name, var_value, env_list[0])
-                    env_list[0] = new_env
-                    return [var_value, env_list]
+                var var_name = tree[1]
+                var var_value = toy(tree[2],env,module_name)
+                // var_name exsit
+                if (var_name in env[env.length-1]){
+                    console.log( "Error... "+var_name+" with value has been defined")
+                    console.log( "In toy language, it is not allowed to redefine var.")
+                    console.log( "While not recommended to change value of a defined var,")
+                    console.log( "you could use set! function to modify the value.")
+                    return var_value
                 }
-                var var_value = toy(tree[2],env,module_name)[0]
-                return define(tree[1], var_value, env)
+                else{
+                    env[env.length-1][var_name] = var_value
+                    return var_value
+                }
             }
             // (set! var_name var_value)
             else if (tree[0]=="set!"){
-                // return new env_list
-                var set_ = function(var_name, var_value, env_list){
-                    // if var_name does not existed, return -1
-                    // else return index
-                    var set__check = function(var_name, env, count){
-                        if (env.length == 0)
-                            return -1
+                var set_ = function(var_name,env,var_value){
+                    var i = env.length - 1
+                    var found_var = false
+                    while(i>=0){
                         // find var
-                        else if (env[0][0] === var_name){
-                            return count
+                        if (var_name in env[i]){
+                            env[i][var_name] = var_value 
+                            found_var = true
+                            break
                         }
-                        return set__check(var_name, cdr(env), count+1)
+                        i=i-1
                     }
-
-                    // error does not find var
-                    if (env_list.length == 0){
+                    if (found_var == false){
                         console.log("Error...In function set! "+var_name+" does not existed")
-                        return []
-                    }
-                    var index = set__check(var_name, env_list[0], 0)
-                    // 0 == false -> true, so use === instead
-                    if (index === -1)
-                        return cons(env_list[0], set_(var_name, var_value, cdr(env_list)))
-                    else{
-                        env_list[0][index][1] = var_value
-                        return env_list
                     }
                 }
+                var var_name = tree[1]
+                var var_value = toy(tree[2],env,module_name)
+                set_(var_name,env,var_value)
+                return var_value,env
 
-                var var_value = toy(tree[2],env,module_name)[0]
-                var new_env = set_(tree[1], var_value, env)
-                return [var_value, new_env]
 			}
 
             else if (tree[0]=="let"){
                 // add new env to env_list
             	// return new env_list
-				var eval_let = function(expr,env_list){
-				    if (expr.length==0)
-				        return env_list
-				    // now ((x 12)(y x)) -> y = 12
-                    var var_name = expr[0][0]
-                    var return_obj = toy(expr[0][1],env_list)
-                    var var_value = return_obj[0]
-                    env_list[0].push([var_name,var_value])
-                    return eval_let(cdr(expr), env_list) 
-				}
+                var eval_let = function(expr , env_list){
+                    var i = 0
+                    while (i < expr.length){
+                        var var_name = expr[i][0]
+                        var return_value = toy(expr[i][1],env_list)
+                        env_list[env_list.length - 1][var_name] = return_value
+                        i=i+1
+                    }
+                }
                 // 添加新的空 env
-                                               // 添加新的 [] 到 env
-                var new_env = eval_let(tree[1],cons([],env))
-                var return_obj = toy(tree[2],new_env,module_name)
-                var return_value = return_obj[0]
-                var return_env = return_obj[1]
+                env.push({})
+                eval_let(tree[1],env)
+                var return_value = toy(tree[2],env,module_name)
                 // delete 新加入的 env
-                return_env = cdr(return_env)
-                return[return_value, return_env]
+                env.pop()
+                return return_value
             }
             else if (tree[0]=="lambda")
-                return [tree,env]
+                return tree
+                /*
+
+            (define square (macro (x) @(* ,x ,x)  ))
+            square : macro name
+            (x) : params
+            @(* ,x ,x) : return value that will run when calling macro
+            */
+            else if (tree[0]=='macro'){
+                return ["macro",tree[1],tree[2]]
+            }
             else if (tree[0]=="begin")
                 return toy(tree[tree.length-1], toy_language(tree.slice(1,tree.length-1),env,module_name),module_name)
             else if (tree[0]=="apply")
-                return toy(cons(tree[1],toy(tree[2],env,module_name)[0]),env,module_name)
+                return toy(cons(tree[1],toy(tree[2],env,module_name)),env,module_name)
             else if (tree[0]=="eval")
-                return toy(toy(tree[1],env,module_name)[0],env,module_name)
+                return toy(toy(tree[1],env,module_name),env,module_name)
             else if (tree[0]=="quasiquote")
-                return [quasiquote(tree[1],env,module_name),env]
+                return quasiquote(tree[1],env,module_name)
             /*
             # load module
             # (load a) will import content in a with module_name ""
@@ -609,27 +641,71 @@ var toy = function(tree,env,module_name){
          	}
             // io function
             else if (tree[0]=="display")
-                return [display_(toy(tree[1],env,module_name)[0]),env]
+                return display_(toy(tree[1],env,module_name))
             // show defined variables in env
             else if (tree[0]=="show-env"){
             	printArray(env)
-            	return ["",env]
+                // here has some problem ... 
+            	return env
             }
-            // ref len slice functions
+            // FOR LISP LIST OPERATION
+            // ref len slice set-ref! functions
+            // push pop functions for mutable data
             // ref (ref '(a b c) 0) get 'a
             // (ref value index)
             else if (tree[0]=="ref"){
-                return [ toy(tree[1],env,module_name)[0][parseInt(toy(tree[2],env,module_name)[0])], env]
+                var index = parseInt(toy(tree[2],env,module_name))
+                var value = toy(tree[1],env,module_name)
+                if (index<0 || index>=value.length){
+                    console.log("Error...ref index out of boundary")
+                    return 'undefined'
+                }
+                return value[index]
             }
             // (len '(a b c)) ->3
             // get length of value
             else if (tree[0]=="len"){
-                return [str(toy(tree[1],env,module_name)[0].length), env]
+                return str(toy(tree[1],env,module_name).length)
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="slice"){
-                return [toy(tree[1],env,module_name)[0].slice(parseInt(toy(tree[2],env,module_name)[0]),parseInt(toy(tree[3],env,module_name)[0])),env]
+                var left = parseInt(toy(tree[2],env,module_name))
+                var right = parseInt(toy(tree[3],env,module_name))
+                var value = toy(tree[1],env,module_name)
+                if (left<0){
+                    console.log("Error...slice left index < 0")
+                    return 'undefined'
+                }
+                if (right >= value.length){
+                    console.log("Error...slice right index out of boundary")
+                    return 'undefined'
+                }
+                return value.slice(left,right)
             }
+
+            // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
+            else if (tree[0]=="set-ref!"){
+                // i can not do it now...
+                var var_value = toy(tree[1],env,module_name)
+                var index0 = toy(tree[2],env,module_name)
+                var set_value = toy(tree[3],env,module_name)
+                var_value[index0] = set_value
+                return var_value
+            }
+            else if (tree[0] == 'push'){
+                var value = toy(tree[1],env,module_name)
+                var push_value = toy(tree[2],env,module_name)
+                value.push(push_value)
+                return value
+            }
+            else if (tree[0] == 'pop'){
+                var value = toy(tree[1],env,module_name)
+                if (value == [])
+                    return 'undefined'
+                var pop_value = value.pop()
+                return pop_value
+            }
+
 
             /*
                 for while statements
@@ -643,34 +719,30 @@ var toy = function(tree,env,module_name){
                 does not create new env for env_list
                 */
             else if (tree[0]=="while"){
-                var return_obj = toy(tree[1],env,module_name)
-                var judge = return_obj[0]
-                var env_ = return_obj[1]
+                var judge = toy(tree[1],env,module_name)
                 while(judge!="0"){
                     var stms = tree.slice(2,tree.length)
-                    env_ = toy_language(stms,env_,module_name)
-                    var return_obj = toy(tree[1],env_,module_name)
-                    judge = return_obj[0]
-                    env_ = return_obj[1]
+                    toy_language(stms,env,module_name)
+                    judge = toy(tree[1],env,module_name)
                 }
-                return ["",env]
+                return "undefined"
             }
 
             else if (tree[0]=="for"){
                 var var_name = tree[1]
                 var value = assoc(var_name, env)
                 if (value === 'undefined'){
-                    env = toy(['define',var_name,'0'],env,module_name)[1]
+                    toy(['define',var_name,'0'],env,module_name)
                 }
-                var in_value = toy(tree[3],env,module_name)[0]
+                var in_value = toy(tree[3],env,module_name)
                 var i = 0
                 while (i<in_value.length){
                     // update var_name value
-                    env = toy(['set!',var_name,['quote',in_value[i]]],env,module_name)[1]
-                    env = toy(cons('begin',tree.slice(4,tree.length)),env,module_name)[1]
+                    toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
+                    toy(cons('begin',tree.slice(4,tree.length)),env,module_name)
                     i=i+1
                 }
-                return ["",env]
+                return "undefined"
             }
             
 
@@ -684,26 +756,26 @@ var toy = function(tree,env,module_name){
             */
             else if (tree[0]=="defmacro"){
                 var macro_name = tree[1]
-                var macro_value = ["run-macro",tree[2],tree[3]]
-                var new_env = cons( cons([macro_name , macro_value], env[0]) , cdr(env))
-                return [macro_value,new_env]
+                var macro_value = ["macro",tree[2],tree[3]]
+                env[env.length - 1][macro_name] = macro_value
+                return macro_value
             }
             /*
                 (macroexpand '(square 3))
                 -> (* 3 3)
             */
             else if (tree[0]=="macroexpand"){
-                var value = toy(tree[1],env,module_name)[0]
-                value[0]  = toy(value[0],env,module_name)[0]
+                var value = toy(tree[1],env,module_name)
+                value[0]  = toy(value[0],env,module_name)
                 var expanded = macroexpand(value,env,module_name)
-                return [expanded,env]
+                return expanded
             }
             //procedure value
             else{
                 var value = assoc(tree[0],env)
                 if (value === "undefined"){
                     console.log("Error...Undefined function "+tree[0])
-                    return ["",env]
+                    return ""
                 }
                 return toy(cons(value , cdr(tree)),env,module_name)
             }
@@ -711,43 +783,48 @@ var toy = function(tree,env,module_name){
         else{
             if (tree[0][0]=="lambda"){
                 // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
-                var pair_params = function(names,params,env_list,module_name){
+                var pair_params = function(names,params,env,module_name){
                     if (names.length==0)
-                        return []
+                        return 
                     // calculate params
-                    else if (names[0]==".")
-                        return cons([names[1],evlis(params,env_list,module_name)],[])
+                    else if (names[0]=="."){
+                        env[env.length - 1][names[1]] =  evlis(params,env,module_name)
+                        return 
+                    }
                     // lazy and does not calculate params
-                    else if (names[0]=="&")
-                        return cons([names[1],params],[])
-                    else
-                        return cons([names[0],toy(params[0],env_list,module_name)[0]],pair_params(cdr(names),cdr(params),env_list,module_name))
+                    else if (names[0]=="&"){
+                        env[env.length - 1][names[1]] = params
+                    }
+                    else{
+                        env[env.length - 1][names[0]] = toy(params[0],env,module_name)
+                        return pair_params(cdr(names) , cdr(params) , env , module_name )
+                    }
                 }
-                var temp_env = pair_params(tree[0][1],cdr(tree),env,module_name)
-                var new_env = cons(temp_env, env)
+
+                // add local env
+                env.push({})
+                pair_params(tree[0][1],cdr(tree),env,module_name)
                 var stms = tree[0].slice(2,tree[0].length)
-                var return_array = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length-1), new_env, module_name) , module_name)
-                var return_value = return_array[0]
-                var return_env = return_array[1]
+                var return_value = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length-1), env, module_name) , module_name)
                 // delete 新加入的 env
-                return_env = cdr(return_env)
-                return [return_value, return_env]
+                env.pop()
+                return return_value
             }
             /* macro
             
-((run-macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
+((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
                 expand
                 -> (* 3 3)
                 run
                 -> 9
 
             */
-            else if (tree[0][0]=="run-macro"){
+            else if (tree[0][0]=="macro"){
                 var to_run = macroexpand(tree,env,module_name)
                 return toy(to_run,env,module_name)
             }
             else
-                return toy(cons(toy(tree[0],env,module_name)[0] , cdr(tree)), env,module_name)
+                return toy(cons(toy(tree[0],env,module_name) , cdr(tree)), env,module_name)
         }
 }
 
@@ -817,7 +894,11 @@ var make_rat_string = function(rat){
 // calculate two numbers only
 //==== add ========
 var _add_ = function(num1,num2){
-	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
+    var type1 = typeOfNum(num1)
+    var type2 = typeOfNum(num2)
+    if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
+        return num1+num2
+	if (type1 == "Float" || type2 == "Float")
 		return calculateTwoNum(num1,num2,"+")
 	return make_rat_string(add_rat(format_number(num1),format_number(num2)))
 }
@@ -882,7 +963,7 @@ var _and_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
 			return "1"
-		else if (toy(arr[0],env,module_name)[0]=="0")
+		else if (toy(arr[0],env,module_name)=="0")
 			return "0"
 		return _and_array_(cdr(arr),env,module_name)
 }
@@ -890,13 +971,13 @@ var _or_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
 			return "0"
-		else if (toy(arr[0],env,module_name)[0]!="0")
+		else if (toy(arr[0],env,module_name)!="0")
 			return "1"
 		return _or_array_(cdr(arr),env,module_name)
 	
 }
 var _not_ = function(value,env,module_name){
-	var value = toy(value,env,module_name)[0]
+	var value = toy(value,env,module_name)
 	if (value=="0")
 		return "1"
 	return "0"
@@ -919,7 +1000,7 @@ var _lt_array_ = function(arr,env,module_name){
 		if (rest.length==0)
 			return "1"
 		else{
-			value2 = toy(rest[0],env,module_name)[0]
+			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
 			if (_lt_two_values(ahead,value2)=="0")
@@ -931,7 +1012,7 @@ var _lt_array_ = function(arr,env,module_name){
 		console.log("Error...< or > invalid num of params")
 		return "0"
 	}
-	var value1 = toy(arr[0],env,module_name)[0]
+	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
 	    value1=eval(value1)
 	return _lt_array_iter_(value1,cdr(arr),env,module_name)
@@ -982,7 +1063,7 @@ var _equal_array_ = function(arr,env,module_name){
 		if (rest.length==0)
 			return "1"
 		else{
-			value2 = toy(rest[0],env,module_name)[0]
+			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
 			if (_equal_two_values(ahead,value2)=="0")
@@ -994,7 +1075,7 @@ var _equal_array_ = function(arr,env,module_name){
 		console.log("Error...= invalid num of params")
 		return "0"
 	}
-	var value1 = toy(arr[0],env,module_name)[0]
+	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
 	    value1=eval(value1)
 	return _equal_array_iter_(value1,cdr(arr),env,module_name)
@@ -1011,7 +1092,7 @@ var _le_array_ = function(arr,env,module_name){
 		if (rest.length==0)
 			return "1"
 		else{
-			value2 = toy(rest[0],env,module_name)[0]
+			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
 			if (_le_two_values(ahead,value2)=="0")
@@ -1023,7 +1104,7 @@ var _le_array_ = function(arr,env,module_name){
 		console.log("Error...<= or >= invalid num of params")
 		return "0"
 	}
-	var value1 = toy(arr[0],env,module_name)[0]
+	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
 	    value1=eval(value1)
 	return _le_array_iter_(value1,cdr(arr),env,module_name)

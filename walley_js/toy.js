@@ -686,13 +686,11 @@ var toy = function(tree,env,module_name){
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
             else if (tree[0]=="set-ref!"){
                 // i can not do it now...
-                var last = tree.pop
-                var var_name = tree[1]
-                var var_ref = assoc(var_name , env)
+                var var_value = toy(tree[1],env,module_name)
                 var index0 = toy(tree[2],env,module_name)
                 var set_value = toy(tree[3],env,module_name)
-                var_ref[index0] = set_value
-                return var_ref
+                var_value[index0] = set_value
+                return var_value
             }
             else if (tree[0] == 'push'){
                 var value = toy(tree[1],env,module_name)
