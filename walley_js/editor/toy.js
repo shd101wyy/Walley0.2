@@ -796,7 +796,12 @@ var toy = function(tree,env,module_name){
                     else if (names[0]=="&"){
                         output[names[1]] = params
                     }
-                    else{                        
+                    else{               
+                        // add undefined support when there are not enough inputs
+                        if (params.length == 0){
+                            output[names[0]] = 'undefined'
+                            return pair_params(cdr(names),[],env,module_name,output)
+                        }
                         output[names[0]] = toy(params[0],env,module_name)
                         return pair_params(cdr(names) , cdr(params) , env , module_name ,output)
                     }
