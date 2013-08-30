@@ -580,7 +580,7 @@ var toy = function(tree,env,module_name){
                 var var_name = tree[1]
                 var var_value = toy(tree[2],env,module_name)
                 set_(var_name,env,var_value)
-                return var_value,env
+                return var_value
 
 			}
 
