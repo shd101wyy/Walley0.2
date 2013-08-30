@@ -59,9 +59,71 @@
  ;;(for var in '((1 2 3) 2 3 4) (display var))
  ;;(for var in '((1 2) (3 4) (5 6)) (display var))
  ;;(display var)
-
-
-
-
-
-
+(define test-hash
+  '(:a 12
+       :b 13
+       :c (lambda (x y) (+ x y))
+       )
+)
+;; return key list of hash table
+(define hash-keys 
+  (lambda (hash)
+    (cond
+     ((eq hash '()) 
+      '()
+      )
+     (1
+      (cons 
+       (car hash)
+       (hash-keys
+        (cdr (cdr hash))
+        )
+       )
+      )
+     )
+    )
+  )
+;; get value according to key
+(define hash-get
+  (lambda (x key) 
+    (cond
+     ((eq x '())
+      'undefined
+      )
+     ((eq (car x) key)
+      (ref x 1)
+      )
+     (1
+      (hash-get (cdr (cdr x)) key)
+      )
+     )
+      )
+  )
+(define hash-set
+  (lambda (x key value)
+    (define hash-set-iter 
+      (lambda (x x_copy key value count)
+        (cond
+         ;; it is empty
+         ((eq x '())
+          (begin
+            (push x_copy key)
+            (push x_copy value)
+            x_copy
+            )
+          )
+         ;; found existed key
+         ((eq (car x) key)
+          (set-ref! x 1 value)
+          )
+         (1
+          (hash-set-iter
+           (cdr (cdr x)) x_copy key value (+ count 1)
+           )
+          )
+         )
+        )
+      )
+    (hash-set-iter x x key value 0)
+      )
+  )
