@@ -302,12 +302,12 @@ var macroexpand = function(tree,env,module_name){
         return pairs(cdr(a),cdr(b),env)
     }
     var vars = tree[0][1]
-    var stm = tree[0][2]
+    var stms = tree[0][2]
     var params = cdr(tree)
     
     env.push({})
     pairs(vars,params,env)
-    var return_value = toy(stm,env,module_name)
+    var return_value = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length - 1), env, module_name),module_name)
     env.pop()
     return return_value
 }
@@ -613,7 +613,7 @@ var toy = function(tree,env,module_name){
             @(* ,x ,x) : return value that will run when calling macro
             */
             else if (tree[0]=='macro'){
-                return ["macro",tree[1],tree[2]]
+                return ["macro",tree[1],tree.slice(2,tree.length)]
             }
             else if (tree[0]=="begin")
                 return toy(tree[tree.length-1], toy_language(tree.slice(1,tree.length-1),env,module_name),module_name)
@@ -756,7 +756,7 @@ var toy = function(tree,env,module_name){
             */
             else if (tree[0]=="defmacro"){
                 var macro_name = tree[1]
-                var macro_value = ["macro",tree[2],tree[3]]
+                var macro_value = ["macro",tree[2],tree.slice(3,tree.length)]
                 env[env.length - 1][macro_name] = macro_value
                 return macro_value
             }
