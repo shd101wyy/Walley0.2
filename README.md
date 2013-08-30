@@ -1,6 +1,7 @@
 Walley0.2  
 =========  
-Toy language is a lisp dialect written in Python 2.7.5 ......  
+Toy language is a lisp dialect written in Python 2.7.5 ......
+Well now in JavaScript and Python version has been stopped  
 Well.... It cannot be regarded as lisp dialect cuz I did not learn lisp very well  
 It does not support "Macro" now cuz.... idk what macro really is ..... so hard... XD  
 The whole language is like Scheme
@@ -12,6 +13,20 @@ The whole language is like Scheme
 		test.py       test file  
 		test.toy      test file  
 		test2.toy     test file
+
+For the JavaScript Version, please check walley_js folder
+
+Attention:: Python version is stopped...
+
+
+    Toy Language Data Type:
+
+        atom list .
+
+    list is mutable data... attention
+
+
+
 
 #=================  
 In toy.py file:  
@@ -96,21 +111,13 @@ quote:
 
 embeded functions:  
 内嵌函数：  
-	#########  
-	local=    （和 define作用一样的函数。。将在未来删除)  
-		(local= [var_name] [var_value])  
-		eg:  
-			(local= x 12)   
-			it will create local variable x and then assign 12 to x  
-			创建局部变量x并赋值12    
-	这个函数推荐在定义函数内使用  
   
 	#########  
 	car cdr cons cond let list if 和其他lisp一样  
   
 	#########  
-	stms  
-	(stms [stm1] [stm2] ....)  
+	begin  
+	(begin [stm1] [stm2] ....)  
 		依次运行 stm1 stm2 并且返回最后一个值  
   
 	#########  
@@ -157,9 +164,9 @@ embeded functions:
 		(null? '(1 2 3)) -> 0 因为  (1 2 3) 不是空的  
   
 	#########  
-	print  
+	display  
 		eg:  
-		>>> (print "Hello")  
+		>>> (display "Hello")  
 			Hello  
 		>>>    
   
@@ -171,50 +178,65 @@ embeded functions:
 				    . args 为可变参数 variadic params  
 	(add 3 4) -> 12+3=15, args = (3 4)  
   
-  
-  
-  
-  
-===========  
-About Lazy Evaluation  
-关于惰性求值  
-	if 函数的源代码 source code  
-	如果 函数参数前加了 &， 则表示该参数为惰性求值，传递参数时不会计算  
-	if & is ahead param, then this param is for lazy evaluation...  
-	(define if (lambda (&condition &stm1 &stm2) (cond (condition stm1) (1 stm2))))  
+    & args
+    (define if (lambda (& params)))
+    if I input (if 1 (/ 12 0) 13) then 
+    'params' will be assigned value (1 (/ 12 0) 13) without 
+
+    ######### embed list function
+    
+    Function 'len':
+    (len [list/atom]) return the length of list or atom
+    eg:
+        (len '(1 2 3)) -> 3
+        (len '1234) ->4
+
+    Function 'ref':
+    (ref [life/atom] index) and the value at index
+    eg:
+        (ref '(1 2 3) 0) -> 1
+        (ref '1234 2) -> 3
+
+    Function 'slice':
+    (slice [life/atom] slice-from slice-to)
+        get slice of life or atom
+        eg:
+            (slice '(1 2 3) 0 2) -> (1 2)
+
+
+    Function 'set-ref!'
+    (set-ref! var-name index var-value)
+        Attention: this function will change value at index of mutable data type list
+        set value at index
+        eg:
+            (define x '(1 2 3)
+            (set-ref! x 0 12) -> x=(12 2 3)
+    
+    Function 'pop'
+    (pop [list])
+
+    Function 'push'
+    (push [list] [push_value])
+
+
+    
+     
 
 ===========  
 About Macro  
 由于本人正在学习macro。。。尚未完全理解macro。。所以只是简单的做了一个定义macro的函数  
 <code>
-(defmacro [macro_name] ([constant_keywords 非变量关键字])  
-	( ([pattern]) ([templete]) )  
-	( ([pattern]) ([templete]) )  
-	( ([pattern]) ([templete]) )  
-	...  
-  )  
+(defmacro [macro-name] [params] [return-value ...])
+
+    or
+
+(define [macro-name] (macro [params] [return-value ...]))
+
+eg:
+    (define  square (macro (x) @(* ,x ,x)))
+    (square 12) will return 144
  </code>
-和scheme相似。。关于 ... 的用法也相近  
-eg:  
-	<code>
-	(defmacro test_add (and)  
-		((add a b) (+ a b))  
-		((add a b and ...) (+ a b ...))  
-		)  
-	</code>
-	>(test_add 3 4) ; 展开为 (+ 3 4)  
-	> 7  
-	>(test_add 3 4 and 5 6) ; 展开为 (+ 3 4 5 6)  
-	> 18  
 
-
-
-=============
-删除了 pair 的支持
-现在 
-	(cons 'a 'b) -> 'ab   # it is not pair anymore
-	(cons 'a '(b)) -> '(a b)
-	(cons '(a) '(b)) -> '((a) b)
 
 
 
