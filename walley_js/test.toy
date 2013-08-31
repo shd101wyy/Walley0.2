@@ -101,17 +101,29 @@
   )
 
 ;; if judge stm1 stm2
-(define if (macro (& params)
-             (define judge (ref params 0))
-             (cond
-              (judge
-               (ref params 1)
-               )
-              (1
-               (ref params 2)
-               )
-              )
-             ))
+;(define if (macro (& params)
+;             (define judge (ref params 0))
+;             (cond
+;              (judge
+;               (ref params 1)
+;               )
+;              (1
+;               (ref params 2)
+;               )
+;              )
+;             ))
+
+(define if 
+  (lambda (& params)
+    (define judge (eval (ref params 0)))
+    ;;(display judge)
+    (cond
+     (judge (eval (ref params 1)))
+     (1 (eval (ref params 2)))
+     )
+    )
+  )
+
 
 ;; situation 1
 ;; (range-1 4) -> (0 1 2 3)
@@ -265,9 +277,3 @@
     )
   )
 
-(define add (lambda (a b) (+ a b)))
-(display (add 3 4))
-;; (display (null? '()))
-(display (list-add '(1 5) '(2 3)))
-;; (display (or (null? '()) (null? '(123)) ))
-;; (display (factorial 4))

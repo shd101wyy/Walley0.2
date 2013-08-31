@@ -805,6 +805,7 @@ var toy = function(tree,env,module_name){
                     // lazy and does not calculate params
                     else if (names[0]=="&"){
                         output[names[1]] = params
+                        return output
                     }
                     else{               
                         // add undefined support when there are not enough inputs
