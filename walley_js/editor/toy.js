@@ -545,6 +545,8 @@ var toy = function(tree,env,module_name){
             // (define var_name var_value)
             else if (tree[0]=="define"){
                 var var_name = tree[1]
+                if (module_name!="")
+                    var_name = module_name + "." + var_name
                 var var_value = toy(tree[2],env,module_name)
                 // var_name exsit
                 if (var_name in env[env.length-1]){
@@ -578,6 +580,8 @@ var toy = function(tree,env,module_name){
                     }
                 }
                 var var_name = tree[1]
+                if (module_name!="")
+                    var_name = module_name + "." + var_name
                 var var_value = toy(tree[2],env,module_name)
                 set_(var_name,env,var_value)
                 return var_value
@@ -630,15 +634,21 @@ var toy = function(tree,env,module_name){
             # (load a a) will import content in a with module_name "a"
             # eg:
             # a -> (define x 12)
-            # (load a a) will cons ((a.x 12)) as env
-            # (load a) will cons ((x 12)) as env
+            # (load 'a 'a) will cons ((a.x 12)) as env
+            # (load 'a) will cons ((x 12)) as env
             */
             else if (tree[0]=="load"){
+                var load_module = toy(tree[1],env,module_name)
+                var as_name = ""
                 if (tree.length==2)
-                    module_name = ""
+                    as_name = ""
                 else
-                    module_name = tree[2]
-                return toy_language(VirtualFileSystem[tree[1]], env , module_name)
+                    as_name = toy(tree[2],env,module_name)
+                if (load_module in VirtualFileSystem)
+                    toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                else
+                    console.log("Error...Module " + load_module + "does not exist")
+                return 'undefined'
          	}
             // io function
             else if (tree[0]=="display")

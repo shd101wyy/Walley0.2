@@ -80,13 +80,19 @@
 			&nbsp;&nbsp;&nbsp;&nbsp;Packages List
 			</h4>
 			<ul id="file_list">
+                <!--
 			  <li>
-			  	<img src='./Folder-icon.png'/ width="25px" height="30px">
-			  		math
-			  </li>			  
+			  	<img src='./Document-icon.png'/ width="25px" height="30px">
+			  		toy
+			  </li>	
+              -->		  
 			</ul>
+            <!--
 			<button class="btn btn-small btn-primary" id="edit" onclick="turnOnFileEditMode()"> edit </button>
 			<button class="btn btn-small btn-primary" id="files_panel_button" onclick="createNewPackage()"> new package </button>
+            -->
+
+            <button class="btn btn-small btn-primary" id='new-file' onclick = 'createNewFile()'> new file2 </button> 
 			<div id="files_edit_panel"></div>
 
 		</div>
@@ -103,6 +109,8 @@
 (define x 12)
 		</div>
 		<script type="text/javascript">
+            //window.localStorage.clear()
+        /*
 			// 当前所在 package
     		var Current_Package = ""
     		// 当前正在被编辑的文件
@@ -138,25 +146,44 @@
 				VirtualFileSystem = JSON.parse(window.localStorage["virtual_file_system"])
 				editor.setValue(VirtualFileSystem["toy_default"]["run"]  )
 			}
+            */
 
-
+            /*
 			// load package list
 			var inner_html_in_file_list = createListForPackage(VirtualFileSystem)
 			//alert(inner_html_in_file_list)
 			document.getElementById("file_list").innerHTML = inner_html_in_file_list
-
+            */
 			// save script
+
+            var current_edit_file = "toy"
+
+            var editor = ace.edit("editor")
+            editor.setTheme("ace/theme/monokai");
+            editor.getSession().setMode("ace/mode/lisp");
+            // auto pair brackets ...
+            editor.setBehavioursEnabled(true);
+
+            if (window.localStorage){
+                if (window.localStorage["virtual_file_system"] == undefined)
+                    VirtualFileSystem = {"toy":";; toy file"}
+                else
+                    VirtualFileSystem = JSON.parse(window.localStorage["virtual_file_system"])
+                // add file in virtual file system to file_list
+                var file_list = document.getElementById('file_list')
+                for(var i in VirtualFileSystem){
+                    file_list.innerHTML = file_list.innerHTML + 
+                        "<li id=\"" + i + "\" onclick=\"clickFileItem('" + i + "')\"><img src='./Document-icon.png'/ width='25px' height='30px'>&nbsp;" +
+                        i + '</li>'
+                }
+                editor.setValue(VirtualFileSystem['toy'])
+
+            }
+
 			var saveScript = function(){
-				//alert(Current_File[0] + " : " + Current_File[1])
-				// update VirtualFileSystem
-				VirtualFileSystem[Current_File[0]][Current_File[1]] = editor.getValue()
-
-				var string_virtual_file_system = JSON.stringify(VirtualFileSystem)
-				//alert(string_virtual_file_system)
-
-				window.localStorage["virtual_file_system"] = string_virtual_file_system
+                VirtualFileSystem[current_edit_file] = editor.getValue()
+				window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
 				console.log("\n\nSuccessfully saved file")
-
 			}
     		editor.commands.addCommand({
 			    name: 'myCommand',
@@ -167,6 +194,7 @@
 			    readOnly: true // false if this command should not apply in readOnly mode
 			});
 
+            
     		// End ACE part ========================
 			// redefine console.log
     		console.log = function(input_str){
@@ -179,7 +207,7 @@
     			var _console_ = document.getElementById("console")
     			_console_.innerHTML = _console_.innerHTML+input_str
     		}
-
+            
     		// clicked run script button
     		var runScript = function(){
     			// clean console
@@ -187,40 +215,17 @@
     			//_console_.innerHTML = ""
     			_console_.innerHTML = _console_.innerHTML+"<br>"
 
-    			// if it is "run" file， then read other files
-    			// 如果是 run 文件，则自动读取其他的files
-    			if (Current_File[1]=="run"){
-    				var content = ""
-    				for(var i in VirtualFileSystem[Current_Editing_File_In_Package]){
-    					// 编译文件
-    					//VirtualFileSystem[Current_Package][i+".toyc"] = parseString(VirtualFileSystem[Current_Package][i])
-
-    					// does not run "run" file
-    					if (i=="run"){
-    						continue
-    					}
-    					content = content +"\n" + VirtualFileSystem[Current_Editing_File_In_Package][i]
-    				}
-    				
-    				content = content + "\n" + VirtualFileSystem[Current_Editing_File_In_Package]["run"]
-    				var parsed_obj = parseString(content)
-	    			toy_language(parsed_obj,ENV_LIST,"")
-
-	    			// 更新 file list
-	    			//var file_list = document.getElementById("file_list")
-    								 // add return button to package list
-    				//file_list.innerHTML = "<button onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
-    			}
-    			else{
-	    			var content = editor.getValue()
-	    			var parsed_obj = parseString(content)
-	    			toy_language(parsed_obj,[],"")
-    			}
+	    		var content = editor.getValue()
+	    		var parsed_obj = parseString(content)
+                var new_env = ENV_LIST.slice(0)
+	    		toy_language(parsed_obj,new_env,"")
+    			
 
     			// scroll to bottom
     			_console_.scrollTop = _console_.scrollHeight;
 
     		}
+            /*
     		// 在界面中创建新的 package
     		var createNewPackage = function(){
     			var package_name_you_want_to_create = prompt("Create Package with name:\n")
@@ -483,6 +488,35 @@
     				file_list.innerHTML = "<button class='btn btn-small btn-primary' onclick='returnToPackageList()'> return </button>" + createListForFiles(VirtualFileSystem[Current_Package])
     			}
     		}
+            */
+
+            var createNewFile = function(){
+                var file_name = prompt("Please enter the file name:\n")
+                var file_list = document.getElementById('file_list')
+
+                if (file_name in VirtualFileSystem){
+                    alert("File: " + file_name + " already existed" )
+                    return 
+                }
+
+                VirtualFileSystem[file_name] = ";; File: " + file_name +" for toy ;;;"
+                // update local storage
+                window.localStorage["virtual_file_system"] = JSON.stringify(VirtualFileSystem)
+
+                // set edit content
+                editor.setValue(VirtualFileSystem[file_name])
+
+                // update file_list
+                file_list.innerHTML = file_list.innerHTML + "<li id=\"" + file_name + "\" onclick=\"clickFileItem('" + file_name + "')\"><img src='./Document-icon.png'/ width='25px' height='30px'>&nbsp;" + file_name + "</li>"
+
+            }
+
+            var clickFileItem = function(file_id){
+                current_edit_file = file_id
+                editor.setValue(VirtualFileSystem[file_id])
+            }
+
+
 
 		</script>
 
