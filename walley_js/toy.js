@@ -1139,8 +1139,8 @@ var _equal_array_ = function(arr,env,module_name){
 		return "0"
 	}
 	var value1 = toy(arr[0],env,module_name)
-	//if (stringIsNumber(value1))
-	//    value1=eval(value1)
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
 	return _equal_array_iter_(value1,cdr(arr),env,module_name)
 }
 // <=
