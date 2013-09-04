@@ -2,6 +2,9 @@
 	JavaScript Version Toy Language
 	Developed by shd101wyy
 */
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
 // lexer and parser
 // convert input_str to list
 // 直接转换为 list
@@ -87,7 +90,7 @@ var parseString = function(input_str){
 			result.push(_result_)
 			return new_lexer_iter(rest_result[0],result)
 		}
-		// atom
+		// atom or number
 		else{
 			var getString = function(input_str,result){
 				if (input_str=="")
@@ -98,6 +101,9 @@ var parseString = function(input_str){
 					return getString(cdr(input_str),result+input_str[0])
 			}
 			var rest_result = getString(input_str,"")
+            // if it is number
+            if (isNumber(rest_result[1]))
+                rest_result[1] = parseFloat(rest_result[1])
 			result.push(rest_result[1])
 			return new_lexer_iter(rest_result[0],result)
 		}
@@ -111,7 +117,12 @@ var parseString = function(input_str){
 	quote atom eq car cdr cons cond
 
 */
-var quote = function(arg){return arg}
+var quote = function(arg){
+    // convert number to string
+    if (typeof(arg) === 'number')
+        return arg + ""
+    return arg
+}
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
 		return "1"
@@ -229,13 +240,13 @@ var append = function(x,y){
         return y
     return cons(x[0],append(cdr(x),y))
 }
-
+/*
 var number_ = function (value){
     if (stringIsNumber(value))
         return "1"
     return "0"
 }
-
+*/
 var display_ = function(value){
     /*
         convert
@@ -313,6 +324,7 @@ var macroexpand = function(tree,env,module_name){
     return return_value
 }
 
+/*
 // check char is digit
 var charIsDigit = function(input_char){
 	return input_char==="0" || input_char==="1"|| input_char==="2"|| input_char==="3"|| input_char==="4"|| input_char==="5"|| input_char==="6"|| input_char==="7"|| input_char==="8"|| input_char==="9"
@@ -359,7 +371,7 @@ var stringIsNumber = function(input_str){
     if (typeOfNum(input_str)!="Unknown_or_Invalid")
         return true
     return false
-}
+}*/
 
 var str=function(input_s){return input_s+""}
 var len=function(obj){return obj.length}
@@ -485,6 +497,7 @@ var ENV_LIST = [{
     'show-env':'show-env',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
+    'num':'num',
     'while':'while','for':'for'
     }]
 
@@ -492,8 +505,12 @@ var toy = function(tree,env,module_name){
 	if (typeof(module_name)==="undefined")
 		module_name = ""
     // number
-    if (stringIsNumber(tree))
+    else if (typeof(tree) === "number")
         return tree
+    // the code below is removed... 
+    // number
+    //if (stringIsNumber(tree))
+    //    return tree
     // atom
     else if (typeof(tree)=="string")
         return assoc(tree,env)
@@ -501,9 +518,14 @@ var toy = function(tree,env,module_name){
         if (typeof(tree[0])=='string'){
             // seven primitive functions
             if (tree[0]=="quote")
-                return tree[1]
+                return quote(toy(tree[1],env,module_name))
             else if (tree[0]=="atom?")
                 return atom(toy(tree[1],env,module_name))
+            else if (tree[0]=="number?"){
+                if(typeof(toy(tree[1],env,module_name)) === "number")
+                    return "1"
+                return "0"
+            }
             else if (tree[0]=="eq")
                 return eq(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="car")
@@ -716,6 +738,10 @@ var toy = function(tree,env,module_name){
                 var pop_value = value.pop()
                 return pop_value
             }
+            // convert stuff in number
+            else if (tree[0] == "num"){
+                return parseFloat(toy(tree[1],env,module_name))
+            }
 
 
             /*
@@ -849,11 +875,15 @@ var toy = function(tree,env,module_name){
 /*
 	Math Calculation
 */
+/*
+I removed fraction support on September/4/2013
 
 // calculate two numbers 原生的计算
 var calculateTwoNum = function(num1,num2,sign){
 	return str(eval(num1+sign+num2))
 }
+*/
+/*
 // 分数计算 
 // GCD
 var gcd = function(a,b){
@@ -909,9 +939,12 @@ var make_rat_string = function(rat){
 		return str(rat[0])
 	return rat[0]+"/"+rat[1]
 }
+*/
 // calculate two numbers only
 //==== add ========
 var _add_ = function(num1,num2){
+    return eval(num1+"+"+num2)
+    /*
     var type1 = typeOfNum(num1)
     var type2 = typeOfNum(num2)
     if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
@@ -919,24 +952,34 @@ var _add_ = function(num1,num2){
 	if (type1 == "Float" || type2 == "Float")
 		return calculateTwoNum(num1,num2,"+")
 	return make_rat_string(add_rat(format_number(num1),format_number(num2)))
+    */
 }
 //==== substruction ===
 var _sub_ = function(num1,num2){
+    return eval(num1+"-"+num2)
+    /*
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"-")
 	return make_rat_string(sub_rat(format_number(num1),format_number(num2)))
+    */
 }
 //==== Multplication ===
 var _mul_ = function(num1,num2){
+    return eval(num1+"*"+num2)
+    /*
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"*")
 	return make_rat_string(mul_rat(format_number(num1),format_number(num2)))
+    */
 }
 //==== Division ====
 var _div_ = function(num1,num2){
+    return eval(num1+"/"+num2)
+    /*
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"/")
 	return make_rat_string(div_rat(format_number(num1),format_number(num2)))
+    */
 }
 // add array
 // eg [1,2,3]-> 6
@@ -1019,8 +1062,8 @@ var _lt_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			if (stringIsNumber(value2))
-	    		value2=eval(value2)
+			//if (stringIsNumber(value2))
+	    	//	value2=eval(value2)
 			if (_lt_two_values(ahead,value2)=="0")
 				return "0"
 			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
@@ -1031,8 +1074,8 @@ var _lt_array_ = function(arr,env,module_name){
 		return "0"
 	}
 	var value1 = toy(arr[0],env,module_name)
-	if (stringIsNumber(value1))
-	    value1=eval(value1)
+	//if (stringIsNumber(value1))
+	//    value1=eval(value1)
 	return _lt_array_iter_(value1,cdr(arr),env,module_name)
 }
 // >
@@ -1082,8 +1125,8 @@ var _equal_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			if (stringIsNumber(value2))
-	    		value2=eval(value2)
+			//if (stringIsNumber(value2))
+	    	//	value2=eval(value2)
 			if (_equal_two_values(ahead,value2)=="0")
 				return "0"
 			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
@@ -1094,8 +1137,8 @@ var _equal_array_ = function(arr,env,module_name){
 		return "0"
 	}
 	var value1 = toy(arr[0],env,module_name)
-	if (stringIsNumber(value1))
-	    value1=eval(value1)
+	//if (stringIsNumber(value1))
+	//    value1=eval(value1)
 	return _equal_array_iter_(value1,cdr(arr),env,module_name)
 }
 // <=
@@ -1111,8 +1154,8 @@ var _le_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			if (stringIsNumber(value2))
-	    		value2=eval(value2)
+			//if (stringIsNumber(value2))
+	    	//	value2=eval(value2)
 			if (_le_two_values(ahead,value2)=="0")
 				return "0"
 			return _le_array_iter_(value2 , cdr(rest), env, module_name)
@@ -1123,8 +1166,8 @@ var _le_array_ = function(arr,env,module_name){
 		return "0"
 	}
 	var value1 = toy(arr[0],env,module_name)
-	if (stringIsNumber(value1))
-	    value1=eval(value1)
+	//if (stringIsNumber(value1))
+    //   value1=eval(value1)
 	return _le_array_iter_(value1,cdr(arr),env,module_name)
 }
 // >=
