@@ -6,6 +6,7 @@ var util=require("util")
 var readline = require('readline')
 var argv = process.argv
 console.log(argv)
+console.log("Try to use code9")
 // REPL
 if (argv.length==2){
 	
