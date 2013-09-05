@@ -126,7 +126,7 @@ var quote = function(arg){
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
 		return "1"
-	return "0"
+	return []
 }
 var eq = function(arg0, arg1){
 	// "" eq [] 
@@ -135,11 +135,11 @@ var eq = function(arg0, arg1){
 	var type0 = typeof(arg0)
 	var type1 = typeof(arg1)
 	if (type0!=type1)
-		return "0"
+		return []
 	else if (arg0==arg1)
 		return "1"
 	else
-		return "0"
+		return []
 }
 var car = function ( arg ){ 
 	if (arg.length==0){
@@ -183,8 +183,9 @@ var cons = function (value1, value2){
 }
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
-		return "0"
-	if (toy(tree[0][0],env,module_name)!='0')
+		return []
+    // true
+	if (toy(tree[0][0],env,module_name).length!=0)
 		return toy(tree[0][1],env,module_name)
 	return cond(cdr(tree),env,module_name)
 }
@@ -244,7 +245,7 @@ var append = function(x,y){
 var number_ = function (value){
     if (stringIsNumber(value))
         return "1"
-    return "0"
+    return []
 }
 
 var display_ = function(value){
@@ -378,7 +379,7 @@ var len=function(obj){return obj.length}
 
 // I changed false to []
 // and true is all except []
-var judge_(value) = function(){
+var judge_ = function(value){
     if (value.length == 0)
         return true
     return false
@@ -773,7 +774,7 @@ var toy = function(tree,env,module_name){
                 */
             else if (tree[0]=="while"){
                 var judge = toy(tree[1],env,module_name)
-                while(judge!="0"){
+                while(judge.length != 0){
                     var stms = tree.slice(2,tree.length)
                     toy_language(stms,env,module_name)
                     judge = toy(tree[1],env,module_name)
@@ -1037,35 +1038,35 @@ var _and_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
 			return "1"
-		else if (toy(arr[0],env,module_name)=="0")
-			return "0"
+		else if (toy(arr[0],env,module_name).length == 0)
+			return []
 		return _and_array_(cdr(arr),env,module_name)
 }
 var _or_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
-			return "0"
-		else if (toy(arr[0],env,module_name)!="0")
+			return []
+		else if (toy(arr[0],env,module_name).length!=0)
 			return "1"
 		return _or_array_(cdr(arr),env,module_name)
 	
 }
 var _not_ = function(value,env,module_name){
 	var value = toy(value,env,module_name)
-	if (value=="0")
+	if (value.length == 0)
 		return "1"
-	return "0"
+	return []
 }
 // 结束定义 and or
 // ======= 比较 =============================
 // <
 var _lt_two_values = function(value1,value2){
 	if (typeof(value1)!=typeof(value2))
-		return "0"
+		return []
 	if (value1<value2)
 	    return "1"
 	else
-	    return "0"   
+	    return []   
 }
 // eg ["3","4","5"] -> "1"
 var _lt_array_ = function(arr,env,module_name){
@@ -1077,14 +1078,14 @@ var _lt_array_ = function(arr,env,module_name){
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
-			if (_lt_two_values(ahead,value2)=="0")
-				return "0"
+			if (_lt_two_values(ahead,value2).length==0)
+				return []
 			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...< or > invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
@@ -1105,13 +1106,13 @@ var _equal_two_values = function(value1,value2){
 		var length1 = arr1.length
 		var length2 = arr2.length
 		if (length1!=length2)
-			return "0"
+			return []
 		while (i<arr1.length){
 			var value1 = arr1[i]
 			var value2 = arr2[i]
 			var result = _equal_two_values(value1,value2)
-			if (result=="0")
-				return "0"
+			if (result.length==0)
+				return []
 			i=i+1
 		}
 		return "1"
@@ -1119,14 +1120,14 @@ var _equal_two_values = function(value1,value2){
 	var type1 = typeof(value1)
 	var type2 = typeof(value2)
 	if (type1!=type2)
-		return "0"
+		return []
 	else{
 		if (type1=="object" || type1=="array"){
 			return _equal_two_arrays_(value1,value2)
 		}
 		if (value1 == value2)
 			return "1"
-		return "0"
+		return []
 	}
 }
 // values equal , not objects equal
@@ -1140,14 +1141,14 @@ var _equal_array_ = function(arr,env,module_name){
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
-			if (_equal_two_values(ahead,value2)=="0")
-				return "0"
+			if (_equal_two_values(ahead,value2).length==0)
+				return []
 			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...= invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
@@ -1156,9 +1157,9 @@ var _equal_array_ = function(arr,env,module_name){
 }
 // <=
 var _le_two_values = function(value1,value2){
-	if (_lt_two_values(value1,value2)!="0" || _equal_two_values(value1,value2)!="0")
+	if (_lt_two_values(value1,value2).length!=0 || _equal_two_values(value1,value2).length!=0)
 		return "1"
-	return "0"
+	return []
 }
 var _le_array_ = function(arr,env,module_name){
 	var _le_array_iter_ = function(ahead,rest,env,module_name){
@@ -1169,14 +1170,14 @@ var _le_array_ = function(arr,env,module_name){
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
-			if (_le_two_values(ahead,value2)=="0")
-				return "0"
+			if (_le_two_values(ahead,value2).length==0)
+				return []
 			return _le_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...<= or >= invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
