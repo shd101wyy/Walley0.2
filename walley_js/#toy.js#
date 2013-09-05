@@ -773,10 +773,11 @@ var toy = function(tree,env,module_name){
                 */
             else if (tree[0]=="while"){
                 var judge = toy(tree[1],env,module_name)
-                while(judge!="0"){
+                judge = judge_(judge)
+                while(judge){
                     var stms = tree.slice(2,tree.length)
                     toy_language(stms,env,module_name)
-                    judge = toy(tree[1],env,module_name)
+                    judge = judge_(toy(tree[1],env,module_name))
                 }
                 return "undefined"
             }
@@ -1037,35 +1038,35 @@ var _and_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
 			return "1"
-		else if (toy(arr[0],env,module_name)=="0")
-			return "0"
+		else if (judge_(toy(arr[0],env,module_name))==false)
+			return []
 		return _and_array_(cdr(arr),env,module_name)
 }
 var _or_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
-			return "0"
-		else if (toy(arr[0],env,module_name)!="0")
+			return []
+		else if (judge_(toy(arr[0],env,module_name))==true)
 			return "1"
 		return _or_array_(cdr(arr),env,module_name)
 	
 }
 var _not_ = function(value,env,module_name){
-	var value = toy(value,env,module_name)
-	if (value=="0")
+	var value = judge_(toy(value,env,module_name))
+	if (value==false)
 		return "1"
-	return "0"
+	return []
 }
 // 结束定义 and or
 // ======= 比较 =============================
 // <
 var _lt_two_values = function(value1,value2){
 	if (typeof(value1)!=typeof(value2))
-		return "0"
+		return []
 	if (value1<value2)
 	    return "1"
 	else
-	    return "0"   
+	    return []   
 }
 // eg ["3","4","5"] -> "1"
 var _lt_array_ = function(arr,env,module_name){
@@ -1077,14 +1078,14 @@ var _lt_array_ = function(arr,env,module_name){
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
-			if (_lt_two_values(ahead,value2)=="0")
-				return "0"
+			if (judge_(_lt_two_values(ahead,value2))==false)
+				return []
 			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...< or > invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
 	if (stringIsNumber(value1))
@@ -1105,13 +1106,13 @@ var _equal_two_values = function(value1,value2){
 		var length1 = arr1.length
 		var length2 = arr2.length
 		if (length1!=length2)
-			return "0"
+			return []
 		while (i<arr1.length){
 			var value1 = arr1[i]
 			var value2 = arr2[i]
 			var result = _equal_two_values(value1,value2)
-			if (result=="0")
-				return "0"
+			if (judge_(result)==false)
+				return []
 			i=i+1
 		}
 		return "1"
@@ -1119,14 +1120,14 @@ var _equal_two_values = function(value1,value2){
 	var type1 = typeof(value1)
 	var type2 = typeof(value2)
 	if (type1!=type2)
-		return "0"
+		return []
 	else{
 		if (type1=="object" || type1=="array"){
 			return _equal_two_arrays_(value1,value2)
 		}
 		if (value1 == value2)
 			return "1"
-		return "0"
+		return []
 	}
 }
 // values equal , not objects equal
@@ -1140,7 +1141,7 @@ var _equal_array_ = function(arr,env,module_name){
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
 	    		value2=eval(value2)
-			if (_equal_two_values(ahead,value2)=="0")
+			if (judge_(_equal_two_values(ahead,value2)=="0")
 				return "0"
 			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
 		}
