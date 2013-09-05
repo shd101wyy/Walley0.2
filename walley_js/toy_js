@@ -39,8 +39,45 @@ if (argv.length==2){
 	});
 	
 }
+// test running time 
+else if (argv.length==3 && argv[2]==='test'){
+	console.log("Test mode");
+	console.log("Press Ctrl + C to quit\n");
+
+	var input_str=""
+
+	var rl = readline.createInterface({
+	  input: process.stdin,
+	  output: process.stdout
+	})
+
+	rl.setPrompt('toy> ')
+	rl.prompt()
+
+	var to_run=""
+	var env = toy.ENV_LIST
+	rl.on('line', function(line) {
+		var start = new Date().getTime()
+		
+		var parsed_obj = toy.parseString(line)
+		parsed_obj = parsed_obj[0]
+		var return_value = toy.toy(parsed_obj , env , "" )
+		console.log(return_value)
+
+		var end = new Date().getTime()
+		console.log("Time collapse: "+(end-start) + " ms")
+
+		rl.setPrompt('toy> ')
+		rl.prompt()
+	})
+
+	rl.on('close', function() {
+	  console.log('Quit walley')
+	  process.exit(0)
+	});
+}
 // run file
-if (argv.length==3){
+else if (argv.length==3){
 	var file_name = argv[2]
 	if (typeof(file_name)=="undefined"){
 		console.log("No input file..")
@@ -55,7 +92,7 @@ if (argv.length==3){
 }
 
 // show env
-if (argv.length==4 && argv[2]=="env"){
+else if (argv.length==4 && argv[2]=="env"){
 	var file_name = argv[3]
 	if (typeof(file_name)=="undefined"){
 		console.log("No input file..")
@@ -71,7 +108,7 @@ if (argv.length==4 && argv[2]=="env"){
 }
 
 // COMPRESS
-if (argv.length == 4 && argv[2] == "compress"){
+else if (argv.length == 4 && argv[2] == "compress"){
 	var file_name = argv[3]
 	var content_in_file = fs.readFileSync(file_name,"utf8")
 	console.log(content_in_file)

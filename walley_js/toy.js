@@ -333,7 +333,7 @@ var charIsDigit = function(input_char){
 //Integer Float Fraction Unknown_or_Invalid
 var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_digit){
     // finish
-    if (input_str===""){
+    if (input_str.length == 0){
         if (has_digit!=true)
             return "Unknown_or_Invalid"
         else if (num_of_slash==1){
@@ -522,6 +522,7 @@ var toy = function(tree,env,module_name){
     // number
     if (stringIsNumber(tree))
         return tree
+        //return ['number',tree]
     // atom
     else if (typeof(tree)=="string")
         return assoc(tree,env)
@@ -533,9 +534,16 @@ var toy = function(tree,env,module_name){
                 //return quote(toy(tree[1],env,module_name))
             else if (tree[0]=="atom?")
                 return atom(toy(tree[1],env,module_name))
+            /*
             else if (tree[0]=="number?"){
-                return number_(toy(tree[1],env,module_name))
+                if (toy(tree[1],env,module_name)[0]=='number')
+                    return "1"
+                return []
             }
+            // number data type
+            else if (tree[0]=="number"){
+                return tree
+            }*/
             else if (tree[0]=="eq")
                 return eq(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="car")
@@ -956,9 +964,7 @@ var make_rat_string = function(rat){
 
 // calculate two numbers only
 //==== add ========
-var _add_ = function(num1,num2){
-    // return eval(num1+"+"+num2)
-    
+var _add_ = function(num1,num2){    
     var type1 = typeOfNum(num1)
     var type2 = typeOfNum(num2)
     if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
@@ -969,27 +975,21 @@ var _add_ = function(num1,num2){
     
 }
 //==== substruction ===
-var _sub_ = function(num1,num2){
-    //return eval(num1+"-"+num2)
-    
+var _sub_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"-")
 	return make_rat_string(sub_rat(format_number(num1),format_number(num2)))
     
 }
 //==== Multplication ===
-var _mul_ = function(num1,num2){
-    //return eval(num1+"*"+num2)
-    
+var _mul_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"*")
 	return make_rat_string(mul_rat(format_number(num1),format_number(num2)))
     
 }
 //==== Division ====
-var _div_ = function(num1,num2){
-    //return eval(num1+"/"+num2)
-    
+var _div_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"/")
 	return make_rat_string(div_rat(format_number(num1),format_number(num2)))
