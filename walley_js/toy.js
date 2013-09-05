@@ -1196,6 +1196,7 @@ if (typeof(module)!="undefined"){
     module.exports.toy_language =toy_language
     module.exports.printArray = printArray
     module.exports.ENV_LIST = ENV_LIST
+    module.exports.display_ = display_
     }
 
 

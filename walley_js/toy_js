@@ -112,6 +112,9 @@ else if (argv.length == 4 && argv[2] == "compress"){
 	var file_name = argv[3]
 	var content_in_file = fs.readFileSync(file_name,"utf8")
 	console.log(content_in_file)
+	var parsedObj = toy.parseString(content_in_file)
+	toy.display_(parsedObj)
+	console.log("\n\n Done...")
 }
 
 
