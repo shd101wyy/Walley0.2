@@ -39,7 +39,6 @@
      )
       )
   )
-
 ;; set hash key - value
 ;; ==
 (define hash-set
@@ -70,7 +69,6 @@
     (hash-set-iter x x key value 0)
       )
   )
-
 ;; check x is in y or not
 ;; (check-in 1 '(1 2 3)) -> true -> 1
 (define check-in

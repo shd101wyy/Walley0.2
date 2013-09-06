@@ -530,7 +530,7 @@ var toy = function(tree,env,module_name){
         if (typeof(tree[0])=='string'){
             // seven primitive functions
             if (tree[0]=="quote")
-                return tree[1]
+                return tree[1].slice(0)
                 //return quote(toy(tree[1],env,module_name))
             else if (tree[0]=="atom?")
                 return atom(toy(tree[1],env,module_name))
@@ -642,7 +642,8 @@ var toy = function(tree,env,module_name){
                     var i = 0
                     while (i < expr.length){
                         var var_name = expr[i][0]
-                        var return_value = toy(expr[i][1],env_list)
+                        var return_value = toy(expr[i][1],env_list,module_name)
+                        
                         env_list[env_list.length - 1][var_name] = return_value
                         i=i+1
                     }
@@ -691,8 +692,13 @@ var toy = function(tree,env,module_name){
                     as_name = ""
                 else
                     as_name = toy(tree[2],env,module_name)
-                if (load_module in VirtualFileSystem)
-                    toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                if (load_module in VirtualFileSystem){
+                    var module_content = VirtualFileSystem[load_module]
+                    if (typeof(module_content)==='string')
+                        toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                    else
+                        toy_language(VirtualFileSystem[load_module],env,as_name)
+                }
                 else
                     console.log("Error...Module " + load_module + "does not exist")
                 return 'undefined'
@@ -1199,6 +1205,9 @@ if (typeof(module)!="undefined"){
     module.exports.display_ = display_
     }
 
+
+var VirtualFileSystem = {}
+VirtualFileSystem["toy"] = [ [ 'define', 'test-hash', [ 'quote', [ ':a', '12', ':b', '13', ':c', [ 'lambda', [ 'x', 'y' ], [ '+', 'x', 'y' ] ] ] ] ], [ 'define', 'hash-keys', [ 'lambda', [ 'hash' ], [ 'cond', [ [ 'eq', 'hash', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ '1', [ 'cons', [ 'car', 'hash' ], [ 'hash-keys', [ 'cdr', [ 'cdr', 'hash' ] ] ] ] ] ] ] ], [ 'define', 'hash-get', [ 'lambda', [ 'x', 'key' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'quote', 'undefined' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'ref', 'x', '1' ] ], [ '1', [ 'hash-get', [ 'cdr', [ 'cdr', 'x' ] ], 'key' ] ] ] ] ], [ 'define', 'hash-set', [ 'lambda', [ 'x', 'key', 'value' ], [ 'define', 'hash-set-iter', [ 'lambda', [ 'x', 'x_copy', 'key', 'value', 'count' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'begin', [ 'push', 'x_copy', 'key' ], [ 'push', 'x_copy', 'value' ], 'x_copy' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'set-ref!', 'x', '1', 'value' ] ], [ '1', [ 'hash-set-iter', [ 'cdr', [ 'cdr', 'x' ] ], 'x_copy', 'key', 'value', [ '+', 'count', '1' ] ] ] ] ] ], [ 'hash-set-iter', 'x', 'x', 'key', 'value', '0' ] ] ], [ 'define', 'check-in', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'eq', 'y', [ 'quote', [  ] ] ], '0' ], [ [ 'eq', 'x', [ 'car', 'y' ] ], '1' ], [ '1', [ 'check-in', 'x', [ 'cdr', 'y' ] ] ] ] ] ], [ 'define', 'defun', [ 'macro', [ 'func-name', '&', 'rest' ], [ 'define', 'params', [ 'car', 'rest' ] ], [ 'define', 'body', [ 'cdr', 'rest' ] ], [ 'quasiquote', [ 'define', [ 'unquote', 'func-name' ], [ 'lambda', [ 'unquote', 'params' ], [ 'unquote', 'body' ] ] ] ] ] ], [ 'define', 'if', [ 'lambda', [ '&', 'params' ], [ 'define', 'judge', [ 'eval', [ 'ref', 'params', '0' ] ] ], [ 'cond', [ 'judge', [ 'eval', [ 'ref', 'params', '1' ] ] ], [ '1', [ 'eval', [ 'ref', 'params', '2' ] ] ] ] ] ], [ 'define', 'range-1', [ 'lambda', [ 'x' ], [ 'define', 'i', '0' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'x' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-2', [ 'lambda', [ 'x', 'y' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-3', [ 'lambda', [ 'x', 'y', 'interval' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'cond', [ [ '<=', 'interval', '0' ], [ 'while', [ '>', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ], [ '1', [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ] ], 'output' ] ], [ 'define', 'range', [ 'lambda', [ '&', 'params' ], [ 'cond', [ [ 'eq', [ 'len', 'params' ], '1' ], [ 'apply', 'range-1', 'params' ] ], [ [ 'eq', [ 'len', 'params' ], '2' ], [ 'apply', 'range-2', 'params' ] ], [ '1', [ 'apply', 'range-3', 'params' ] ] ] ] ], [ 'define', 'null?', [ 'lambda', [ 'x' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], '1' ], [ '1', '0' ] ] ] ], [ 'define', 'empty?', 'null?' ], [ 'define', 'append', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'x' ], 'y' ], [ '1', [ 'cons', [ 'car', 'x' ], [ 'append', [ 'cdr', 'x' ], 'y' ] ] ] ] ] ], [ 'define', 'dolist', [ 'macro', [ '&', 'params' ], [ 'let', [ [ 'var-name', [ 'car', 'params' ] ], [ 'iter-list', [ 'ref', 'params', '1' ] ], [ 'body', [ 'slice', 'params', '2', [ 'len', 'params' ] ] ] ], [ 'append', [ 'quasiquote', [ 'for', [ 'unquote', 'var-name' ], 'in', [ 'unquote', 'iter-list' ] ] ], 'body' ] ] ] ], [ 'define', 'list', [ 'lambda', [ '.', 'args' ], 'args' ] ], [ 'define', 'list-add', [ 'lambda', [ 'x', 'y' ], [ 'define', 'list-add-iter', [ 'lambda', [ 'x', 'y', 'result' ], [ 'cond', [ [ 'or', [ 'null?', 'x' ], [ 'null?', 'y' ] ], 'result' ], [ '1', [ 'list-add-iter', [ 'cdr', 'x' ], [ 'cdr', 'y' ], [ 'push', 'result', [ 'apply', '+', [ 'list', [ 'car', 'x' ], [ 'car', 'y' ] ] ] ] ] ] ] ] ], [ 'list-add-iter', 'x', 'y', [ 'quote', [  ] ] ] ] ], [ 'define', 'factorial', [ 'lambda', [ 'n' ], [ 'define', 'factorial-iter', [ 'lambda', [ 'n', 'result' ], [ 'cond', [ [ 'eq', 'n', '1' ], 'result' ], [ '1', [ 'factorial-iter', [ '-', 'n', '1' ], [ '*', 'result', 'n' ] ] ] ] ] ], [ 'factorial-iter', 'n', '1' ] ] ] ]
 
 
 
