@@ -1,9 +1,34 @@
 ;; define some default value
+(define toy-author 'Yiyi-Wang)
 (define true 1)
 (define false '())
 (define nil '())
-(define toy-author 'Yiyi-Wang)
+(define #t 1)
+(define #f '())
+(define ** ^)
+(define cot (lambda (a) (/ 1 (tan a))))
+(define sec (lambda (a) (/ 1 (cos a))))
+(define csc (lambda (a) (/ 1 (sin a))))
+;; check whether one var is list
+(define list?
+  (lambda (var)
+    (cond
+     ((atom? var) false)
+     (1 true)
+     )
+    )
+  )
 
+;; setq function
+;; (setq var_name var_value)
+(define setq 
+  (macro (var_name var_value)
+    @(set (quote ,var_name) ,var_value) 
+    )
+  )
+
+;; test hash table (dictionary)
+;; this is one example that defined a hash table
 (define test-hash
   '(:a 12
        :b 13
@@ -12,6 +37,7 @@
   )
 
 ;; return key list of hash table
+;; (hash-keys test-hash) -> '(:a :b :c)
 (define hash-keys 
   (lambda (hash)
     (cond
@@ -88,20 +114,21 @@
       (check-in x (cdr y))
       )
      )
-      )
+    )
   )
 
 ;; defun macro
 ;; (defun add (x y) (+ x y)
 ;; -> (define add (lambda (x y) (+ x y))) 
-(define defun (macro (func-name & rest)
-                (define params (car rest))
-                (define body (cdr rest))
-                @(define ,func-name (lambda ,params 
-                                      ,body
-                                      )
-                   )
-                )
+(define defun 
+  (macro (func-name & rest)
+    (define params (car rest))
+    (define body (cdr rest))
+    @(define ,func-name (lambda ,params 
+                          ,body
+                          )
+       )
+    )
   )
 
 ;; if judge stm1 stm2
@@ -260,6 +287,8 @@
     )
   )
 
+;; factorial
+;; (factorial 3) -> 3! = 3*2*1 = 6
 (define factorial 
   (lambda (n)
     (define factorial-iter
@@ -274,8 +303,34 @@
     )
   )
 
+;; math functions
 
-;;(display (append '(1 2 ) '(3 4)))
-(dolist i '(1 2 3 4)
-        (display i)
-       )
+
+;; simplify toy language
+;; (# x = 12)  ;; change value or define global variable
+;; (# local y = 12)
+;; (# 3 + 4) -> 7 
+;;
+;;
+;;
+
+(define # 
+  (lambda (& params)
+    (define infix-param (ref params 1))
+    (cond
+     ((eq infix-param '+)
+      (apply + (list (ref params 0) (ref params 2))))
+     ((eq infix-param '-)
+      (apply - (list (ref params 0) (ref params 2))))
+     ((eq infix-param '*)
+      (apply * (list (ref params 0) (ref params 2))))
+     ((eq infix-param '/)
+      (apply / (list (ref params 0) (ref params 2))))
+     )
+    )
+  )
+
+(define x 12)
+;;(setq x '(1 2 3))
+(display (list? x))
+(display (# 3 + 4))

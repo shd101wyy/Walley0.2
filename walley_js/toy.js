@@ -498,7 +498,6 @@ var ENV_LIST = [{
     'show-env':'show-env',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
-    'num':'num',
     'while':'while','for':'for'
     }]
 
@@ -760,11 +759,8 @@ var toy = function(tree,env,module_name){
                 var pop_value = value.pop()
                 return pop_value
             }
-            // convert stuff in number
-            else if (tree[0] == "num"){
-                return parseFloat(toy(tree[1],env,module_name))
-            }
-
+          
+            
 
             /*
                 for while statements
@@ -800,7 +796,24 @@ var toy = function(tree,env,module_name){
                 }
                 return "undefined"
             }
-            
+            // implement math functions
+            else if (tree[0]=="^"){
+                var value1 = toy(tree[1],env,module_name)
+                var power = toy(tree[2],env,module_name)
+                return str(Math.pow(eval(value1),eval(power)))
+            }
+            else if (tree[0]=="sin"){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.sin(eval(value)))
+            }
+            else if (tree[0]=='cos'){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.cos(eval(value)))
+            }
+            else if (tree[0]=='tan'){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.tan(eval(value)))
+            }
 
             // defmacro
             /*
