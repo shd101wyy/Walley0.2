@@ -160,15 +160,6 @@ var cons = function (value1, value2){
 	if (type1=="string" && type2=="string")
 		return value1+value2
 	else if (type2!="string"){
-        /*
-        var output = new Array(1 + value2.length)
-        output[0] = value1 
-        var i = 0
-        while (i < value2.length){
-            output[1 + i] = value2[i]
-            i = i + 1
-        }
-        */ 
         // For Google V8 push is faster
         var output = [value1]
         for (var i in value2){
@@ -839,8 +830,8 @@ var toy = function(tree,env,module_name){
             else{
                 var value = assoc(tree[0],env)
                 if (value === "undefined"){
-                    console.log("Error...Undefined function "+tree[0])
-                    return ""
+                    console.log("Error...Undefined function |"+tree[0]+"|")
+                    return "undefined"
                 }
                 return toy(cons(value , cdr(tree)),env,module_name)
             }

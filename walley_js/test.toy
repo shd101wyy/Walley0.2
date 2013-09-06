@@ -1,3 +1,9 @@
+;; define some default value
+(define true 1)
+(define false '())
+(define nil '())
+(define toy-author 'Yiyi-Wang)
+
 (define test-hash
   '(:a 12
        :b 13
@@ -75,7 +81,7 @@
   (lambda (x y)
     (cond
      ((eq y '())
-      0
+      '()
       )
      ((eq x (car y)) 1)
      (1
@@ -200,7 +206,7 @@
   (lambda (x)
     (cond
      ((eq x '()) 1)
-     (1 0)
+     (1 '())
      )
     )
   )
@@ -221,18 +227,11 @@
 
 (define dolist
   (macro (& params)
-    (let
-        (
-         (var-name (car params))
-         (iter-list (ref params 1) )
-         (body (slice params 2 (len params)))
-         
-        )
-      
-      (append @(for ,var-name in ,iter-list) body)
-     ;; @(for ,var-name in ,iter-list ,body)
-
-      )
+    (define var-name (car params))
+    (define iter-list (ref params 1) )
+    (define body (slice params 2 (len params)))     
+    (append @(for ,var-name in ,iter-list) body)
+    ;; @(for ,var-name in ,iter-list ,body)
     )
   )
 
@@ -275,3 +274,8 @@
     )
   )
 
+
+;;(display (append '(1 2 ) '(3 4)))
+(dolist i '(1 2 3 4)
+        (display i)
+       )
