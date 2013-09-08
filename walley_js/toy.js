@@ -160,12 +160,8 @@ var cons = function (value1, value2){
 	if (type1=="string" && type2=="string")
 		return value1+value2
 	else if (type2!="string"){
-        // For Google V8 push is faster
-        var output = [value1]
-        for (var i in value2){
-            output.push(value2[i])
-        }
-		return output
+        value2.splice(0,0,value1)
+        return value2
 	}
 	else{
 		console.log("Error...Function cons param type error")
