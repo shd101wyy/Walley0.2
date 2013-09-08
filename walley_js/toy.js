@@ -548,9 +548,9 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="car")
                 return car(toy(tree[1],env,module_name))
             else if (tree[0]=="cdr")
-                return CDR(toy(tree[1],env,module_name))
+                return cdr(toy(tree[1],env,module_name))
             else if (tree[0]=="cons")
-                return CONS(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
+                return cons(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers
