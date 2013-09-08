@@ -1,6 +1,7 @@
 /*
 	JavaScript Version Toy Language
 	Developed by shd101wyy
+    It is actually Array Processor rather than Lisp Processor
 */
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -153,15 +154,6 @@ var cdr = function ( arg ){
 		console.log("Error...cannot get cdr of empty list")
 	}
 	return arg.slice(1,arg.length)
-}
-var CDR = function (arg){
-    if (arg.length==0){
-        console.log("Error...cannot get cdr of empty list")
-    }
-    return arg[1]
-}
-var CONS = function(value1,value2){
-    return [value1,value2]
 }
 var cons = function (value1, value2){
 	var type1 = typeof(value1)
@@ -544,9 +536,9 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="car")
                 return car(toy(tree[1],env,module_name))
             else if (tree[0]=="cdr")
-                return CDR(toy(tree[1],env,module_name))
+                return cdr(toy(tree[1],env,module_name))
             else if (tree[0]=="cons")
-                return CONS(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
+                return cons(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers

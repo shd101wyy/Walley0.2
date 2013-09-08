@@ -102,8 +102,8 @@ var parseString = function(input_str){
 			}
 			var rest_result = getString(input_str,"")
             // if it is number
-            if (isNumber(rest_result[1]))
-                rest_result[1] = parseFloat(rest_result[1])
+            //if (isNumber(rest_result[1]))
+            //    rest_result[1] = parseFloat(rest_result[1])
 			result.push(rest_result[1])
 			return new_lexer_iter(rest_result[0],result)
 		}
@@ -119,14 +119,14 @@ var parseString = function(input_str){
 */
 var quote = function(arg){
     // convert number to string
-    if (typeof(arg) === 'number')
-        return arg + ""
+    //if (typeof(arg) === 'number')
+    //    return arg + ""
     return arg
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
 		return "1"
-	return "0"
+	return []
 }
 var eq = function(arg0, arg1){
 	// "" eq [] 
@@ -135,11 +135,11 @@ var eq = function(arg0, arg1){
 	var type0 = typeof(arg0)
 	var type1 = typeof(arg1)
 	if (type0!=type1)
-		return "0"
+		return []
 	else if (arg0==arg1)
 		return "1"
 	else
-		return "0"
+		return []
 }
 var car = function ( arg ){ 
 	if (arg.length==0){
@@ -160,21 +160,8 @@ var cons = function (value1, value2){
 	if (type1=="string" && type2=="string")
 		return value1+value2
 	else if (type2!="string"){
-        /*
-        var output = new Array(1 + value2.length)
-        output[0] = value1 
-        var i = 0
-        while (i < value2.length){
-            output[1 + i] = value2[i]
-            i = i + 1
-        }
-        */ 
-        // For Google V8 push is faster
-        var output = [value1]
-        for (var i in value2){
-            output.push(value2[i])
-        }
-		return output
+        value2.splice(0,0,value1)
+        return value2
 	}
 	else{
 		console.log("Error...Function cons param type error")
@@ -183,8 +170,9 @@ var cons = function (value1, value2){
 }
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
-		return "0"
-	if (toy(tree[0][0],env,module_name)!='0')
+		return []
+    // true
+	if (toy(tree[0][0],env,module_name).length!=0)
 		return toy(tree[0][1],env,module_name)
 	return cond(cdr(tree),env,module_name)
 }
@@ -240,13 +228,13 @@ var append = function(x,y){
         return y
     return cons(x[0],append(cdr(x),y))
 }
-/*
+
 var number_ = function (value){
     if (stringIsNumber(value))
         return "1"
-    return "0"
+    return []
 }
-*/
+
 var display_ = function(value){
     /*
         convert
@@ -324,7 +312,7 @@ var macroexpand = function(tree,env,module_name){
     return return_value
 }
 
-/*
+
 // check char is digit
 var charIsDigit = function(input_char){
 	return input_char==="0" || input_char==="1"|| input_char==="2"|| input_char==="3"|| input_char==="4"|| input_char==="5"|| input_char==="6"|| input_char==="7"|| input_char==="8"|| input_char==="9"
@@ -332,7 +320,7 @@ var charIsDigit = function(input_char){
 //Integer Float Fraction Unknown_or_Invalid
 var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_digit){
     // finish
-    if (input_str===""){
+    if (input_str.length == 0){
         if (has_digit!=true)
             return "Unknown_or_Invalid"
         else if (num_of_slash==1){
@@ -371,10 +359,19 @@ var stringIsNumber = function(input_str){
     if (typeOfNum(input_str)!="Unknown_or_Invalid")
         return true
     return false
-}*/
+}
 
 var str=function(input_s){return input_s+""}
 var len=function(obj){return obj.length}
+
+// I changed false to []
+// and true is all except []
+var judge_ = function(value){
+    if (value.length == 0)
+        return true
+    return false
+}
+
 // ...
 //
 //=======================================
@@ -497,20 +494,21 @@ var ENV_LIST = [{
     'show-env':'show-env',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
-    'num':'num',
     'while':'while','for':'for'
     }]
+
 
 var toy = function(tree,env,module_name){
 	if (typeof(module_name)==="undefined")
 		module_name = ""
     // number
-    else if (typeof(tree) === "number")
-        return tree
+    //else if (typeof(tree) === "number")
+    //    return tree
     // the code below is removed... 
     // number
-    //if (stringIsNumber(tree))
-    //    return tree
+    if (stringIsNumber(tree))
+        return tree
+        //return ['number',tree]
     // atom
     else if (typeof(tree)=="string")
         return assoc(tree,env)
@@ -518,14 +516,20 @@ var toy = function(tree,env,module_name){
         if (typeof(tree[0])=='string'){
             // seven primitive functions
             if (tree[0]=="quote")
-                return quote(toy(tree[1],env,module_name))
+                return tree[1].slice(0)
+                //return quote(toy(tree[1],env,module_name))
             else if (tree[0]=="atom?")
                 return atom(toy(tree[1],env,module_name))
+            /*
             else if (tree[0]=="number?"){
-                if(typeof(toy(tree[1],env,module_name)) === "number")
+                if (toy(tree[1],env,module_name)[0]=='number')
                     return "1"
-                return "0"
+                return []
             }
+            // number data type
+            else if (tree[0]=="number"){
+                return tree
+            }*/
             else if (tree[0]=="eq")
                 return eq(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="car")
@@ -584,7 +588,9 @@ var toy = function(tree,env,module_name){
                 }
             }
             // (set! var_name var_value)
-            else if (tree[0]=="set!"){
+            // (set (quote var_name) var_value)
+            // the set function is the same it is in emacs lisp
+            else if (tree[0]=="set!" || tree[0]=="set"){
                 var set_ = function(var_name,env,var_value){
                     var i = env.length - 1
                     var found_var = false
@@ -598,10 +604,15 @@ var toy = function(tree,env,module_name){
                         i=i-1
                     }
                     if (found_var == false){
-                        console.log("Error...In function set! "+var_name+" does not existed")
+                        if (tree[0] == "set")
+                            env[0][var_name] = var_value
+                        else
+                            console.log("Error...In function set! "+var_name+" does not existed")
                     }
                 }
                 var var_name = tree[1]
+                if (tree[0] == "set")
+                    var_name = toy(tree[1],env,module_name)
                 if (module_name!="")
                     var_name = module_name + "." + var_name
                 var var_value = toy(tree[2],env,module_name)
@@ -617,7 +628,8 @@ var toy = function(tree,env,module_name){
                     var i = 0
                     while (i < expr.length){
                         var var_name = expr[i][0]
-                        var return_value = toy(expr[i][1],env_list)
+                        var return_value = toy(expr[i][1],env_list,module_name)
+                        
                         env_list[env_list.length - 1][var_name] = return_value
                         i=i+1
                     }
@@ -666,8 +678,13 @@ var toy = function(tree,env,module_name){
                     as_name = ""
                 else
                     as_name = toy(tree[2],env,module_name)
-                if (load_module in VirtualFileSystem)
-                    toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                if (load_module in VirtualFileSystem){
+                    var module_content = VirtualFileSystem[load_module]
+                    if (typeof(module_content)==='string')
+                        toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                    else
+                        toy_language(VirtualFileSystem[load_module],env,as_name)
+                }
                 else
                     console.log("Error...Module " + load_module + "does not exist")
                 return 'undefined'
@@ -738,11 +755,8 @@ var toy = function(tree,env,module_name){
                 var pop_value = value.pop()
                 return pop_value
             }
-            // convert stuff in number
-            else if (tree[0] == "num"){
-                return parseFloat(toy(tree[1],env,module_name))
-            }
-
+          
+            
 
             /*
                 for while statements
@@ -757,7 +771,7 @@ var toy = function(tree,env,module_name){
                 */
             else if (tree[0]=="while"){
                 var judge = toy(tree[1],env,module_name)
-                while(judge!="0"){
+                while(judge.length != 0){
                     var stms = tree.slice(2,tree.length)
                     toy_language(stms,env,module_name)
                     judge = toy(tree[1],env,module_name)
@@ -767,21 +781,35 @@ var toy = function(tree,env,module_name){
 
             else if (tree[0]=="for"){
                 var var_name = tree[1]
-                var value = assoc(var_name, env)
-                if (value === 'undefined'){
-                    toy(['define',var_name,'0'],env,module_name)
-                }
                 var in_value = toy(tree[3],env,module_name)
                 var i = 0
                 while (i<in_value.length){
                     // update var_name value
-                    toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
+                    //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
+                    env[env.length-1][var_name] = in_value[i]
                     toy(cons('begin',tree.slice(4,tree.length)),env,module_name)
                     i=i+1
                 }
                 return "undefined"
             }
-            
+            // implement math functions
+            else if (tree[0]=="^"){
+                var value1 = toy(tree[1],env,module_name)
+                var power = toy(tree[2],env,module_name)
+                return str(Math.pow(eval(value1),eval(power)))
+            }
+            else if (tree[0]=="sin"){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.sin(eval(value)))
+            }
+            else if (tree[0]=='cos'){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.cos(eval(value)))
+            }
+            else if (tree[0]=='tan'){
+                var value = toy(tree[1],env,module_name)
+                return str(Math.tan(eval(value)))
+            }
 
             // defmacro
             /*
@@ -811,8 +839,8 @@ var toy = function(tree,env,module_name){
             else{
                 var value = assoc(tree[0],env)
                 if (value === "undefined"){
-                    console.log("Error...Undefined function "+tree[0])
-                    return ""
+                    console.log("Error...Undefined function |"+tree[0]+"|")
+                    return "undefined"
                 }
                 return toy(cons(value , cdr(tree)),env,module_name)
             }
@@ -883,7 +911,7 @@ var calculateTwoNum = function(num1,num2,sign){
 	return str(eval(num1+sign+num2))
 }
 */
-/*
+
 // 分数计算 
 // GCD
 var gcd = function(a,b){
@@ -939,12 +967,10 @@ var make_rat_string = function(rat){
 		return str(rat[0])
 	return rat[0]+"/"+rat[1]
 }
-*/
+
 // calculate two numbers only
 //==== add ========
-var _add_ = function(num1,num2){
-    return eval(num1+"+"+num2)
-    /*
+var _add_ = function(num1,num2){    
     var type1 = typeOfNum(num1)
     var type2 = typeOfNum(num2)
     if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
@@ -952,34 +978,28 @@ var _add_ = function(num1,num2){
 	if (type1 == "Float" || type2 == "Float")
 		return calculateTwoNum(num1,num2,"+")
 	return make_rat_string(add_rat(format_number(num1),format_number(num2)))
-    */
+    
 }
 //==== substruction ===
-var _sub_ = function(num1,num2){
-    return eval(num1+"-"+num2)
-    /*
+var _sub_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"-")
 	return make_rat_string(sub_rat(format_number(num1),format_number(num2)))
-    */
+    
 }
 //==== Multplication ===
-var _mul_ = function(num1,num2){
-    return eval(num1+"*"+num2)
-    /*
+var _mul_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"*")
 	return make_rat_string(mul_rat(format_number(num1),format_number(num2)))
-    */
+    
 }
 //==== Division ====
-var _div_ = function(num1,num2){
-    return eval(num1+"/"+num2)
-    /*
+var _div_ = function(num1,num2){    
 	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
 		return calculateTwoNum(num1,num2,"/")
 	return make_rat_string(div_rat(format_number(num1),format_number(num2)))
-    */
+    
 }
 // add array
 // eg [1,2,3]-> 6
@@ -1024,35 +1044,34 @@ var _and_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
 			return "1"
-		else if (toy(arr[0],env,module_name)=="0")
-			return "0"
+		else if (toy(arr[0],env,module_name).length == 0)
+			return []
 		return _and_array_(cdr(arr),env,module_name)
 }
 var _or_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
-			return "0"
-		else if (toy(arr[0],env,module_name)!="0")
+			return []
+		else if (toy(arr[0],env,module_name).length!=0)
 			return "1"
 		return _or_array_(cdr(arr),env,module_name)
-	
 }
 var _not_ = function(value,env,module_name){
 	var value = toy(value,env,module_name)
-	if (value=="0")
+	if (value.length == 0)
 		return "1"
-	return "0"
+	return []
 }
 // 结束定义 and or
 // ======= 比较 =============================
 // <
 var _lt_two_values = function(value1,value2){
 	if (typeof(value1)!=typeof(value2))
-		return "0"
+		return []
 	if (value1<value2)
 	    return "1"
 	else
-	    return "0"   
+	    return []   
 }
 // eg ["3","4","5"] -> "1"
 var _lt_array_ = function(arr,env,module_name){
@@ -1062,20 +1081,20 @@ var _lt_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			//if (stringIsNumber(value2))
-	    	//	value2=eval(value2)
-			if (_lt_two_values(ahead,value2)=="0")
-				return "0"
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_lt_two_values(ahead,value2).length==0)
+				return []
 			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...< or > invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
-	//if (stringIsNumber(value1))
-	//    value1=eval(value1)
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
 	return _lt_array_iter_(value1,cdr(arr),env,module_name)
 }
 // >
@@ -1092,13 +1111,13 @@ var _equal_two_values = function(value1,value2){
 		var length1 = arr1.length
 		var length2 = arr2.length
 		if (length1!=length2)
-			return "0"
+			return []
 		while (i<arr1.length){
 			var value1 = arr1[i]
 			var value2 = arr2[i]
 			var result = _equal_two_values(value1,value2)
-			if (result=="0")
-				return "0"
+			if (result.length==0)
+				return []
 			i=i+1
 		}
 		return "1"
@@ -1106,14 +1125,14 @@ var _equal_two_values = function(value1,value2){
 	var type1 = typeof(value1)
 	var type2 = typeof(value2)
 	if (type1!=type2)
-		return "0"
+		return []
 	else{
 		if (type1=="object" || type1=="array"){
 			return _equal_two_arrays_(value1,value2)
 		}
 		if (value1 == value2)
 			return "1"
-		return "0"
+		return []
 	}
 }
 // values equal , not objects equal
@@ -1125,27 +1144,27 @@ var _equal_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			//if (stringIsNumber(value2))
-	    	//	value2=eval(value2)
-			if (_equal_two_values(ahead,value2)=="0")
-				return "0"
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_equal_two_values(ahead,value2).length==0)
+				return []
 			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...= invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
-	//if (stringIsNumber(value1))
-	//    value1=eval(value1)
+	if (stringIsNumber(value1))
+	    value1=eval(value1)
 	return _equal_array_iter_(value1,cdr(arr),env,module_name)
 }
 // <=
 var _le_two_values = function(value1,value2){
-	if (_lt_two_values(value1,value2)!="0" || _equal_two_values(value1,value2)!="0")
+	if (_lt_two_values(value1,value2).length!=0 || _equal_two_values(value1,value2).length!=0)
 		return "1"
-	return "0"
+	return []
 }
 var _le_array_ = function(arr,env,module_name){
 	var _le_array_iter_ = function(ahead,rest,env,module_name){
@@ -1154,20 +1173,20 @@ var _le_array_ = function(arr,env,module_name){
 			return "1"
 		else{
 			value2 = toy(rest[0],env,module_name)
-			//if (stringIsNumber(value2))
-	    	//	value2=eval(value2)
-			if (_le_two_values(ahead,value2)=="0")
-				return "0"
+			if (stringIsNumber(value2))
+	    		value2=eval(value2)
+			if (_le_two_values(ahead,value2).length==0)
+				return []
 			return _le_array_iter_(value2 , cdr(rest), env, module_name)
 		}
 	}
 	if (arr.length<2){
 		console.log("Error...<= or >= invalid num of params")
-		return "0"
+		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
-	//if (stringIsNumber(value1))
-    //   value1=eval(value1)
+	if (stringIsNumber(value1))
+       value1=eval(value1)
 	return _le_array_iter_(value1,cdr(arr),env,module_name)
 }
 // >=
@@ -1182,14 +1201,12 @@ if (typeof(module)!="undefined"){
     module.exports.toy_language =toy_language
     module.exports.printArray = printArray
     module.exports.ENV_LIST = ENV_LIST
+    module.exports.display_ = display_
     }
 
 
-
-
-
-
-
+var VirtualFileSystem = {}
+VirtualFileSystem["toy"] = [ [ 'define', 'true', '1' ], [ 'define', 'false', [ 'quote', [  ] ] ], [ 'define', 'nil', [ 'quote', [  ] ] ], [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] ], [ 'define', 'test-hash', [ 'quote', [ ':a', '12', ':b', '13', ':c', [ 'lambda', [ 'x', 'y' ], [ '+', 'x', 'y' ] ] ] ] ], [ 'define', 'hash-keys', [ 'lambda', [ 'hash' ], [ 'cond', [ [ 'eq', 'hash', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ '1', [ 'cons', [ 'car', 'hash' ], [ 'hash-keys', [ 'cdr', [ 'cdr', 'hash' ] ] ] ] ] ] ] ], [ 'define', 'hash-get', [ 'lambda', [ 'x', 'key' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'quote', 'undefined' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'ref', 'x', '1' ] ], [ '1', [ 'hash-get', [ 'cdr', [ 'cdr', 'x' ] ], 'key' ] ] ] ] ], [ 'define', 'hash-set', [ 'lambda', [ 'x', 'key', 'value' ], [ 'define', 'hash-set-iter', [ 'lambda', [ 'x', 'x_copy', 'key', 'value', 'count' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'begin', [ 'push', 'x_copy', 'key' ], [ 'push', 'x_copy', 'value' ], 'x_copy' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'set-ref!', 'x', '1', 'value' ] ], [ '1', [ 'hash-set-iter', [ 'cdr', [ 'cdr', 'x' ] ], 'x_copy', 'key', 'value', [ '+', 'count', '1' ] ] ] ] ] ], [ 'hash-set-iter', 'x', 'x', 'key', 'value', '0' ] ] ], [ 'define', 'check-in', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'eq', 'y', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ [ 'eq', 'x', [ 'car', 'y' ] ], '1' ], [ '1', [ 'check-in', 'x', [ 'cdr', 'y' ] ] ] ] ] ], [ 'define', 'defun', [ 'macro', [ 'func-name', '&', 'rest' ], [ 'define', 'params', [ 'car', 'rest' ] ], [ 'define', 'body', [ 'cdr', 'rest' ] ], [ 'quasiquote', [ 'define', [ 'unquote', 'func-name' ], [ 'lambda', [ 'unquote', 'params' ], [ 'unquote', 'body' ] ] ] ] ] ], [ 'define', 'if', [ 'lambda', [ '&', 'params' ], [ 'define', 'judge', [ 'eval', [ 'ref', 'params', '0' ] ] ], [ 'cond', [ 'judge', [ 'eval', [ 'ref', 'params', '1' ] ] ], [ '1', [ 'eval', [ 'ref', 'params', '2' ] ] ] ] ] ], [ 'define', 'range-1', [ 'lambda', [ 'x' ], [ 'define', 'i', '0' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'x' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-2', [ 'lambda', [ 'x', 'y' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-3', [ 'lambda', [ 'x', 'y', 'interval' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'cond', [ [ '<=', 'interval', '0' ], [ 'while', [ '>', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ], [ '1', [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ] ], 'output' ] ], [ 'define', 'range', [ 'lambda', [ '&', 'params' ], [ 'cond', [ [ 'eq', [ 'len', 'params' ], '1' ], [ 'apply', 'range-1', 'params' ] ], [ [ 'eq', [ 'len', 'params' ], '2' ], [ 'apply', 'range-2', 'params' ] ], [ '1', [ 'apply', 'range-3', 'params' ] ] ] ] ], [ 'define', 'null?', [ 'lambda', [ 'x' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], '1' ], [ '1', [ 'quote', [  ] ] ] ] ] ], [ 'define', 'empty?', 'null?' ], [ 'define', 'append', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'x' ], 'y' ], [ '1', [ 'cons', [ 'car', 'x' ], [ 'append', [ 'cdr', 'x' ], 'y' ] ] ] ] ] ], [ 'define', 'dolist', [ 'macro', [ '&', 'params' ], [ 'define', 'var-name', [ 'car', 'params' ] ], [ 'define', 'iter-list', [ 'ref', 'params', '1' ] ], [ 'define', 'body', [ 'slice', 'params', '2', [ 'len', 'params' ] ] ], [ 'append', [ 'quasiquote', [ 'for', [ 'unquote', 'var-name' ], 'in', [ 'unquote', 'iter-list' ] ] ], 'body' ] ] ], [ 'define', 'list', [ 'lambda', [ '.', 'args' ], 'args' ] ], [ 'define', 'list-add', [ 'lambda', [ 'x', 'y' ], [ 'define', 'list-add-iter', [ 'lambda', [ 'x', 'y', 'result' ], [ 'cond', [ [ 'or', [ 'null?', 'x' ], [ 'null?', 'y' ] ], 'result' ], [ '1', [ 'list-add-iter', [ 'cdr', 'x' ], [ 'cdr', 'y' ], [ 'push', 'result', [ 'apply', '+', [ 'list', [ 'car', 'x' ], [ 'car', 'y' ] ] ] ] ] ] ] ] ], [ 'list-add-iter', 'x', 'y', [ 'quote', [  ] ] ] ] ], [ 'define', 'factorial', [ 'lambda', [ 'n' ], [ 'define', 'factorial-iter', [ 'lambda', [ 'n', 'result' ], [ 'cond', [ [ 'eq', 'n', '1' ], 'result' ], [ '1', [ 'factorial-iter', [ '-', 'n', '1' ], [ '*', 'result', 'n' ] ] ] ] ] ], [ 'factorial-iter', 'n', '1' ] ] ] ]
 
 
 
