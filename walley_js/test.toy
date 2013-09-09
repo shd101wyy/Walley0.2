@@ -32,7 +32,7 @@
     ((list? arg)
       (ref-iter arg index)
       )
-    (1 'undefined')
+    (1 'undefined)
     )
   ))
 ;; push
@@ -47,7 +47,7 @@
     ))
     (cond
       ((list? arg) (push-iter arg push_value))
-      (1 'undefined')
+      (1 'undefined)
       )
   ))
 (define push (macro (var_name push_value)
