@@ -447,7 +447,7 @@ var toy = function(tree,env,module_name){
                 return _and_array_(cdr(tree),env,module_name)
             }
             else if (tree[0]=="not"){
-            	return _not_(tree[1],env,module_name)
+            	return _not_(tree[1][0],env,module_name)
             }
             // (define var_name var_value)
             else if (tree[0]=="define"){
@@ -538,16 +538,23 @@ var toy = function(tree,env,module_name){
             @(* ,x ,x) : return value that will run when calling macro
             */
             else if (tree[0]=='macro'){
-                return ["macro",tree[1],tree.slice(2,tree.length)]
+                return ["macro",tree[1][0],tree[1][1]]
             }
-            else if (tree[0]=="begin")
-                return toy(tree[tree.length-1], toy_language(tree.slice(1,tree.length-1),env,module_name),module_name)
+            else if (tree[0]=="begin"){
+                tree = cdr(tree)
+                var value;
+                while(tree.length!=0){
+                    value = toy(tree[0],env,module_name)
+                    tree = tree[1]
+                }
+                return value
+            }
             else if (tree[0]=="apply")
-                return toy(cons(tree[1],listToArray(toy(tree[2],env,module_name))),env,module_name)
+                return toy(cons(tree[1][0],toy(tree[1][1][0],env,module_name)),env,module_name)
             else if (tree[0]=="eval")
-                return toy(toy(tree[1],env,module_name),env,module_name)
+                return toy(toy(tree[1][0],env,module_name),env,module_name)
             else if (tree[0]=="quasiquote")
-                return quasiquote(tree[1],env,module_name)
+                return quasiquote(tree[1][0],env,module_name)
             /*
             # load module
             # (load a) will import content in a with module_name ""
@@ -558,12 +565,12 @@ var toy = function(tree,env,module_name){
             # (load 'a) will cons ((x 12)) as env
             */
             else if (tree[0]=="load"){
-                var load_module = toy(tree[1],env,module_name)
+                var load_module = toy(tree[1][0],env,module_name)
                 var as_name = ""
                 if (tree.length==2)
                     as_name = ""
                 else
-                    as_name = toy(tree[2],env,module_name)
+                    as_name = toy(tree[1][1][0],env,module_name)
                 if (load_module in VirtualFileSystem){
                     var module_content = VirtualFileSystem[load_module]
                     if (typeof(module_content)==='string')
@@ -577,7 +584,7 @@ var toy = function(tree,env,module_name){
          	}
             // io function
             else if (tree[0]=="display")
-                return display_(toy(tree[1],env,module_name))
+                return display(toy(tree[1][0],env,module_name))
             // show defined variables in env
             else if (tree[0]=="show-env"){
             	printArray(env)
@@ -588,13 +595,13 @@ var toy = function(tree,env,module_name){
             // mutable list funcions
             // set-car! set-cdr!
             else if (tree[0]=='set-car!'){
-                var value = toy(tree[1],env,module_name)
-                value[0] = toy(tree[2],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
+                value[0] = toy(tree[1][1][0],env,module_name)
                 return value
             }
             else if (tree[0]=='set-cdr!'){
-                var value = toy(tree[1],env,module_name)
-                value[1] = toy(tree[2],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
+                value[1] = toy(tree[1][1][0],env,module_name)
                 return value
             }
             /*
@@ -726,45 +733,45 @@ var toy = function(tree,env,module_name){
                 does not create new env for env_list
                 */
             else if (tree[0]=="while"){
-                var judge = toy(tree[1],env,module_name)
+                var judge = toy(tree[1][0],env,module_name)
                 while(judge.length != 0){
-                    var stms = tree.slice(2,tree.length)
-                    toy_language(stms,env,module_name)
-                    judge = toy(tree[1],env,module_name)
+                    var stms = cons('begin', cdr(cdr(tree)))
+                    toy(stms,env,module_name)
+                    judge = toy(tree[1][0],env,module_name)
                 }
                 return "undefined"
             }
             // this function has lots of problem
             else if (tree[0]=="for"){
-                var var_name = tree[1]
-                var in_value = toy(tree[3],env,module_name)
+                var var_name = tree[1][0]
+                var in_value = toy(tree[1][1][1][0],env,module_name)
                 var i = 0
                 while (in_value.length!=0){
                     // update var_name value
                     //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
                     env[env.length-1][var_name] = in_value[0]
-                    in_value = CDR(in_value)
-                    toy(cons('begin',tree.slice(4,tree.length)),env,module_name)
+                    in_value = cdr(in_value)
+                    toy(cons('begin',tree[1][1][1][1],env,module_name)
                     i=i+1
                 }
                 return "undefined"
             }
             // implement math functions
             else if (tree[0]=="^"){
-                var value1 = toy(tree[1],env,module_name)
-                var power = toy(tree[2],env,module_name)
+                var value1 = toy(tree[1][0],env,module_name)
+                var power = toy(tree[1][1][0],env,module_name)
                 return str(Math.pow(eval(value1),eval(power)))
             }
             else if (tree[0]=="sin"){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 return str(Math.sin(eval(value)))
             }
             else if (tree[0]=='cos'){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 return str(Math.cos(eval(value)))
             }
             else if (tree[0]=='tan'){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 return str(Math.tan(eval(value)))
             }
 
@@ -777,8 +784,8 @@ var toy = function(tree,env,module_name){
             @(* ,x ,x) : return value that will run when calling macro
             */
             else if (tree[0]=="defmacro"){
-                var macro_name = tree[1]
-                var macro_value = ["macro",tree[2],tree.slice(3,tree.length)]
+                var macro_name = tree[1][0]
+                var macro_value = ["macro",tree[1][1][0],cdr(cdr(cdr(tree)))]
                 env[env.length - 1][macro_name] = macro_value
                 return macro_value
             }
@@ -787,7 +794,7 @@ var toy = function(tree,env,module_name){
                 -> (* 3 3)
             */
             else if (tree[0]=="macroexpand"){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 value[0]  = toy(value[0],env,module_name)
                 var expanded = macroexpand(value,env,module_name)
                 return expanded
@@ -803,6 +810,13 @@ var toy = function(tree,env,module_name){
             }
         }
         else{
+            /*
+                (
+                    (lambda (a b) (+ a b))
+                    3 4
+                    )
+
+            */
             if (tree[0][0]=="lambda"){
                 // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
                 var pair_params = function(names,params,env,module_name,output){
@@ -810,12 +824,12 @@ var toy = function(tree,env,module_name){
                         return output
                     // calculate params
                     else if (names[0]=="."){
-                        output[names[1]] =  arrayToList(evlis(params,env,module_name))
+                        output[names[1][0]] =  arrayToList(evlis(params,env,module_name))
                         return output
                     }
                     // lazy and does not calculate params
                     else if (names[0]=="&"){
-                        output[names[1]] = arrayToList(params)
+                        output[names[1][0]] = arrayToList(params)
                         return output
                     }
                     else{               
@@ -828,13 +842,13 @@ var toy = function(tree,env,module_name){
                         return pair_params(cdr(names) , cdr(params) , env , module_name ,output)
                     }
                 }
-
                 // add local env
-                var output = pair_params(tree[0][1],cdr(tree),env,module_name,{})
+                var output = pair_params(car(cdr(car(tree))),cdr(tree),env,module_name,{})
                 env.push(output)
                 
-                var stms = tree[0].slice(2,tree[0].length)
-                var return_value = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length-1), env, module_name) , module_name)
+                var stms = cons('begin', cdr(cdr(car(tree))))
+                display(stms)                
+                var return_value = toy(stms, env , module_name)
                 // delete 新加入的 env
                 env.pop()
                 return return_value
@@ -905,15 +919,15 @@ var get_numerator = function(num){
 		return ""
 	else if (num[0]=="/")
 		return ""
-	return num[0]+get_numerator(cdr(num))
+	return num[0]+get_numerator(num.slice(1))
 }
 // 3/4 -> 4
 var get_denominator = function(num){
 	if (num.length==0)
 		return "1"
 	else if (num[0]=="/")
-		return cdr(num)
-	return get_denominator(cdr(num))
+		return num.slice(1)
+	return get_denominator(num.slice(1))
 }
 // format number
 // 3/4 -> ['3','4']
@@ -1297,7 +1311,7 @@ var TOY_Eval = function (input_str,env,module_name){
             i = indexOfLastBracket(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
             console.log(parsed)
-            toy(parsed,env,module_name)
+            console.log(toy(parsed,env,module_name))
             continue
         }
         else{
@@ -1338,7 +1352,7 @@ if (typeof(module)!="undefined"){
     }
 
 
-TOY_Eval("(define x 12) (set! x 14) (cons 12 13) (let ((x '(1 2))(y 13)) (cons y x) ) ",ENV_LIST,"")
+TOY_Eval("(define add (lambda (a b) (+ a b))) (add 3 4) ",ENV_LIST,"")
 
 
 
