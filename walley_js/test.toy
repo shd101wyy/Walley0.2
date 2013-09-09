@@ -14,11 +14,56 @@
   (lambda (var)
     (cond
      ((atom? var) false)
+     ((vector? var) false)
      (1 true)
      )
     )
   )
+;; get list ref according to index
+(define ref (lambda (arg index)
+  (define ref-iter (lambda (arg index)
+    (cond
+        ((eq 0 index) (car arg))
+        ((null? arg) 'undefined)
+        (1 (ref-iter (cdr arg) (- index 1)))
+        )
+    ))
+  (cond
+    ((list? arg)
+      (ref-iter arg index)
+      )
+    (1 'undefined')
+    )
+  ))
+;; push
+;;(push '(1 2 3) 34) -> (1 2 3 34)
+;; undestructive
+(define push* (lambda (arg push_value)
+  (define push-iter (lambda (arg push_value)
+    (cond
+      ((null? arg) (cons push_value '()))
+      (1 (cons (car arg) (push-iter (cdr arg) push_value)))
+      )
+    ))
+    (cond
+      ((list? arg) (push-iter arg push_value))
+      (1 'undefined')
+      )
+  ))
+(define push (macro (var_name push_value)
+  @(set! ,var_name (push* ,var_name ,push_value))
+  ))
 
+;; get length of list
+(define len (lambda (arg)
+  (define len-iter (lambda (arg count)
+    (cond
+      ((null? arg) count)
+      (1 (len-iter (cdr arg) (+ count 1)))
+      )
+    ))
+  (len-iter arg 0)
+  ))
 ;; setq function
 ;; (setq var_name var_value)
 (define setq 
@@ -256,7 +301,7 @@
   (macro (& params)
     (define var-name (car params))
     (define iter-list (ref params 1) )
-    (define body (slice params 2 (len params)))     
+    (define body (cdr (cdr params)))     
     (append @(for ,var-name in ,iter-list) body)
     ;; @(for ,var-name in ,iter-list ,body)
     )
@@ -303,34 +348,6 @@
     )
   )
 
-;; math functions
+(display (len '(1 2 3 4)))
+(display (range 2 10))
 
-
-;; simplify toy language
-;; (# x = 12)  ;; change value or define global variable
-;; (# local y = 12)
-;; (# 3 + 4) -> 7 
-;;
-;;
-;;
-
-(define # 
-  (lambda (& params)
-    (define infix-param (ref params 1))
-    (cond
-     ((eq infix-param '+)
-      (apply + (list (ref params 0) (ref params 2))))
-     ((eq infix-param '-)
-      (apply - (list (ref params 0) (ref params 2))))
-     ((eq infix-param '*)
-      (apply * (list (ref params 0) (ref params 2))))
-     ((eq infix-param '/)
-      (apply / (list (ref params 0) (ref params 2))))
-     )
-    )
-  )
-
-(define x 12)
-;;(setq x '(1 2 3))
-(display (list? x))
-(display (# 3 + 4))
