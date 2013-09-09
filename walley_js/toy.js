@@ -1,6 +1,8 @@
 /*
 	JavaScript Version Toy Language
 	Developed by shd101wyy
+
+    now list is linked list rather than array
 */
 function isNumber(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -36,7 +38,7 @@ var parseString = function(input_str){
 		else if (input_str[0]==" " || input_str[0]=="\n" || input_str[0]=="\t" )
 			return new_lexer_iter( cdr(input_str) , result  )
 		// quote unquote quasiquote
-		else if (input_str[0]=="'" || input_str[0]=="," || input_str[0]=="@" ){
+		else if (input_str[0]=="'" || input_str[0]=="," || input_str[0]=="@" || input_str[0]=="#" ){
 			// return rest string and result string
 			// [rest , result ]
 			var dealWith_Quote_Unquote_Quasiquote = function (input_str , result , count_of_double_quote, count_of_bracket) {
@@ -61,8 +63,10 @@ var parseString = function(input_str){
 				quote = "quote"
 			else if (input_str[0]==",")
 				quote = "unquote"
-			else
+			else if (input_str[0]=="#")
 				quote = "quasiquote"
+            else
+                quote = "#vector"
 
 			var rest_result = dealWith_Quote_Unquote_Quasiquote(cdr(input_str) ,"" , 0, 0 )
 			var _rest_ = rest_result[0]
@@ -117,11 +121,20 @@ var parseString = function(input_str){
 	quote atom eq car cdr cons cond
 
 */
+// convert array to linked list
+// [1,2,3] -> [1,[2,[3,[]]]]
+var arrayToList = function(arg){
+    if (arg.length == 0)
+        return arg
+    else
+        return [arg[0],arrayToList(arg.slice(1,arg.length))]
+}
 var quote = function(arg){
-    // convert number to string
-    //if (typeof(arg) === 'number')
-    //    return arg + ""
-    return arg
+    if (typeof(arg) == 'string')
+        return arg
+    else
+        // return [type, value]
+        return ['#list', arrayToList(arg)]
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
@@ -505,8 +518,10 @@ var ENV_LIST = [{
     'load':'load',
     'display':'display',
     'show-env':'show-env',
+    'set-car!':'set-car!','set-cdr!':'set-cdr!',
+    'vector':'vector',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
-    'ref':'ref','len':'len','slice':'slice','set-ref!':'set-ref!','push':'push','pop':'pop',
+    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop',
     'while':'while','for':'for'
     }]
 
@@ -529,7 +544,7 @@ var toy = function(tree,env,module_name){
         if (typeof(tree[0])=='string'){
             // seven primitive functions
             if (tree[0]=="quote")
-                return tree[1].slice(0)
+                return quote(tree[1])
                 //return quote(toy(tree[1],env,module_name))
             else if (tree[0]=="atom?")
                 return atom(toy(tree[1],env,module_name))
@@ -548,9 +563,9 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="car")
                 return car(toy(tree[1],env,module_name))
             else if (tree[0]=="cdr")
-                return cdr(toy(tree[1],env,module_name))
+                return CDR(toy(tree[1],env,module_name))
             else if (tree[0]=="cons")
-                return cons(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
+                return CONS(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers
@@ -711,12 +726,32 @@ var toy = function(tree,env,module_name){
                 // here has some problem ... 
             	return env
             }
+
+            // mutable list funcions
+            // set-car! set-cdr!
+            else if (tree[0]=='set-car!'){
+                var value = toy(tree[1],env,module_name)
+                value[0] = toy(tree[2],env,module_name)
+                return value
+            }
+            else if (tree[0]=='set-cdr!'){
+                var value = toy(tree[1],env,module_name)
+                value[1] = toy(tree[2],env,module_name)
+                return value
+            }
+            /*
+                embed data type
+            */
+            else if (tree[0]=='#vector'){
+                return tree
+            }
+
             // FOR LISP LIST OPERATION
             // ref len slice set-ref! functions
             // push pop functions for mutable data
             // ref (ref '(a b c) 0) get 'a
             // (ref value index)
-            else if (tree[0]=="ref"){
+            else if (tree[0]=="vector-ref"){
                 var index = parseInt(toy(tree[2],env,module_name))
                 var value = toy(tree[1],env,module_name)
                 if (index<0 || index>=value.length){
@@ -727,11 +762,11 @@ var toy = function(tree,env,module_name){
             }
             // (len '(a b c)) ->3
             // get length of value
-            else if (tree[0]=="len"){
+            else if (tree[0]=="vector-len"){
                 return str(toy(tree[1],env,module_name).length)
             }
             // (slice '(a b c) 0 2) -> '(a b)
-            else if (tree[0]=="slice"){
+            else if (tree[0]=="vector-slice"){
                 var left = parseInt(toy(tree[2],env,module_name))
                 var right = parseInt(toy(tree[3],env,module_name))
                 var value = toy(tree[1],env,module_name)
@@ -747,7 +782,7 @@ var toy = function(tree,env,module_name){
             }
 
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
-            else if (tree[0]=="set-ref!"){
+            else if (tree[0]=="vector-set!"){
                 // i can not do it now...
                 var var_value = toy(tree[1],env,module_name)
                 var index0 = toy(tree[2],env,module_name)
@@ -755,13 +790,13 @@ var toy = function(tree,env,module_name){
                 var_value[index0] = set_value
                 return var_value
             }
-            else if (tree[0] == 'push'){
+            else if (tree[0] == 'vector-push'){
                 var value = toy(tree[1],env,module_name)
                 var push_value = toy(tree[2],env,module_name)
                 value.push(push_value)
                 return value
             }
-            else if (tree[0] == 'pop'){
+            else if (tree[0] == 'vector-pop'){
                 var value = toy(tree[1],env,module_name)
                 if (value == [])
                     return 'undefined'
