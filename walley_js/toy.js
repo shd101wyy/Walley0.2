@@ -134,7 +134,7 @@ var quote = function(arg){
         return arg
     else
         // return [type, value]
-        return ['#list', arrayToList(arg)]
+        return arrayToList(arg)
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
@@ -487,9 +487,9 @@ var ENV_LIST = [{
     'display':'display',
     'show-env':'show-env',
     'set-car!':'set-car!','set-cdr!':'set-cdr!',
-    'vector':'vector',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
-    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop',
+    'vector':'vector','vector?':'vector?','#vector':'#vector'
+    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy'
     'while':'while','for':'for'
     }]
 
@@ -720,6 +720,21 @@ var toy = function(tree,env,module_name){
             // push pop functions for mutable data
             // ref (ref '(a b c) 0) get 'a
             // (ref value index)
+            else if (tree[0]=='vector'){
+                var i = 1
+                var return_value = []
+                while (i < tree.length){
+                    return_value[i-1] = toy(tree[i],env,module_name)
+                    i = i + 1
+                }
+                return new Vector(return_value)
+            }
+            else if (tree[0]=='vector?'){
+                var value = toy(tree[1],env,module_name)
+                if (value.constructor == Vector)
+                    return "1"
+                return []
+            }
             else if (tree[0]=="vector-ref"){
                 var index = parseInt(toy(tree[2],env,module_name))
                 var value = toy(tree[1],env,module_name)
@@ -798,7 +813,15 @@ var toy = function(tree,env,module_name){
                 var pop_value = value.value.pop()
                 return pop_value
             }
-          
+            else if (tree[0] == 'vector-copy'){
+                var value = toy(tree[1],env,module_name)
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-copy! wrong type var")
+                    return 'undefined'
+                }
+                var return_value = new Vector(value.value.slice(0))
+                return return_value
+            }
             
 
             /*
@@ -821,15 +844,16 @@ var toy = function(tree,env,module_name){
                 }
                 return "undefined"
             }
-
+            // this function has lots of problem
             else if (tree[0]=="for"){
                 var var_name = tree[1]
                 var in_value = toy(tree[3],env,module_name)
                 var i = 0
-                while (i<in_value.length){
+                while (in_value.length!=0){
                     // update var_name value
                     //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
-                    env[env.length-1][var_name] = in_value[i]
+                    env[env.length-1][var_name] = in_value[0]
+                    in_value = CDR(in_value)
                     toy(cons('begin',tree.slice(4,tree.length)),env,module_name)
                     i=i+1
                 }
