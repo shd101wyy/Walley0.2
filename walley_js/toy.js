@@ -63,7 +63,7 @@ var parseString = function(input_str){
 				quote = "quote"
 			else if (input_str[0]==",")
 				quote = "unquote"
-			else if (input_str[0]=="#")
+			else if (input_str[0]=="@")
 				quote = "quasiquote"
             else
                 quote = "#vector"
@@ -398,6 +398,9 @@ var judge_ = function(value){
     return false
 }
 
+var Vector = function(init_value){
+    this.value = init_value
+}
 // ...
 //
 //=======================================
@@ -453,41 +456,6 @@ var toy_language = function(trees,env,module_name){
     defmacro macroexpand run-macro
 */
 // init env_list
-/*
-var ENV_LIST = [[
-    ["quote","quote"],
-    ["atom?","atom?"],
-    ["eq","eq"],
-    ["car","car"],
-    ["cdr","cdr"],
-    ["cons","cons"],
-    ["cond","cond"],
-    ["+","+"],
-    ['-','-'],
-    ['*','*'],
-    ['/','/'],
-    ['<','<'],
-    ['>','>'],
-    ['=','='],
-    ['>=','>='],
-    ['<=','<='],
-    ['or','or'],
-    ['and','and'],
-    ['not','not'],
-    ['define','define'],
-    ['set!','set!'],
-    ['let','let'],
-    ['lambda','lambda'],
-    ['begin','begin'],
-    ['apply','apply'],['eval','eval'],
-    ['quasiquote','quasiquote'],
-    ['load','load'],
-    ['display','display'],
-    ['show-env','show-env'],
-    ['defmacro','defmacro'],['macroexpand','macroexpand'],['run-macro','run-macro'],
-    ['ref','ref'],['len','len'],['slice','slice'],
-    ['while','while'],['for','for']
-    ]]*/
 var ENV_LIST = [{
     "quote":"quote",
     "atom?":"atom?",
@@ -743,7 +711,8 @@ var toy = function(tree,env,module_name){
                 embed data type
             */
             else if (tree[0]=='#vector'){
-                return tree
+                var return_value = new Vector(tree[1])
+                return return_value
             }
 
             // FOR LISP LIST OPERATION
@@ -754,22 +723,36 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="vector-ref"){
                 var index = parseInt(toy(tree[2],env,module_name))
                 var value = toy(tree[1],env,module_name)
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-ref wrong type var")
+                    return 'undefined'
+                }
+
                 if (index<0 || index>=value.length){
                     console.log("Error...ref index out of boundary")
                     return 'undefined'
                 }
-                return value[index]
+                return value.value[index]
             }
             // (len '(a b c)) ->3
             // get length of value
             else if (tree[0]=="vector-len"){
-                return str(toy(tree[1],env,module_name).length)
+                var value = toy(tree[1],env,module_name)
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-len wrong type var")
+                    return 'undefined'
+                }
+                return str(value.value.length)
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="vector-slice"){
                 var left = parseInt(toy(tree[2],env,module_name))
                 var right = parseInt(toy(tree[3],env,module_name))
                 var value = toy(tree[1],env,module_name)
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-slice wrong type var")
+                    return 'undefined'
+                }
                 if (left<0){
                     console.log("Error...slice left index < 0")
                     return 'undefined'
@@ -778,7 +761,7 @@ var toy = function(tree,env,module_name){
                     console.log("Error...slice right index out of boundary")
                     return 'undefined'
                 }
-                return value.slice(left,right)
+                return new Vector(value.value.slice(left,right))
             }
 
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
@@ -787,20 +770,32 @@ var toy = function(tree,env,module_name){
                 var var_value = toy(tree[1],env,module_name)
                 var index0 = toy(tree[2],env,module_name)
                 var set_value = toy(tree[3],env,module_name)
-                var_value[index0] = set_value
+                if (var_value.constructor != Vector){
+                    console.log("Error...function vector-set! wrong type var")
+                    return 'undefined'
+                }
+                var_value.value[index0] = set_value
                 return var_value
             }
             else if (tree[0] == 'vector-push'){
                 var value = toy(tree[1],env,module_name)
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-set! wrong type var")
+                    return 'undefined'
+                }
                 var push_value = toy(tree[2],env,module_name)
-                value.push(push_value)
+                value.value.push(push_value)
                 return value
             }
             else if (tree[0] == 'vector-pop'){
                 var value = toy(tree[1],env,module_name)
-                if (value == [])
+                if (value.constructor != Vector){
+                    console.log("Error...function vector-pop! wrong type var")
                     return 'undefined'
-                var pop_value = value.pop()
+                }
+                if (value.value == [])
+                    return 'undefined'
+                var pop_value = value.value.pop()
                 return pop_value
             }
           
