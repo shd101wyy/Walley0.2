@@ -488,8 +488,8 @@ var ENV_LIST = [{
     'show-env':'show-env',
     'set-car!':'set-car!','set-cdr!':'set-cdr!',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
-    'vector':'vector','vector?':'vector?','#vector':'#vector'
-    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy'
+    'vector':'vector','vector?':'vector?','#vector':'#vector',
+    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
     'while':'while','for':'for'
     }]
 
