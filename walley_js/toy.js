@@ -55,6 +55,9 @@ var car = function ( arg ){
 		console.log("Error...cannot get car of empty list")
         return 'undefined'
 	}
+    // vector
+    else if (arg.constructor == Vector)
+        return arg.value[0]
 	return arg[0]
 }
 
@@ -63,6 +66,9 @@ var cdr = function (arg){
         console.log("Error...cannot get cdr of empty list")
         return 'undefined'
     }
+    // vector
+    else if (arg.constructor == Vector)
+        return arg.value.slice(1)
     return arg[1]
 }
 var cons = function(value1, value2){
@@ -616,8 +622,13 @@ var toy = function(tree,env,module_name){
                 embed data type
             */
             else if (tree[0]=='#vector'){
-                var return_value = new Vector(tree[1])
-                return return_value
+                var value_tree = tree[1]
+                var i = 0
+                while (i < value_tree.length){
+                    value_tree[i] = toy(value_tree[i],env,module_name)
+                    i = i + 1
+                }
+                return new Vector(tree[1])
             }
 
             // FOR LISP LIST OPERATION
@@ -628,9 +639,10 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=='vector'){
                 var i = 1
                 var return_value = []
-                while (i < tree.length){
-                    return_value[i-1] = toy(tree[i],env,module_name)
-                    i = i + 1
+                tree = tree[1]
+                while (tree.length != 0){
+                    return_value.push(toy(tree[0],env,module_name))
+                    tree = tree[1]
                 }
                 return new Vector(return_value)
             }
@@ -640,9 +652,10 @@ var toy = function(tree,env,module_name){
                     return "1"
                 return []
             }
+            // (vector-ref [1,2,3] 0) -> 1
             else if (tree[0]=="vector-ref"){
-                var index = parseInt(toy(tree[2],env,module_name))
-                var value = toy(tree[1],env,module_name)
+                var index = parseInt(toy(tree[1][1][0],env,module_name))
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-ref wrong type var")
                     return 'undefined'
@@ -657,7 +670,7 @@ var toy = function(tree,env,module_name){
             // (len '(a b c)) ->3
             // get length of value
             else if (tree[0]=="vector-len"){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-len wrong type var")
                     return 'undefined'
@@ -666,9 +679,9 @@ var toy = function(tree,env,module_name){
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="vector-slice"){
-                var left = parseInt(toy(tree[2],env,module_name))
-                var right = parseInt(toy(tree[3],env,module_name))
-                var value = toy(tree[1],env,module_name)
+                var left = parseInt(toy(tree[1][1][0],env,module_name))
+                var right = parseInt(toy(tree[1][1][1][0],env,module_name))
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-slice wrong type var")
                     return 'undefined'
@@ -687,9 +700,9 @@ var toy = function(tree,env,module_name){
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
             else if (tree[0]=="vector-set!"){
                 // i can not do it now...
-                var var_value = toy(tree[1],env,module_name)
-                var index0 = toy(tree[2],env,module_name)
-                var set_value = toy(tree[3],env,module_name)
+                var var_value = toy(tree[1][0],env,module_name)
+                var index0 = toy(tree[1][1][0],env,module_name)
+                var set_value = toy(tree[1][1][1][0],env,module_name)
                 if (var_value.constructor != Vector){
                     console.log("Error...function vector-set! wrong type var")
                     return 'undefined'
@@ -698,17 +711,17 @@ var toy = function(tree,env,module_name){
                 return var_value
             }
             else if (tree[0] == 'vector-push'){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-set! wrong type var")
                     return 'undefined'
                 }
-                var push_value = toy(tree[2],env,module_name)
+                var push_value = toy(tree[1][1][0],env,module_name)
                 value.value.push(push_value)
                 return value
             }
             else if (tree[0] == 'vector-pop'){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-pop! wrong type var")
                     return 'undefined'
@@ -719,7 +732,7 @@ var toy = function(tree,env,module_name){
                 return pop_value
             }
             else if (tree[0] == 'vector-copy'){
-                var value = toy(tree[1],env,module_name)
+                var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-copy! wrong type var")
                     return 'undefined'
@@ -1214,6 +1227,39 @@ var indexOfLastParenthesis = function (input_str,start){
     }
     return -1
 }
+// a b c d -> ['a','b','c','d']
+var formatArray = function(input_str){
+    var output = []
+    for(var i = 0; i < input_str.length; i = i + 1){
+        if (input_str[i] == ' ' || input_str[i]== '\t' || input_str[i] == '\n'){
+            continue
+        }
+        // list
+        else if (input_str[i] == '('){
+            var index = indexOfLastParenthesis(input_str,i)
+            output.push(parseOneSentence(input_str.slice(i+1,index)))
+            i = index 
+        }
+        else if (input_str[i] == '['){
+            var index = indexOfLastBracket(input_str, i )
+            output.push(formatArray(input_str.slice(1,index)))
+            i = index
+        }
+        else if (input_str[0]==";"){
+            while( i!=input_str.length && input_str[i]!='\n'){i++}
+            continue
+        }
+        else{
+            var start = i
+            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
+                i = i + 1
+            }
+            output.push(input_str.slice(start, i))
+            continue
+        }
+    }
+    return ["#vector", output]
+}
 /*
     one complete statement at a time
     (define x 12) -> ['define' ['x' ['12' []]]]
@@ -1245,6 +1291,7 @@ var parseOneSentence = function (input_str){
     // vector
     else if (input_str[0] == '['){
         var i = indexOfLastBracket(input_str,0)
+        return cons(formatArray(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
     }
     else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
         var flag;
@@ -1287,27 +1334,6 @@ var parseOneSentence = function (input_str){
         }
         return cons(input_str.slice(0,i),parseOneSentence(input_str.slice(i+1)))
     }
-}
-var formatList = function (list){
-    var display_string = ""
-    while(1){
-        if(typeof(list) == 'string'){
-            display_string = display_string + ' . ' + list
-            break
-        }
-        if(list.length == 0)
-            break
-        if (typeof(list[0]) == 'string')
-            display_string = display_string + ' ' + list[0]
-        else{
-            display_string = display_string + ' ' + formatList(list[0])
-        }
-        list = list[1]
-    }
-    display_string += ')'
-    display_string = display_string.slice(1)
-    display_string = "(" + display_string
-    return display_string
 }
 /*
     mode :
@@ -1371,6 +1397,46 @@ var TOY_Eval = function (input_str,env,module_name){
     }
     return return_value
 }
+// ['a','b','c'] -> [1 2]
+var formatArrayString = function (arr){
+    var output = "["
+    var i = 0
+    while (i < arr.length){
+        if (typeof(arr[i]) == 'string')
+            output = output + ' ' + arr[i]
+        else if (arr[i].constructor == Vector)
+            output = output + ' ' + formatArrayString(arr[i].value)
+        else
+            output = output + ' ' + formatList(arr[i])
+        i = i + 1
+    }
+    output = output + "]"
+    return output
+}
+var formatList = function (list){
+    var display_string = ""
+    while(1){
+        if(typeof(list) == 'string'){
+            display_string = display_string + ' . ' + list
+            break
+        }
+        if(list.length == 0)
+            break
+        if (typeof(list[0]) == 'string')
+            display_string = display_string + ' ' + list[0]
+        else if (list[0].constructor == Vector){
+            display_string = display_string + ' ' + formatArrayString(list[0].value)
+        }
+        else{
+            display_string = display_string + ' ' + formatList(list[0])
+        }
+        list = list[1]
+    }
+    display_string += ')'
+    display_string = display_string.slice(1)
+    display_string = "(" + display_string
+    return display_string
+}
 var displayList = function (list){
     console.log(formatList(list))
 }
@@ -1378,6 +1444,9 @@ var display = function(arg){
     if (typeof(arg) == 'string')
         console.log(arg)
     // does not support vector yet
+    else if (arg.constructor == Vector){
+        console.log(formatArrayString(arg.value))    
+    }
     else 
         displayList(arg)
     return 'undefined'
@@ -1398,7 +1467,7 @@ if (typeof(module)!="undefined"){
     module.exports.display = display
     }
 
-//var output = "(x)(+)"
+//var output = "define x [1 (+ 3 4) y 3 4]"
 //display( parseOneSentence(output) )
 //TOY_Eval(output,ENV_LIST,"")
 
