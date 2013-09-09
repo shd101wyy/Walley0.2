@@ -751,7 +751,7 @@ var toy = function(tree,env,module_name){
                     //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
                     env[env.length-1][var_name] = in_value[0]
                     in_value = cdr(in_value)
-                    toy(cons('begin',tree[1][1][1][1],env,module_name)
+                    toy(cons('begin',tree[1][1][1][1],env,module_name))
                     i=i+1
                 }
                 return "undefined"
