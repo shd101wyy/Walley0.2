@@ -25,10 +25,7 @@ if (argv.length==2){
 	var to_run=""
 	var env = toy.ENV_LIST
 	rl.on('line', function(line) {
-		var parsed_obj = toy.parseString(line)
-		parsed_obj = parsed_obj[0]
-		var return_value = toy.toy(parsed_obj , env , "" )
-		console.log(return_value)
+		toy.TOY_Eval(line,toy.ENV_LIST,"")
 		rl.setPrompt('toy> ')
 		rl.prompt()
 	})

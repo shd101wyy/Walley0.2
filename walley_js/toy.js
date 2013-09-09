@@ -4,122 +4,10 @@
 
     now list is linked list rather than array
 */
-function isNumber(n) {
-  return !isNaN(parseFloat(n)) && isFinite(n);
-}
-// lexer and parser
-// convert input_str to list
-// 直接转换为 list
-var parseString = function(input_str){
-	var new_lexer_iter = function(input_str,result){
-		if (input_str=="")
-			return result
-		else if (input_str[0]=="("){
-			var rest_result = new_lexer_iter(cdr(input_str),[])
-			result.push(rest_result[1])
-			return new_lexer_iter(rest_result[0],result)
-		}
-		else if (input_str[0]==")")
-			return [cdr(input_str),result]
-		// annotation
-		else if (input_str[0]==";"){
-			// ; 123\n4 -> 4
-			var cleanAnnotation = function (input_str){
-				if (input_str=="")
-					return ""
-				else if (input_str[0]=="\n")
-					return cdr(input_str)
-				else
-					return cleanAnnotation( cdr(input_str) )
-			}
-			return new_lexer_iter( cleanAnnotation(input_str) , result)
-		}
-		// delete unused string
-		else if (input_str[0]==" " || input_str[0]=="\n" || input_str[0]=="\t" )
-			return new_lexer_iter( cdr(input_str) , result  )
-		// quote unquote quasiquote
-		else if (input_str[0]=="'" || input_str[0]=="," || input_str[0]=="@" || input_str[0]=="#" ){
-			// return rest string and result string
-			// [rest , result ]
-			var dealWith_Quote_Unquote_Quasiquote = function (input_str , result , count_of_double_quote, count_of_bracket) {
-				if (input_str=="")
-					return ["",result]
-				else if (count_of_bracket==0 && (input_str[0]=="\n" || input_str[0]==" "))
-					return [cdr(input_str) , result ]
-				else if (input_str[0]=="\"")
-					return dealWith_Quote_Unquote_Quasiquote(cdr(input_str) , result+"\"" , count_of_double_quote+1 , count_of_bracket )
-				else if (input_str[0]=="(" && count_of_double_quote%2==0 )
-					return dealWith_Quote_Unquote_Quasiquote(cdr(input_str) , result+"(" , count_of_double_quote, count_of_bracket+1 )
-				else if (input_str[0]==")" && count_of_double_quote%2==0 ){
-					if (count_of_bracket==0)
-						return [input_str ,result]
-					return dealWith_Quote_Unquote_Quasiquote(cdr(input_str) , result+")", count_of_double_quote , count_of_bracket-1)
-				}
-				else
-					return dealWith_Quote_Unquote_Quasiquote(cdr(input_str), result+input_str[0],count_of_double_quote,count_of_bracket)
-			}
-			var quote;
-			if (input_str[0]=="'")
-				quote = "quote"
-			else if (input_str[0]==",")
-				quote = "unquote"
-			else if (input_str[0]=="@")
-				quote = "quasiquote"
-            else
-                quote = "#vector"
-
-			var rest_result = dealWith_Quote_Unquote_Quasiquote(cdr(input_str) ,"" , 0, 0 )
-			var _rest_ = rest_result[0]
-			var _result_ = [quote,parseString(rest_result[1])[0]]
-			result.push(_result_)
-			return new_lexer_iter(_rest_,result)
-		}
-		// string is atom as well
-		else if (input_str[0]=="\""){
-			var dealWith_string = function(input_str,result){
-				if (input_str==""){
-					console.log("Invalid String")
-					return ["",""]
-				}
-				else if (input_str[0]=='\\')
-					return dealWith_string(input_str.slice(2,input_str.length), result+input_str.slice(0,2))
-				else if (input_str[0]=="\"")
-					return [cdr(input_str),result]
-				else
-					return dealWith_string(cdr(input_str),result+input_str[0])
-			}
-
-			var rest_result = dealWith_string(cdr(input_str),"")
-			var _result_ = ["quote",rest_result[1]]
-			result.push(_result_)
-			return new_lexer_iter(rest_result[0],result)
-		}
-		// atom or number
-		else{
-			var getString = function(input_str,result){
-				if (input_str=="")
-					return ["",result]
-				else if (input_str[0]=="(" || input_str[0]==" " || input_str[0]=="\t" || input_str[0]=="\n" || input_str[0]==")")
-					return [input_str,result]
-				else
-					return getString(cdr(input_str),result+input_str[0])
-			}
-			var rest_result = getString(input_str,"")
-            // if it is number
-            //if (isNumber(rest_result[1]))
-            //    rest_result[1] = parseFloat(rest_result[1])
-			result.push(rest_result[1])
-			return new_lexer_iter(rest_result[0],result)
-		}
-	}
-	var result = new_lexer_iter(input_str,[])
-	return result	
-}
 
 /*
 	7 primitive functions
 	quote atom eq car cdr cons cond
-
 */
 // convert array to linked list
 // [1,2,3] -> [1,[2,[3,[]]]]
@@ -142,11 +30,7 @@ var listToArray = function(arg){
     return output
 }
 var quote = function(arg){
-    if (typeof(arg) == 'string')
-        return arg
-    else
-        // return [type, value]
-        return arrayToList(arg)
+    return arg
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
@@ -173,39 +57,18 @@ var car = function ( arg ){
 	}
 	return arg[0]
 }
-var cdr = function ( arg ){
-	if (arg.length==0){
-		console.log("Error...cannot get cdr of empty list")
-        return 'undefined'
-	}
-	return arg.slice(1,arg.length)
-}
 
-var CDR = function (arg){
+var cdr = function (arg){
     if (arg.length==0){
         console.log("Error...cannot get cdr of empty list")
         return 'undefined'
     }
     return arg[1]
 }
-var CONS = function(value1, value2){
+var cons = function(value1, value2){
     return [value1,value2]
 }
 
-var cons = function (value1, value2){
-	var type1 = typeof(value1)
-	var type2 = typeof(value2)
-	if (type1=="string" && type2=="string")
-		return value1+value2
-	else if (type2!="string"){
-        value2.splice(0,0,value1)
-        return value2
-	}
-	else{
-		console.log("Error...Function cons param type error")
-		return ""
-	}
-}
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
 		return []
@@ -373,20 +236,20 @@ var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_dig
         return "Unknown_or_Invalid"
     }
     else if (input_str[0]=="e")
-        return checkTypeOfNum(cdr(input_str),num_of_e+1,num_of_dot,num_of_slash,has_digit)
+        return checkTypeOfNum(input_str.slice(1),num_of_e+1,num_of_dot,num_of_slash,has_digit)
     else if (input_str[0]==".")
-        return checkTypeOfNum(cdr(input_str),num_of_e,num_of_dot+1,num_of_slash,has_digit)
+        return checkTypeOfNum(input_str.slice(1),num_of_e,num_of_dot+1,num_of_slash,has_digit)
     else if (input_str[0]=='/')
-        return checkTypeOfNum(cdr(input_str),num_of_e,num_of_dot,num_of_slash+1,has_digit)
+        return checkTypeOfNum(input_str.slice(1),num_of_e,num_of_dot,num_of_slash+1,has_digit)
     else if (charIsDigit(input_str[0]))
-        return checkTypeOfNum(cdr(input_str),num_of_e,num_of_dot,num_of_slash,true)
+        return checkTypeOfNum(input_str.slice(1),num_of_e,num_of_dot,num_of_slash,true)
     else
         return "Unknown_or_Invalid"
 }
 // get type of num
 var typeOfNum = function(input_str){
     if (input_str[0]=="-")
-        return checkTypeOfNum(cdr(input_str),0,0,0,false)
+        return checkTypeOfNum(input_str.slice(1),0,0,0,false)
     return checkTypeOfNum(input_str,0,0,0,false)
 }
 
@@ -527,8 +390,9 @@ var toy = function(tree,env,module_name){
     //    return tree
     // the code below is removed... 
     // number
-    if (stringIsNumber(tree))
+    if (stringIsNumber(tree)!=false){
         return tree
+    }
         //return ['number',tree]
     // atom
     else if (typeof(tree)=="string")
@@ -536,29 +400,25 @@ var toy = function(tree,env,module_name){
     else
         if (typeof(tree[0])=='string'){
             // seven primitive functions
+            // (quote abc)
             if (tree[0]=="quote")
-                return quote(tree[1])
-                //return quote(toy(tree[1],env,module_name))
+                return quote(tree[1][0])
+            // (atom? abc)
             else if (tree[0]=="atom?")
-                return atom(toy(tree[1],env,module_name))
-            /*
-            else if (tree[0]=="number?"){
-                if (toy(tree[1],env,module_name)[0]=='number')
-                    return "1"
-                return []
-            }
-            // number data type
-            else if (tree[0]=="number"){
-                return tree
-            }*/
+                return atom(toy(tree[1][0],env,module_name))
+            // (eq a b)
             else if (tree[0]=="eq")
-                return eq(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
+                return eq(toy(tree[1][0],env,module_name),toy(tree[1][1][0],env,module_name))
+            // (car x)
             else if (tree[0]=="car")
-                return car(toy(tree[1],env,module_name))
+                return car(toy(tree[1][0],env,module_name))
+            // (cdr x)
             else if (tree[0]=="cdr")
-                return CDR(toy(tree[1],env,module_name))
-            else if (tree[0]=="cons")
-                return CONS(toy(tree[1],env,module_name),toy(tree[2],env,module_name))
+                return cdr(toy(tree[1][0],env,module_name))
+            // (cons x y)
+            else if (tree[0]=="cons"){
+                return cons(toy(tree[1][0],env,module_name),toy(tree[1][1][0],env,module_name))
+            }
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers
@@ -591,10 +451,10 @@ var toy = function(tree,env,module_name){
             }
             // (define var_name var_value)
             else if (tree[0]=="define"){
-                var var_name = tree[1]
+                var var_name = car(cdr(tree))
                 if (module_name!="")
                     var_name = module_name + "." + var_name
-                var var_value = toy(tree[2],env,module_name)
+                var var_value = toy(car(cdr(cdr(tree))),env,module_name)
                 // var_name exsit
                 if (var_name in env[env.length-1]){
                     console.log( "Error... "+var_name+" with value has been defined")
@@ -631,12 +491,12 @@ var toy = function(tree,env,module_name){
                             console.log("Error...In function set! "+var_name+" does not existed")
                     }
                 }
-                var var_name = tree[1]
+                var var_name = tree[1][0]
                 if (tree[0] == "set")
-                    var_name = toy(tree[1],env,module_name)
+                    var_name = toy(tree[1][0],env,module_name)
                 if (module_name!="")
                     var_name = module_name + "." + var_name
-                var var_value = toy(tree[2],env,module_name)
+                var var_value = toy(tree[1][1][0],env,module_name)
                 set_(var_name,env,var_value)
                 return var_value
 
@@ -645,20 +505,25 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="let"){
                 // add new env to env_list
             	// return new env_list
+                /*
+                    ((x 0)
+                     (y 12)
+                        )
+
+                */
                 var eval_let = function(expr , env_list){
-                    var i = 0
-                    while (i < expr.length){
-                        var var_name = expr[i][0]
-                        var return_value = toy(expr[i][1],env_list,module_name)
-                        
-                        env_list[env_list.length - 1][var_name] = return_value
-                        i=i+1
-                    }
+                    if (expr.length == 0)
+                        return;
+                    var var_name = car(car(expr))
+                    var var_value = toy(car(cdr(car(expr))),env,module_name)
+                    env_list[env_list.length-1][var_name] = var_value
+                    return eval_let(cdr(expr),env_list)
                 }
                 // 添加新的空 env
                 env.push({})
-                eval_let(tree[1],env)
-                var return_value = toy(tree[2],env,module_name)
+                eval_let(tree[1][0],env)
+                // (let ((x 1) (y 2)) (+ 3 4))
+                var return_value = toy(tree[1][1][0],env,module_name)
                 // delete 新加入的 env
                 env.pop()
                 return return_value
@@ -1285,17 +1150,6 @@ var _le_array_ = function(arr,env,module_name){
 var _ge_array_ = function(arr,env,module_name){
 	return _le_array_(arr.reverse(),env,module_name)
 }
-// 
-// exports to Nodejs 
-if (typeof(module)!="undefined"){
-    module.exports.parseString = parseString
-    module.exports.toy = toy 
-    module.exports.toy_language =toy_language
-    module.exports.printArray = printArray
-    module.exports.ENV_LIST = ENV_LIST
-    module.exports.display_ = display_
-    }
-
 
 var VirtualFileSystem = {}
 VirtualFileSystem["toy"] = [ [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] ], [ 'define', 'true', '1' ], [ 'define', 'false', [ 'quote', [  ] ] ], [ 'define', 'nil', [ 'quote', [  ] ] ], [ 'define', [ '#vector', 't' ], '1' ], [ 'define', [ '#vector', 'f' ], [ 'quote', [  ] ] ], [ 'define', '**', '^' ], [ 'define', 'cot', [ 'lambda', [ 'a' ], [ '/', '1', [ 'tan', 'a' ] ] ] ], [ 'define', 'sec', [ 'lambda', [ 'a' ], [ '/', '1', [ 'cos', 'a' ] ] ] ], [ 'define', 'csc', [ 'lambda', [ 'a' ], [ '/', '1', [ 'sin', 'a' ] ] ] ], [ 'define', 'list?', [ 'lambda', [ 'var' ], [ 'cond', [ [ 'atom?', 'var' ], 'false' ], [ [ 'vector?', 'var' ], 'false' ], [ '1', 'true' ] ] ] ], [ 'define', 'ref', [ 'lambda', [ 'arg', 'index' ], [ 'define', 'ref-iter', [ 'lambda', [ 'arg', 'index' ], [ 'cond', [ [ 'eq', '0', 'index' ], [ 'car', 'arg' ] ], [ [ 'null?', 'arg' ], [ 'quote', 'undefined' ] ], [ '1', [ 'ref-iter', [ 'cdr', 'arg' ], [ '-', 'index', '1' ] ] ] ] ] ], [ 'cond', [ [ 'list?', 'arg' ], [ 'ref-iter', 'arg', 'index' ] ], [ '1', [ 'quote', 'undefined' ] ] ] ] ], [ 'define', 'push*', [ 'lambda', [ 'arg', 'push_value' ], [ 'define', 'push-iter', [ 'lambda', [ 'arg', 'push_value' ], [ 'cond', [ [ 'null?', 'arg' ], [ 'cons', 'push_value', [ 'quote', [  ] ] ] ], [ '1', [ 'cons', [ 'car', 'arg' ], [ 'push-iter', [ 'cdr', 'arg' ], 'push_value' ] ] ] ] ] ], [ 'cond', [ [ 'list?', 'arg' ], [ 'push-iter', 'arg', 'push_value' ] ], [ '1', [ 'quote', 'undefined' ] ] ] ] ], [ 'define', 'push', [ 'macro', [ 'var_name', 'push_value' ], [ 'quasiquote', [ 'set!', [ 'unquote', 'var_name' ], [ 'push*', [ 'unquote', 'var_name' ], [ 'unquote', 'push_value' ] ] ] ] ] ], [ 'define', 'len', [ 'lambda', [ 'arg' ], [ 'define', 'len-iter', [ 'lambda', [ 'arg', 'count' ], [ 'cond', [ [ 'null?', 'arg' ], 'count' ], [ '1', [ 'len-iter', [ 'cdr', 'arg' ], [ '+', 'count', '1' ] ] ] ] ] ], [ 'len-iter', 'arg', '0' ] ] ], [ 'define', 'setq', [ 'macro', [ 'var_name', 'var_value' ], [ 'quasiquote', [ 'set', [ 'quote', [ 'unquote', 'var_name' ] ], [ 'unquote', 'var_value' ] ] ] ] ], [ 'define', 'test-hash', [ 'quote', [ ':a', '12', ':b', '13', ':c', [ 'lambda', [ 'x', 'y' ], [ '+', 'x', 'y' ] ] ] ] ], [ 'define', 'hash-keys', [ 'lambda', [ 'hash' ], [ 'cond', [ [ 'eq', 'hash', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ '1', [ 'cons', [ 'car', 'hash' ], [ 'hash-keys', [ 'cdr', [ 'cdr', 'hash' ] ] ] ] ] ] ] ], [ 'define', 'hash-get', [ 'lambda', [ 'x', 'key' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'quote', 'undefined' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'ref', 'x', '1' ] ], [ '1', [ 'hash-get', [ 'cdr', [ 'cdr', 'x' ] ], 'key' ] ] ] ] ], [ 'define', 'hash-set', [ 'lambda', [ 'x', 'key', 'value' ], [ 'define', 'hash-set-iter', [ 'lambda', [ 'x', 'x_copy', 'key', 'value', 'count' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'begin', [ 'push', 'x_copy', 'key' ], [ 'push', 'x_copy', 'value' ], 'x_copy' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'set-ref!', 'x', '1', 'value' ] ], [ '1', [ 'hash-set-iter', [ 'cdr', [ 'cdr', 'x' ] ], 'x_copy', 'key', 'value', [ '+', 'count', '1' ] ] ] ] ] ], [ 'hash-set-iter', 'x', 'x', 'key', 'value', '0' ] ] ], [ 'define', 'check-in', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'eq', 'y', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ [ 'eq', 'x', [ 'car', 'y' ] ], '1' ], [ '1', [ 'check-in', 'x', [ 'cdr', 'y' ] ] ] ] ] ], [ 'define', 'defun', [ 'macro', [ 'func-name', '&', 'rest' ], [ 'define', 'params', [ 'car', 'rest' ] ], [ 'define', 'body', [ 'cdr', 'rest' ] ], [ 'quasiquote', [ 'define', [ 'unquote', 'func-name' ], [ 'lambda', [ 'unquote', 'params' ], [ 'unquote', 'body' ] ] ] ] ] ], [ 'define', 'if', [ 'lambda', [ '&', 'params' ], [ 'define', 'judge', [ 'eval', [ 'ref', 'params', '0' ] ] ], [ 'cond', [ 'judge', [ 'eval', [ 'ref', 'params', '1' ] ] ], [ '1', [ 'eval', [ 'ref', 'params', '2' ] ] ] ] ] ], [ 'define', 'range-1', [ 'lambda', [ 'x' ], [ 'define', 'i', '0' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'x' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-2', [ 'lambda', [ 'x', 'y' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-3', [ 'lambda', [ 'x', 'y', 'interval' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'cond', [ [ '<=', 'interval', '0' ], [ 'while', [ '>', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ], [ '1', [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ] ], 'output' ] ], [ 'define', 'range', [ 'lambda', [ '&', 'params' ], [ 'cond', [ [ 'eq', [ 'len', 'params' ], '1' ], [ 'apply', 'range-1', 'params' ] ], [ [ 'eq', [ 'len', 'params' ], '2' ], [ 'apply', 'range-2', 'params' ] ], [ '1', [ 'apply', 'range-3', 'params' ] ] ] ] ], [ 'define', 'null?', [ 'lambda', [ 'x' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], '1' ], [ '1', [ 'quote', [  ] ] ] ] ] ], [ 'define', 'empty?', 'null?' ], [ 'define', 'append', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'x' ], 'y' ], [ '1', [ 'cons', [ 'car', 'x' ], [ 'append', [ 'cdr', 'x' ], 'y' ] ] ] ] ] ], [ 'define', 'dolist', [ 'macro', [ '&', 'params' ], [ 'define', 'var-name', [ 'car', 'params' ] ], [ 'define', 'iter-list', [ 'ref', 'params', '1' ] ], [ 'define', 'body', [ 'cdr', [ 'cdr', 'params' ] ] ], [ 'append', [ 'quasiquote', [ 'for', [ 'unquote', 'var-name' ], 'in', [ 'unquote', 'iter-list' ] ] ], 'body' ] ] ], [ 'define', 'list', [ 'lambda', [ '.', 'args' ], 'args' ] ], [ 'define', 'list-add', [ 'lambda', [ 'x', 'y' ], [ 'define', 'list-add-iter', [ 'lambda', [ 'x', 'y', 'result' ], [ 'cond', [ [ 'or', [ 'null?', 'x' ], [ 'null?', 'y' ] ], 'result' ], [ '1', [ 'list-add-iter', [ 'cdr', 'x' ], [ 'cdr', 'y' ], [ 'push', 'result', [ 'apply', '+', [ 'list', [ 'car', 'x' ], [ 'car', 'y' ] ] ] ] ] ] ] ] ], [ 'list-add-iter', 'x', 'y', [ 'quote', [  ] ] ] ] ], [ 'define', 'factorial', [ 'lambda', [ 'n' ], [ 'define', 'factorial-iter', [ 'lambda', [ 'n', 'result' ], [ 'cond', [ [ 'eq', 'n', '1' ], 'result' ], [ '1', [ 'factorial-iter', [ '-', 'n', '1' ], [ '*', 'result', 'n' ] ] ] ] ] ], [ 'factorial-iter', 'n', '1' ] ] ], [ 'display', [ 'len', [ 'quote', [ '1', '2', '3', '4' ] ] ] ], [ 'display', [ 'range', '2', '10' ] ] ]
@@ -1345,7 +1199,7 @@ var parseOneSentence = function (input_str){
             console.log("Error code 1")
             return ;
         }
-        return CONS(parseOneSentence(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
+        return cons(parseOneSentence(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
     }
     else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
         var flag;
@@ -1363,11 +1217,11 @@ var parseOneSentence = function (input_str){
             while (i!=input_str.length && input_str[i]!=' '){
                 i = i + 1
             }
-            return CONS(CONS(flag, CONS(input_str.slice(0,i),[])), parseOneSentence(input_str.slice(i)))
+            return cons(cons(flag, cons(input_str.slice(0,i),[])), parseOneSentence(input_str.slice(i)))
         }
         else{
             var i = indexOfLastBracket(input_str,1)
-            return CONS(CONS(flag, CONS(parseOneSentence(input_str.slice(2,i)), [])),parseOneSentence(input_str.slice(i+1)))
+            return cons(cons(flag, cons(parseOneSentence(input_str.slice(2,i)), [])),parseOneSentence(input_str.slice(i+1)))
         }
         // list
     }
@@ -1376,7 +1230,7 @@ var parseOneSentence = function (input_str){
         while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
             i = i + 1
         }
-        return CONS(input_str.slice(0,i),parseOneSentence(input_str.slice(i+1)))
+        return cons(input_str.slice(0,i),parseOneSentence(input_str.slice(i+1)))
     }
 }
 var formatList = function (list){
@@ -1442,6 +1296,7 @@ var TOY_Eval = function (input_str,env,module_name){
             var start = i
             i = indexOfLastBracket(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
+            console.log(parsed)
             toy(parsed,env,module_name)
             continue
         }
@@ -1458,17 +1313,32 @@ var TOY_Eval = function (input_str,env,module_name){
 var displayList = function (list){
     console.log(formatList(list))
 }
-var output = TOY_Parse("(define x (lambda (a b) (define x 12) (+ a b))) (define y 12) (define z 13)")
-console.log(output)
+var display = function(arg){
+    if (typeof(arg) == 'string')
+        console.log(arg)
+    // does not support vector yet
+    else 
+        displayList(arg)
+    return 'undefined'
+}
+//var output = TOY_Parse("(define x (lambda (a b) (define x 12) (+ a b))) (define y 12) (define z 13)")
+//console.log(output)
 //displayList(output)
 
 
+// 
+// exports to Nodejs 
+if (typeof(module)!="undefined"){
+    module.exports.TOY_Eval = TOY_Eval
+    module.exports.toy = toy 
+    module.exports.toy_language =toy_language
+    module.exports.printArray = printArray
+    module.exports.ENV_LIST = ENV_LIST
+    module.exports.display_ = display_
+    }
 
 
-
-
-
-
+TOY_Eval("(define x 12) (set! x 14) (cons 12 13) (let ((x '(1 2))(y 13)) (cons y x) ) ",ENV_LIST,"")
 
 
 
