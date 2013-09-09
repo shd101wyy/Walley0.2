@@ -30,7 +30,7 @@ var listToArray = function(arg){
     return output
 }
 var quote = function(arg){
-    return arg
+    return arg.slice(0)
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
@@ -85,17 +85,21 @@ var cond = function(tree,env,module_name){
 // (quasiquote '(1 ,(+ 1 2))) -> (1 3)
 // ((unquote x) x)
 var quasiquote = function(arg,env,module_name){
-    if (typeof(arg) === 'string')
-        return ;
-    else if (arg.length == 0){
-        return ;
+    var quasiquote_iter = function(arg0){
+        if (typeof(arg0) === 'string')
+            return arg0;
+        else if (arg0.length == 0){
+            return [];
+        }
+        else if (typeof(arg0[0]) == 'object' && arg0[0][0]=='unquote'){
+            return cons(toy(arg0[0][1][0],env,module_name), quasiquote(cdr(arg0),env,module_name))
+        }
+        else if (typeof(arg0[0]) === 'object')
+            return cons(quasiquote_iter(arg0[0],env,module_name), quasiquote(cdr(arg0),env,module_name))
+        // car(argo) is string
+        return cons(car(arg0), quasiquote_iter(cdr(arg0),env,module_name))
     }
-    else if (typeof(arg[0]) == 'object' && arg[0][0]=='unquote'){
-        arg[0] = toy(arg[0][1][0],env,module_name)
-    }
-    else if (typeof(arg[0]) === 'object')
-        quasiquote(arg[0],env,module_name)
-    return quasiquote(cdr(arg),env,module_name)
+    return quasiquote_iter(arg)
 }
 
 // get var_value according to var_name
@@ -190,19 +194,20 @@ var macroexpand = function(tree,env,module_name){
             return
         // rest
         if (a[0]=="&"){
-            env[env.length - 1][a[1]] = arrayToList(b)
+            env[env.length - 1][a[1][0]] = b
             return 
         }
         env[env.length - 1][a[0]] = b[0]
         return pairs(cdr(a),cdr(b),env)
     }
-    var vars = tree[0][1]
-    var stms = tree[0][2]
+    var vars = car(cdr(car(tree)))
+    var stms = cdr(cdr(car(tree)))
+    stms = cons('begin',stms)
     var params = cdr(tree)
     
     env.push({})
     pairs(vars,params,env)
-    var return_value = toy(stms[stms.length-1], toy_language(stms.slice(0,stms.length - 1), env, module_name),module_name)
+    var return_value = toy(stms, env, module_name)
     env.pop()
     return return_value
 }
@@ -530,14 +535,17 @@ var toy = function(tree,env,module_name){
             square : macro name
             (x) : params
             @(* ,x ,x) : return value that will run when calling macro
+
+                return
+                (macro (x) @(* ,x ,x))
             */
             else if (tree[0]=='macro'){
-                return ["macro",tree[1][0],tree[1][1]]
+                return tree
             }
             else if (tree[0]=="begin"){
                 tree = cdr(tree)
                 var value;
-                while(tree.length!=0){
+                while(tree.length!=0 && typeof(tree)!='string'){
                     value = toy(tree[0],env,module_name)
                     tree = tree[1]
                 }
@@ -548,8 +556,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="eval")
                 return toy(toy(tree[1][0],env,module_name),env,module_name)
             else if (tree[0]=="quasiquote"){
-                quasiquote(tree[1][0],env,module_name)
-                return tree[1][0]
+                return quasiquote(tree[1][0],env,module_name)
             }
             /*
             # load module
@@ -1169,7 +1176,7 @@ VirtualFileSystem["toy"] = [ [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] 
 
 // get ) index,
 // start is index of first (
-var indexOfLastBracket = function (input_str,start){
+var indexOfLastParenthesis = function (input_str,start){
     var count = 0
     for(var i = start; i < input_str.length; i = i + 1){
         if (input_str[i]=="("){
@@ -1204,7 +1211,7 @@ var parseOneSentence = function (input_str){
         return parseString(input_str.slice(i))
     }
     else if (input_str[0] == '('){
-        var i = indexOfLastBracket(input_str, 0)
+        var i = indexOfLastParenthesis(input_str, 0)
         if (i==-1){
             console.log("Error code 1")
             return ;
@@ -1221,19 +1228,29 @@ var parseOneSentence = function (input_str){
             flag = 'quasiquote'
         else
             flag = '#vector'
-        // atom
-        if (input_str[1]!='('){
-            var i = 1
-            while (i!=input_str.length && input_str[i]!=' '){
-                i = i + 1
-            }
-            return cons(cons(flag, cons(input_str.slice(1,i),[])), parseOneSentence(input_str.slice(i)))
-        }
-        else{
-            var i = indexOfLastBracket(input_str,1)
-            return cons(cons(flag, cons(parseOneSentence(input_str.slice(2,i)), [])),parseOneSentence(input_str.slice(i+1)))
-        }
-        // list
+
+        var dealWith_Quote_Unquote_Quasiquote = function (input_str , result , count_of_double_quote, count_of_bracket) {
+               if (input_str=="")
+                   return ["",result]
+               else if (count_of_bracket==0 && (input_str[0]=="\n" || input_str[0]==" "))
+                   return [input_str.slice(1) , result ]
+               else if (input_str[0]=="\"")
+                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+"\"" , count_of_double_quote+1 , count_of_bracket )
+               else if (input_str[0]=="(" && count_of_double_quote%2==0 )
+                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+"(" , count_of_double_quote, count_of_bracket+1 )
+               else if (input_str[0]==")" && count_of_double_quote%2==0 ){
+                   if (count_of_bracket==0)
+                       return [input_str ,result]
+                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+")", count_of_double_quote , count_of_bracket-1)
+               }
+               else
+                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1), result+input_str[0],count_of_double_quote,count_of_bracket)
+           }
+
+        var rest_result = dealWith_Quote_Unquote_Quasiquote(input_str.slice(1), "", 0, 0)
+        var rest = rest_result[0]
+        var result = rest_result[1]
+        return cons(cons(flag, parseOneSentence(result)), parseOneSentence(rest))
     }
     else {
         var i = 0
@@ -1280,7 +1297,7 @@ var TOY_Parse = function (input_str){
         }
         else if (input_str[i]=='('){
             var start = i
-            i = indexOfLastBracket(input_str, start)
+            i = indexOfLastParenthesis(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
             displayList(parsed)
             continue
@@ -1294,6 +1311,7 @@ var TOY_Parse = function (input_str){
     }
 }
 var TOY_Eval = function (input_str,env,module_name){
+    var return_value;
     for(var i = 0; i < input_str.length; i = i + 1){
         if (input_str[i] == ' ' || input_str[i] == '\t' || input_str[i] == '\n')
             continue
@@ -1304,11 +1322,13 @@ var TOY_Eval = function (input_str,env,module_name){
         }
         else if (input_str[i]=='('){
             var start = i
-            i = indexOfLastBracket(input_str, start)
+            i = indexOfLastParenthesis(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
-            console.log(parsed)
-            display(parsed)
-            console.log(toy(parsed,env,module_name))
+            
+            //console.log(parsed)
+            //display(parsed)
+            return_value = toy(parsed,env,module_name)
+            //display(return_value)
             continue
         }
         else{
@@ -1316,10 +1336,11 @@ var TOY_Eval = function (input_str,env,module_name){
             while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
                 i = i + 1
             }
-            toy(input_str.slice(start, i), env, module_name)
+            return_value = toy(input_str.slice(start, i), env, module_name)
             continue
         }
     }
+    return return_value
 }
 var displayList = function (list){
     console.log(formatList(list))
@@ -1345,12 +1366,12 @@ if (typeof(module)!="undefined"){
     module.exports.toy_language =toy_language
     module.exports.printArray = printArray
     module.exports.ENV_LIST = ENV_LIST
-    module.exports.display_ = display_
+    module.exports.display = display
     }
 
-
-TOY_Eval("(define x 2) (display @(x (unquote x) (12 ,x) )) ",ENV_LIST,"")
-
+var output = "(define square (macro (x) @(* ,x ,x))) (square 12)"
+//display( parseOneSentence(output) )
+TOY_Eval(output,ENV_LIST,"")
 
 
 
