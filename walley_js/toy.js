@@ -83,25 +83,19 @@ var cond = function(tree,env,module_name){
 #======= builtin functions =============
 */
 // (quasiquote '(1 ,(+ 1 2))) -> (1 3)
+// ((unquote x) x)
 var quasiquote = function(arg,env,module_name){
-    var calculateQuote = function(quote_value,env,module_name){
-        // a
-        if (typeof(quote_value)=="string")
-            return quote_value
-        // [unquote a]
-        else if (quote_value.length==2 && typeof(quote_value[0])==="string" && quote_value[0]=="unquote" )
-            return toy(quote_value[1],env,module_name)
-        else{
-            var output=[]
-            var i = 0
-            while (i<quote_value.length){
-            	output.push(calculateQuote(quote_value[i],env,module_name))
-                i = i + 1
-            }
-            return output
-        }
+    if (typeof(arg) === 'string')
+        return ;
+    else if (arg.length == 0){
+        return ;
     }
-    return calculateQuote(arg,env,module_name)
+    else if (typeof(arg[0]) == 'object' && arg[0][0]=='unquote'){
+        arg[0] = toy(arg[0][1][0],env,module_name)
+    }
+    else if (typeof(arg[0]) === 'object')
+        quasiquote(arg[0],env,module_name)
+    return quasiquote(cdr(arg),env,module_name)
 }
 
 // get var_value according to var_name
@@ -553,8 +547,10 @@ var toy = function(tree,env,module_name){
                 return toy(cons(tree[1][0],toy(tree[1][1][0],env,module_name)),env,module_name)
             else if (tree[0]=="eval")
                 return toy(toy(tree[1][0],env,module_name),env,module_name)
-            else if (tree[0]=="quasiquote")
-                return quasiquote(tree[1][0],env,module_name)
+            else if (tree[0]=="quasiquote"){
+                quasiquote(tree[1][0],env,module_name)
+                return tree[1][0]
+            }
             /*
             # load module
             # (load a) will import content in a with module_name ""
@@ -1231,7 +1227,7 @@ var parseOneSentence = function (input_str){
             while (i!=input_str.length && input_str[i]!=' '){
                 i = i + 1
             }
-            return cons(cons(flag, cons(input_str.slice(0,i),[])), parseOneSentence(input_str.slice(i)))
+            return cons(cons(flag, cons(input_str.slice(1,i),[])), parseOneSentence(input_str.slice(i)))
         }
         else{
             var i = indexOfLastBracket(input_str,1)
@@ -1311,6 +1307,7 @@ var TOY_Eval = function (input_str,env,module_name){
             i = indexOfLastBracket(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
             console.log(parsed)
+            display(parsed)
             console.log(toy(parsed,env,module_name))
             continue
         }
@@ -1352,7 +1349,7 @@ if (typeof(module)!="undefined"){
     }
 
 
-TOY_Eval("(define add (lambda (a b) (+ a b))) (add 3 4) ",ENV_LIST,"")
+TOY_Eval("(define x 2) (display @(x (unquote x) (12 ,x) )) ",ENV_LIST,"")
 
 
 
