@@ -1303,6 +1303,182 @@ VirtualFileSystem["toy"] = [ [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] 
 
 
 
+// get ) index,
+// start is index of first (
+var indexOfLastBracket = function (input_str,start){
+    var count = 0
+    for(var i = start; i < input_str.length; i = i + 1){
+        if (input_str[i]=="("){
+            count+=1
+            continue
+        }
+        else if (input_str[i]==")"){
+            count-=1
+            if (count==0){
+                return i
+            }
+            continue
+        }
+    }
+    return -1
+}
+/*
+    one complete statement at a time
+    (define x 12) -> ['define' ['x' ['12' []]]]
+                     linked list
+    only valid () string
+    no atom, comment...
+*/
+var parseOneSentence = function (input_str){
+    if (input_str == "")
+        return []
+    else if (input_str[0] == ' ' || input_str[0] == '\t' || input_str[0] == '\n')
+        return parseOneSentence(input_str.slice(1))
+    else if (input_str[0]==";"){
+        // ; 123\n4 -> 4
+        while( i!=input_str.length && input_str[i]!='\n'){i++}
+        return parseString(input_str.slice(i))
+    }
+    else if (input_str[0] == '('){
+        var i = indexOfLastBracket(input_str, 0)
+        if (i==-1){
+            console.log("Error code 1")
+            return ;
+        }
+        return CONS(parseOneSentence(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
+    }
+    else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
+        var flag;
+        if (input_str[0]=="'")
+            flag = 'quote'
+        else if (input_str[0]==',')
+            flag = 'unquote'
+        else  if (input_str[0]=='@')
+            flag = 'quasiquote'
+        else
+            flag = '#vector'
+        // atom
+        if (input_str[1]!='('){
+            var i = 1
+            while (i!=input_str.length && input_str[i]!=' '){
+                i = i + 1
+            }
+            return CONS(CONS(flag, CONS(input_str.slice(0,i),[])), parseOneSentence(input_str.slice(i)))
+        }
+        else{
+            var i = indexOfLastBracket(input_str,1)
+            return CONS(CONS(flag, CONS(parseOneSentence(input_str.slice(2,i)), [])),parseOneSentence(input_str.slice(i+1)))
+        }
+        // list
+    }
+    else {
+        var i = 0
+        while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
+            i = i + 1
+        }
+        return CONS(input_str.slice(0,i),parseOneSentence(input_str.slice(i+1)))
+    }
+}
+var formatList = function (list){
+    var display_string = ""
+    while(1){
+        if (typeof(list[0]) == 'string')
+            display_string = display_string + ' ' + list[0]
+        else
+            display_string = display_string + ' ' + formatList(list[0])
+        list = list[1]
+        if(list.length == 0)
+            break
+        if(typeof(list) == 'string'){
+            display_string = display_string + ' . ' + list
+            break
+        }
+    }
+    display_string += ')'
+    display_string = display_string.slice(1)
+    display_string = "(" + display_string
+    return display_string
+}
+/*
+    mode :
+        parse    0
+        eval     1
+        compile  2
+*/
+var TOY_Parse = function (input_str){
+    for(var i = 0; i < input_str.length; i = i + 1){
+        if (input_str[i] == ' ' || input_str[i] == '\t' || input_str[i] == '\n')
+            continue
+        else if (input_str[i]==";"){
+            // ; 123\n4 -> 4
+            while( i!=input_str.length && input_str[i]!='\n'){i++}
+            continue
+        }
+        else if (input_str[i]=='('){
+            var start = i
+            i = indexOfLastBracket(input_str, start)
+            var parsed = parseOneSentence(input_str.slice(start+1,i))
+            displayList(parsed)
+            continue
+        }
+        else{
+            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
+                i = i + 1
+            }
+            continue
+        }
+    }
+}
+var TOY_Eval = function (input_str,env,module_name){
+    for(var i = 0; i < input_str.length; i = i + 1){
+        if (input_str[i] == ' ' || input_str[i] == '\t' || input_str[i] == '\n')
+            continue
+        else if (input_str[i]==";"){
+            // ; 123\n4 -> 4
+            while( i!=input_str.length && input_str[i]!='\n'){i++}
+            continue
+        }
+        else if (input_str[i]=='('){
+            var start = i
+            i = indexOfLastBracket(input_str, start)
+            var parsed = parseOneSentence(input_str.slice(start+1,i))
+            toy(parsed,env,module_name)
+            continue
+        }
+        else{
+            var start = i
+            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
+                i = i + 1
+            }
+            toy(input_str.slice(start, i), env, module_name)
+            continue
+        }
+    }
+}
+var displayList = function (list){
+    console.log(formatList(list))
+}
+var output = TOY_Parse("(define x (lambda (a b) (define x 12) (+ a b))) (define y 12) (define z 13)")
+console.log(output)
+//displayList(output)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
