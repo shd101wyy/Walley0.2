@@ -68,13 +68,18 @@ var cdr = function (arg){
 var cons = function(value1, value2){
     return [value1,value2]
 }
-
+/*
+    (cond
+        (0 12)
+        (1 13)
+        )
+*/
 var cond = function(tree,env,module_name){
 	if (tree.length==0)
 		return []
     // true
 	if (toy(tree[0][0],env,module_name).length!=0)
-		return toy(tree[0][1],env,module_name)
+		return toy(tree[0][1][0],env,module_name)
 	return cond(cdr(tree),env,module_name)
 }
 
@@ -827,12 +832,12 @@ var toy = function(tree,env,module_name){
                         return output
                     // calculate params
                     else if (names[0]=="."){
-                        output[names[1][0]] =  arrayToList(evlis(params,env,module_name))
+                        output[names[1][0]] =  evlis(params,env,module_name)
                         return output
                     }
                     // lazy and does not calculate params
                     else if (names[0]=="&"){
-                        output[names[1][0]] = arrayToList(params)
+                        output[names[1][0]] = params
                         return output
                     }
                     else{               
@@ -850,7 +855,6 @@ var toy = function(tree,env,module_name){
                 env.push(output)
                 
                 var stms = cons('begin', cdr(cdr(car(tree))))
-                display(stms)                
                 var return_value = toy(stms, env , module_name)
                 // delete 新加入的 env
                 env.pop()
@@ -1173,6 +1177,23 @@ VirtualFileSystem["toy"] = [ [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] 
 
 
 
+var indexOfLastBracket = function (input_str,start,check_str){
+    var count = 0
+    for(var i = start; i < input_str.length; i = i + 1){
+        if (input_str[i]=="["){
+            count+=1
+            continue
+        }
+        else if (input_str[i]=="]"){
+            count-=1
+            if (count==0){
+                return i
+            }
+            continue
+        }
+    }
+    return -1
+}
 
 // get ) index,
 // start is index of first (
@@ -1201,14 +1222,15 @@ var indexOfLastParenthesis = function (input_str,start){
     no atom, comment...
 */
 var parseOneSentence = function (input_str){
-    if (input_str == "")
+    if (input_str == "" )
         return []
     else if (input_str[0] == ' ' || input_str[0] == '\t' || input_str[0] == '\n')
         return parseOneSentence(input_str.slice(1))
     else if (input_str[0]==";"){
         // ; 123\n4 -> 4
+        var i = 0
         while( i!=input_str.length && input_str[i]!='\n'){i++}
-        return parseString(input_str.slice(i))
+        return parseOneSentence(input_str.slice(i))
     }
     else if (input_str[0] == '('){
         var i = indexOfLastParenthesis(input_str, 0)
@@ -1216,7 +1238,13 @@ var parseOneSentence = function (input_str){
             console.log("Error code 1")
             return ;
         }
-        return cons(parseOneSentence(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
+        var arg0 = parseOneSentence(input_str.slice(1,i))
+        var arg1 = parseOneSentence(input_str.slice(i+1))
+        return cons( arg0, arg1  )
+    }
+    // vector
+    else if (input_str[0] == '['){
+        var i = indexOfLastBracket(input_str,0)
     }
     else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
         var flag;
@@ -1263,17 +1291,18 @@ var parseOneSentence = function (input_str){
 var formatList = function (list){
     var display_string = ""
     while(1){
-        if (typeof(list[0]) == 'string')
-            display_string = display_string + ' ' + list[0]
-        else
-            display_string = display_string + ' ' + formatList(list[0])
-        list = list[1]
-        if(list.length == 0)
-            break
         if(typeof(list) == 'string'){
             display_string = display_string + ' . ' + list
             break
         }
+        if(list.length == 0)
+            break
+        if (typeof(list[0]) == 'string')
+            display_string = display_string + ' ' + list[0]
+        else{
+            display_string = display_string + ' ' + formatList(list[0])
+        }
+        list = list[1]
     }
     display_string += ')'
     display_string = display_string.slice(1)
@@ -1328,7 +1357,7 @@ var TOY_Eval = function (input_str,env,module_name){
             //console.log(parsed)
             //display(parsed)
             return_value = toy(parsed,env,module_name)
-            //display(return_value)
+           // display(return_value)
             continue
         }
         else{
@@ -1369,9 +1398,9 @@ if (typeof(module)!="undefined"){
     module.exports.display = display
     }
 
-var output = "(define square (macro (x) @(* ,x ,x))) (square 12)"
+//var output = "(x)(+)"
 //display( parseOneSentence(output) )
-TOY_Eval(output,ENV_LIST,"")
+//TOY_Eval(output,ENV_LIST,"")
 
 
 

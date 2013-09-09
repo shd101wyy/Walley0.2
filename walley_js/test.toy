@@ -14,7 +14,7 @@
   (lambda (var)
     (cond
      ((atom? var) false)
-     ((vector? var) false)
+     ;;((vector? var) false)
      (1 true)
      )
     )
@@ -347,7 +347,7 @@
     (factorial-iter n 1)
     )
   )
-
-(display (len '(1 2 3 4)))
-(display (range 2 10))
+(display '(1 2 3 4))
+(display (push* '(23 2 3) 'abc))
+(display (range 2 10 2))
 
