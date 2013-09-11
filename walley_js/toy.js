@@ -617,18 +617,6 @@ var toy = function(tree,env,module_name){
                 // here has some problem ... 
             	return env
             }
-            // Num data type
-            // int
-            else if (tree[0]==1){
-                return new Number(parseInt(tree[1]), 'int')
-            }
-            // float
-            else if (tree[0]==2){
-                return new Number(parseFloat(tree[1]), 'float')
-            }
-            else if (tree[0]==3){
-                return new Number(parseFloat(tree[1]), 'fraction')
-            }
             // mutable list funcions
             // set-car! set-cdr!
             else if (tree[0]=='set-car!'){
@@ -851,6 +839,20 @@ var toy = function(tree,env,module_name){
                     return "undefined"
                 }
                 return toy(cons(value , cdr(tree)),env,module_name)
+            }
+        }
+        else if (typeof(tree[0]) === 'number'){
+            // Num data type
+            // int
+            if (tree[0]===1){
+                return new Number(parseInt(tree[1]), 'int')
+            }
+            // float
+            else if (tree[0]===2){
+                return new Number(parseFloat(tree[1]), 'float')
+            }
+            else if (tree[0]===3){
+                return new Number(parseFloat(tree[1]), 'fraction')
             }
         }
         else{
@@ -1489,6 +1491,9 @@ var display = function(arg){
     // does not support vector yet
     else if (arg.constructor == Vector){
         console.log(formatArrayString(arg.value))    
+    }
+    else if (arg.constructor == Number){
+        console.log(arg.value)    
     }
     else 
         displayList(arg)
