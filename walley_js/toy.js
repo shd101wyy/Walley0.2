@@ -288,6 +288,15 @@ var Vector = function(init_value){
     this.value = init_value
 }
 
+// type                 func_number
+//          int             1
+//          float           2
+//          rational        3
+var Number = function(value, type){
+    this.value = value
+    this.type = type
+}
+
 /*
     TOY DATA TYPE
 
@@ -400,7 +409,10 @@ var toy = function(tree,env,module_name){
     //    return tree
     // the code below is removed... 
     // number
-    if (stringIsNumber(tree)!=false){
+    //if (stringIsNumber(tree)!=false){
+    //    return tree
+    //}
+    if (tree.constructor == Number){
         return tree
     }
         //return ['number',tree]
@@ -605,7 +617,18 @@ var toy = function(tree,env,module_name){
                 // here has some problem ... 
             	return env
             }
-
+            // Num data type
+            // int
+            else if (tree[0]==1){
+                return new Number(parseInt(tree[1]), 'int')
+            }
+            // float
+            else if (tree[0]==2){
+                return new Number(parseFloat(tree[1]), 'float')
+            }
+            else if (tree[0]==3){
+                return new Number(parseFloat(tree[1]), 'fraction')
+            }
             // mutable list funcions
             // set-car! set-cdr!
             else if (tree[0]=='set-car!'){
@@ -1329,10 +1352,30 @@ var parseOneSentence = function (input_str){
     }
     else {
         var i = 0
+        // should check for / fraction when loading
+        // if found /, then check ahead.
+        // if ahead is number
+        // then assume that is fraction
+        // and behind must be number
         while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
             i = i + 1
         }
-        return cons(input_str.slice(0,i),parseOneSentence(input_str.slice(i+1)))
+        var the_atom = input_str.slice(0,i)
+        var type = stringIsNumber(the_atom)
+        if (type!=false){
+            var func_index
+            if(type == "Integer"){
+                func_index = 1
+            }
+            else if (type == "Float"){
+                func_index = 2
+            }
+            else if (type == "Fraction"){
+                func_index = 3
+            }
+            return cons([func_index,  the_atom], parseOneSentence(input_str.slice(i+1)) )
+        }
+        return cons(the_atom, parseOneSentence(input_str.slice(i+1)))
     }
 }
 /*
