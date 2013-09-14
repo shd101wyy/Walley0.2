@@ -806,23 +806,46 @@ var toy = function(tree,env,module_name){
             }
             // implement math functions
             else if (tree[0]=="^"){
+                var isInt = function(n){
+                    return n % 1 === 0
+                }
                 var value1 = toy(tree[1][0],env,module_name)
                 var power = toy(tree[1][1][0],env,module_name)
+                if (value1.type == 'rational'){
+                    var numer = Math.pow(value1.numer, power.numer/power.denom)
+                    var denom = Math.pow(value1.denom, power.numer/power.denom)
+                    if (isInt(numer) && isInt(denom))
+                        return new Number(numer, denom, 'rational')
+                    return new Number(numer/denom, 1, 'float')
+                }
+                else{
+                    var answer = toy(Math.pow( value1.numer/value1.denom  , power.numer/power.denom ))
+                    if (isInt(answer))
+                        return new Number(answer, 1, 'int')
+                    return new Number(answer, 1, 'float')
+                }
                 return str(Math.pow(eval(value1),eval(power)))
             }
             else if (tree[0]=="sin"){
                 var value = toy(tree[1][0],env,module_name)
-                return str(Math.sin(eval(value)))
+                return new Number(Math.sin(value.numer / value.denom), 1, 'float')
             }
             else if (tree[0]=='cos'){
                 var value = toy(tree[1][0],env,module_name)
-                return str(Math.cos(eval(value)))
+                return new Number(Math.cos(value.numer / value.denom), 1, 'float')
             }
             else if (tree[0]=='tan'){
                 var value = toy(tree[1][0],env,module_name)
-                return str(Math.tan(eval(value)))
+                return new Number(Math.tan(value.numer / value.denom), 1, 'float')
             }
-
+            else if (tree[0]=='exp'){
+                var value = toy(tree[1][0],env, module_name)
+                return new Number(Math.exp(value.numer / value.denom), 1, 'float')
+            }
+            else if (tree[0]=='log'){
+                var value = toy(tree[1][0],env, module_name)
+                return new Number(Math.log(value.numer / value.denom), 1, 'float')
+            }
             // defmacro
             /*
 
