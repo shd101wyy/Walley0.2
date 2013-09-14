@@ -926,6 +926,17 @@ var toy = function(tree,env,module_name){
                 }
                 return 'undefined'
             }
+            // file io
+            else if (tree[0]=='file-read'){
+                var file_name = toy(tree[1][0],env,module_name)
+                return new Vector(file_read(file_name))
+            }
+            else if (tree[0]=='file-write'){
+                var file_name = toy(tree[1][0],env,module_name)
+                var write_string = toy(tree[1][1][0],env,module_name)
+                file-write(file_name, write_string)
+                return 'undefined'
+            }
             /*
                 (macroexpand '(square 3))
                 -> (* 3 3)

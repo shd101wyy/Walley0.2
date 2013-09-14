@@ -6,6 +6,23 @@ var util=require("util")
 var readline = require('readline')
 var argv = process.argv
 console.log(argv)
+
+// read file and return array
+var file_read = function(file_name){
+    var content_in_file=fs.readFileSync(file_name,"utf8")   
+    return content_in_file.split('\n')
+}
+
+// write string to file
+var file_write = function(file_name, write_line){
+    fs.writeFile(file_name, write_line, function(err) {
+        if(err) {
+            console.log(err);
+        } else {
+            //console.log("The file was saved!");
+        }
+    }); 
+}
 // REPL
 if (argv.length==2){
 	
