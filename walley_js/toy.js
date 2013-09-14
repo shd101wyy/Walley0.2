@@ -34,19 +34,19 @@ var quote = function(arg){
 }
 var atom = function( input_str ){
 	if (typeof(input_str)=="string")
-		return "1"
+		return "true"
 	return []
 }
 var eq = function(arg0, arg1){
 	// "" eq [] 
 	if (arg0.length==0 && arg1.length==0)
-		return "1"
+		return "true"
 	var type0 = typeof(arg0)
 	var type1 = typeof(arg1)
 	if (type0!=type1)
 		return []
 	else if (arg0==arg1)
-		return "1"
+		return "true"
 	else
 		return []
 }
@@ -141,7 +141,7 @@ var append = function(x,y){
 
 var number_ = function (value){
     if (stringIsNumber(value))
-        return "1"
+        return "true"
     return []
 }
 
@@ -395,29 +395,21 @@ var ENV_LIST = [{
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'vector':'vector','vector?':'vector?','#vector':'#vector',
     'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
-    'while':'while','for':'for'
+    'while':'while','for':'for',
+    'true':'true','false':[]
     }]
 
 
 var toy = function(tree,env,module_name){
 	if (typeof(module_name)==="undefined")
 		module_name = ""
-    // number
-    //else if (typeof(tree) === "number")
-    //    return tree
-    // the code below is removed... 
-    // number
-    //if (stringIsNumber(tree)!=false){
-    //    return tree
-    //}
-    if (tree.constructor == Number)
-        return tree
-    else if (typeof(tree) == 'number')
+
+    if (typeof(tree)=="string")
+        return assoc(tree,env)
+    else if (tree.constructor == Number || tree.constructor == Vector)
         return tree
         //return ['number',tree]
     // atom
-    else if (typeof(tree)=="string")
-        return assoc(tree,env)
     else
         if (typeof(tree[0])=='string'){
             // seven primitive functions
@@ -632,7 +624,6 @@ var toy = function(tree,env,module_name){
                 embed data type
             */
             else if (tree[0]=='#vector'){
-                console.log(tree)
                 var value_tree = tree[1]
                 var i = 0
                 while (i < value_tree.length){
@@ -660,7 +651,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=='vector?'){
                 var value = toy(tree[1],env,module_name)
                 if (value.constructor == Vector)
-                    return "1"
+                    return "true"
                 return []
             }
             // (vector-ref [1,2,3] 0) -> 1
@@ -1104,7 +1095,7 @@ var _div_array_ = function(arr){
 var _and_array_ = function(arr,env,module_name){
 		// pass
 		if (arr.length==0)
-			return "1"
+			return "true"
 		else if (toy(arr[0],env,module_name).length == 0)
 			return []
 		return _and_array_(cdr(arr),env,module_name)
@@ -1114,13 +1105,13 @@ var _or_array_ = function(arr,env,module_name){
 		if (arr.length==0)
 			return []
 		else if (toy(arr[0],env,module_name).length!=0)
-			return "1"
+			return "true"
 		return _or_array_(cdr(arr),env,module_name)
 }
 var _not_ = function(value,env,module_name){
 	var value = toy(value,env,module_name)
 	if (value.length == 0)
-		return "1"
+		return "true"
 	return []
 }
 // 结束定义 and or
@@ -1131,11 +1122,11 @@ var _lt_two_values = function(value1,value2){
 		return []
     if (value1.constructor == Number && value2.constructor == Number){
         if (value1.numer/value1.denom < value2.numer/value2.denom)
-            return "1"
+            return "true"
         return []
     }
 	if (value1<value2)
-	    return "1"
+	    return "true"
 	else
 	    return []   
 }
@@ -1144,7 +1135,7 @@ var _lt_array_ = function(arr,env,module_name){
 	var _lt_array_iter_ = function(ahead,rest,env,module_name){
 		// finish
 		if (rest.length==0)
-			return "1"
+			return "true"
 		else{
 			var value2 = toy(rest[0],env,module_name)
 			if (_lt_two_values(ahead,value2).length==0)
@@ -1182,7 +1173,7 @@ var _equal_two_values = function(value1,value2){
 				return []
 			i=i+1
 		}
-		return "1"
+		return "true"
 	}
 	var type1 = typeof(value1)
 	var type2 = typeof(value2)
@@ -1191,7 +1182,7 @@ var _equal_two_values = function(value1,value2){
 	else{
         if (value1.constructor == Number && value2.constructor == Number){
             if (value1.numer/valu1.denom == value2.numer/value2.denom)
-                return "1"
+                return "true"
             else
                 return []
         }
@@ -1199,7 +1190,7 @@ var _equal_two_values = function(value1,value2){
 			return _equal_two_arrays_(value1,value2)
 		}
 		if (value1 == value2)
-			return "1"
+			return "true"
 		return []
 	}
 }
@@ -1209,7 +1200,7 @@ var _equal_array_ = function(arr,env,module_name){
 	var _equal_array_iter_ = function(ahead,rest,env,module_name){
 		// finish
 		if (rest.length==0)
-			return "1"
+			return "true"
 		else{
 			var value2 = toy(rest[0],env,module_name)
 			if (_equal_two_values(ahead,value2).length==0)
@@ -1227,14 +1218,14 @@ var _equal_array_ = function(arr,env,module_name){
 // <=
 var _le_two_values = function(value1,value2){
 	if (_lt_two_values(value1,value2).length!=0 || _equal_two_values(value1,value2).length!=0)
-		return "1"
+		return "true"
 	return []
 }
 var _le_array_ = function(arr,env,module_name){
 	var _le_array_iter_ = function(ahead,rest,env,module_name){
 		// finish
 		if (rest.length==0)
-			return "1"
+			return "true"
 		else{
 			value2 = toy(rest[0],env,module_name)
 			if (stringIsNumber(value2))
