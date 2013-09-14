@@ -632,6 +632,7 @@ var toy = function(tree,env,module_name){
                 embed data type
             */
             else if (tree[0]=='#vector'){
+                console.log(tree)
                 var value_tree = tree[1]
                 var i = 0
                 while (i < value_tree.length){
@@ -664,18 +665,22 @@ var toy = function(tree,env,module_name){
             }
             // (vector-ref [1,2,3] 0) -> 1
             else if (tree[0]=="vector-ref"){
-                var index = parseInt(toy(tree[1][1][0],env,module_name))
+                var index = toy(tree[1][1][0],env,module_name)
                 var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-ref wrong type var")
                     return 'undefined'
                 }
+                if (index.constructor!=Number || index.type != 'int'){
+                    console.log("Error...function vector-ref invalid index")
+                    return 'undefined'
+                }
 
-                if (index<0 || index>=value.length){
+                if (index.numer<0 || index.numer>=value.length){
                     console.log("Error...ref index out of boundary")
                     return 'undefined'
                 }
-                return value.value[index]
+                return value.value[index.numer]
             }
             // (len '(a b c)) ->3
             // get length of value
@@ -685,26 +690,34 @@ var toy = function(tree,env,module_name){
                     console.log("Error...function vector-len wrong type var")
                     return 'undefined'
                 }
-                return str(value.value.length)
+                return new Number(value.value.length, 1, 'int')
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="vector-slice"){
-                var left = parseInt(toy(tree[1][1][0],env,module_name))
-                var right = parseInt(toy(tree[1][1][1][0],env,module_name))
+                var left = toy(tree[1][1][0],env,module_name)
+                var right = toy(tree[1][1][1][0],env,module_name)
                 var value = toy(tree[1][0],env,module_name)
                 if (value.constructor != Vector){
                     console.log("Error...function vector-slice wrong type var")
                     return 'undefined'
                 }
-                if (left<0){
+                if (left.constructor!=Number || left.type!='int'){
+                    console.log("Error...function vector-slice left index error")
+                    return 'undefined'
+                }
+                if (right.constructor!=Number || right.type!='int'){
+                    console.log("Error...function vector-slice left index error")
+                    return 'undefined'
+                }
+                if (left.numer<0){
                     console.log("Error...slice left index < 0")
                     return 'undefined'
                 }
-                if (right > value.length){
+                if (right.numer > value.length){
                     console.log("Error...slice right index out of boundary")
                     return 'undefined'
                 }
-                return new Vector(value.value.slice(left,right))
+                return new Vector(value.value.slice(left.numer,right.numer))
             }
 
             // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
@@ -717,7 +730,11 @@ var toy = function(tree,env,module_name){
                     console.log("Error...function vector-set! wrong type var")
                     return 'undefined'
                 }
-                var_value.value[index0] = set_value
+                if (index0.constructor!=Number || index0.type!="int"){
+                    console.log("Error...function vector-set! wrong index")
+                    return 'undefined'
+                }
+                var_value.value[index0.numer] = set_value
                 return var_value
             }
             else if (tree[0] == 'vector-push'){
@@ -1260,6 +1277,28 @@ var indexOfLastParenthesis = function (input_str,start){
     }
     return -1
 }
+
+// 12 -> Number(12,1,'int')
+// if its type is not Number
+// return itself
+var formatNumber = function(input_str){
+    var type = stringIsNumber(input_str)
+    if (type!=false){
+        var append_obj
+        if(type == "Integer"){
+            append_obj = new Number(parseInt(input_str), 1, 'int')
+        }
+        else if (type == "Float"){
+            append_obj = new Number(parseFloat(input_str), 1 ,'float')
+        }
+        else if (type == "Fraction"){
+            append_obj = new Number(parseInt(get_numerator(input_str)), parseInt(get_denominator(input_str)), 'rational')
+        }
+        return append_obj
+    }
+    return input_str
+}
+
 // a b c d -> ['a','b','c','d']
 var formatArray = function(input_str){
     var output = []
@@ -1287,8 +1326,8 @@ var formatArray = function(input_str){
             while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
                 i = i + 1
             }
-            output.push(input_str.slice(start, i))
-            continue
+            var the_atom = input_str.slice(start,i)
+            output.push(formatNumber(the_atom))
         }
     }
     return ["#vector", output]
@@ -1371,22 +1410,7 @@ var parseOneSentence = function (input_str){
             i = i + 1
         }
         var the_atom = input_str.slice(0,i)
-        var type = stringIsNumber(the_atom)
-        if (type!=false){
-            var func_index
-            var append_obj
-            if(type == "Integer"){
-                append_obj = new Number(parseInt(the_atom), 1, 'int')
-            }
-            else if (type == "Float"){
-                append_obj = new Number(parseFloat(the_atom), 1 ,'float')
-            }
-            else if (type == "Fraction"){
-                append_obj = new Number(parseInt(get_numerator(the_atom)), parseInt(get_denominator(the_atom)), 'rational')
-            }
-            return cons(append_obj, parseOneSentence(input_str.slice(i+1)) )
-        }
-        return cons(the_atom, parseOneSentence(input_str.slice(i+1)))
+        return cons(formatNumber(the_atom), parseOneSentence(input_str.slice(i+1)))
     }
 }
 /*
