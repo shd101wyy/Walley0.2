@@ -17,6 +17,18 @@
         vector
         dict
 
+    ^^^^^^^^^^^^^^^^
+        atom:
+            abcx x * ^^ 
+        list:
+            (add 3 4)  (define add (lambda (a b) (+ a b)))
+        string:
+            "hello world"
+        number : 
+        vector : [1 2 3 x]
+        dictionary : {:a 12 :b 13}
+
+
 */
 // convert array to linked list
 // [1,2,3] -> [1,[2,[3,[]]]]
@@ -1158,8 +1170,13 @@ var make_rat_string = function(rat){
 //==== add ========
 var _add_ = function(num1,num2){    
     if (num2.constructor != Number){
-        if (num1.constructor != Number)
+        if (typeof(num2)!='string')
+            num2 = num2.value
+        if (num1.constructor != Number){
+            if (typeof(num1)!='string')
+                num1 = num1.value
             return num1+num2
+        }
         else if (num1.type == 'rational')
             return (num1.numer + "/" + num1.denom)+num2
         else 
