@@ -288,12 +288,10 @@ var Vector = function(init_value){
     this.value = init_value
 }
 
-// type                 func_number
-//          int             1
-//          float           2
-//          rational        3
-var Number = function(value, type){
-    this.value = value
+
+var Number = function(numer, denom, type){
+    this.numer = numer
+    this.denom = denom
     this.type = type
 }
 
@@ -412,9 +410,10 @@ var toy = function(tree,env,module_name){
     //if (stringIsNumber(tree)!=false){
     //    return tree
     //}
-    if (tree.constructor == Number){
+    if (tree.constructor == Number)
         return tree
-    }
+    else if (typeof(tree) == 'number')
+        return tree
         //return ['number',tree]
     // atom
     else if (typeof(tree)=="string")
@@ -841,20 +840,6 @@ var toy = function(tree,env,module_name){
                 return toy(cons(value , cdr(tree)),env,module_name)
             }
         }
-        else if (typeof(tree[0]) === 'number'){
-            // Num data type
-            // int
-            if (tree[0]===1){
-                return new Number(parseInt(tree[1]), 'int')
-            }
-            // float
-            else if (tree[0]===2){
-                return new Number(parseFloat(tree[1]), 'float')
-            }
-            else if (tree[0]===3){
-                return new Number(parseFloat(tree[1]), 'fraction')
-            }
-        }
         else{
             /*
                 (
@@ -987,35 +972,55 @@ var make_rat_string = function(rat){
 // calculate two numbers only
 //==== add ========
 var _add_ = function(num1,num2){    
-    var type1 = typeOfNum(num1)
-    var type2 = typeOfNum(num2)
-    if (type1 == 'Unknown_or_Invalid' || type2 == 'string')
-        return num1+num2
-	if (type1 == "Float" || type2 == "Float")
-		return calculateTwoNum(num1,num2,"+")
-	return make_rat_string(add_rat(format_number(num1),format_number(num2)))
-    
+    if (num2.constructor != Number){
+        if (num1.constructor != Number)
+            return num1+num2
+        else if (num1.type == 'rational')
+            return (num1.numer + "/" + num1.denom)+num2
+        else 
+            return num1.numer + num2
+    }
+	if (num1.type == "float" || num2.type == "float")
+		return new Number(num1.numer/num1.denom + num2.numer/num2.denom, 1, 'float')
+    // [numer, denom]
+	var rat = add_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+    if (rat[1] == 1)
+        return new Number(rat[0], 1, 'int')
+    else
+        return new Number(rat[0], rat[1], 'rational')
 }
 //==== substruction ===
 var _sub_ = function(num1,num2){    
-	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
-		return calculateTwoNum(num1,num2,"-")
-	return make_rat_string(sub_rat(format_number(num1),format_number(num2)))
-    
+    if (num1.type == "float" || num2.type == "float")
+        return new Number(num1.numer/num1.denom - num2.numer/num2.denom, 1, 'float')
+    // [numer, denom]
+    var rat = sub_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+    if (rat[1] == 1)
+        return new Number(rat[0], 1, 'int')
+    else
+        return new Number(rat[0], rat[1], 'rational')
 }
 //==== Multplication ===
 var _mul_ = function(num1,num2){    
-	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
-		return calculateTwoNum(num1,num2,"*")
-	return make_rat_string(mul_rat(format_number(num1),format_number(num2)))
-    
+    if (num1.type == "float" || num2.type == "float")
+        return new Number( (num1.numer/num1.denom) * (num2.numer/num2.denom), 1, 'float')
+    // [numer, denom]
+    var rat = mul_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+    if (rat[1] == 1)
+        return new Number(rat[0], 1, 'int')
+    else
+        return new Number(rat[0], rat[1], 'rational')
 }
 //==== Division ====
 var _div_ = function(num1,num2){    
-	if (typeOfNum(num1)=="Float" || typeOfNum(num2)=="Float")
-		return calculateTwoNum(num1,num2,"/")
-	return make_rat_string(div_rat(format_number(num1),format_number(num2)))
-    
+    if (num1.type == "float" || num2.type == "float")
+        return new Number((num1.numer/num1.denom) / (num2.numer/num2.denom), 1, 'float')
+    // [numer, denom]
+    var rat = div_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+    if (rat[1] == 1)
+        return new Number(rat[0], 1, 'int')
+    else
+        return new Number(rat[0], rat[1], 'rational')
 }
 // add array
 // eg [1,2,3]-> 6
@@ -1084,6 +1089,11 @@ var _not_ = function(value,env,module_name){
 var _lt_two_values = function(value1,value2){
 	if (typeof(value1)!=typeof(value2))
 		return []
+    if (value1.constructor == Number && value2.constructor == Number){
+        if (value1.numer/value1.denom < value2.numer/value2.denom)
+            return "1"
+        return []
+    }
 	if (value1<value2)
 	    return "1"
 	else
@@ -1096,9 +1106,7 @@ var _lt_array_ = function(arr,env,module_name){
 		if (rest.length==0)
 			return "1"
 		else{
-			value2 = toy(rest[0],env,module_name)
-			if (stringIsNumber(value2))
-	    		value2=eval(value2)
+			var value2 = toy(rest[0],env,module_name)
 			if (_lt_two_values(ahead,value2).length==0)
 				return []
 			return _lt_array_iter_(value2 , cdr(rest), env, module_name)
@@ -1109,8 +1117,6 @@ var _lt_array_ = function(arr,env,module_name){
 		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
-	if (stringIsNumber(value1))
-	    value1=eval(value1)
 	return _lt_array_iter_(value1,cdr(arr),env,module_name)
 }
 // >
@@ -1143,6 +1149,12 @@ var _equal_two_values = function(value1,value2){
 	if (type1!=type2)
 		return []
 	else{
+        if (value1.constructor == Number && value2.constructor == Number){
+            if (value1.numer/valu1.denom == value2.numer/value2.denom)
+                return "1"
+            else
+                return []
+        }
 		if (type1=="object" || type1=="array"){
 			return _equal_two_arrays_(value1,value2)
 		}
@@ -1159,9 +1171,7 @@ var _equal_array_ = function(arr,env,module_name){
 		if (rest.length==0)
 			return "1"
 		else{
-			value2 = toy(rest[0],env,module_name)
-			if (stringIsNumber(value2))
-	    		value2=eval(value2)
+			var value2 = toy(rest[0],env,module_name)
 			if (_equal_two_values(ahead,value2).length==0)
 				return []
 			return _equal_array_iter_(value2 , cdr(rest), env, module_name)
@@ -1172,8 +1182,6 @@ var _equal_array_ = function(arr,env,module_name){
 		return []
 	}
 	var value1 = toy(arr[0],env,module_name)
-	if (stringIsNumber(value1))
-	    value1=eval(value1)
 	return _equal_array_iter_(value1,cdr(arr),env,module_name)
 }
 // <=
@@ -1366,16 +1374,17 @@ var parseOneSentence = function (input_str){
         var type = stringIsNumber(the_atom)
         if (type!=false){
             var func_index
+            var append_obj
             if(type == "Integer"){
-                func_index = 1
+                append_obj = new Number(parseInt(the_atom), 1, 'int')
             }
             else if (type == "Float"){
-                func_index = 2
+                append_obj = new Number(parseFloat(the_atom), 1 ,'float')
             }
             else if (type == "Fraction"){
-                func_index = 3
+                append_obj = new Number(parseInt(get_numerator(the_atom)), parseInt(get_denominator(the_atom)), 'rational')
             }
-            return cons([func_index,  the_atom], parseOneSentence(input_str.slice(i+1)) )
+            return cons(append_obj, parseOneSentence(input_str.slice(i+1)) )
         }
         return cons(the_atom, parseOneSentence(input_str.slice(i+1)))
     }
@@ -1449,6 +1458,12 @@ var formatArrayString = function (arr){
     while (i < arr.length){
         if (typeof(arr[i]) == 'string')
             output = output + ' ' + arr[i]
+        else if (arr[i].constructor == Number){
+            if (arr[i].type === 'rational')
+                output = output + ' ' + (arr[i].numer + "/" + arr[i].denom)
+            else
+                output = output + ' ' + (arr[i].numer)
+        }
         else if (arr[i].constructor == Vector)
             output = output + ' ' + formatArrayString(arr[i].value)
         else
@@ -1459,7 +1474,7 @@ var formatArrayString = function (arr){
     return output
 }
 var formatList = function (list){
-    var display_string = ""
+    var display_string = "("
     while(1){
         if(typeof(list) == 'string'){
             display_string = display_string + ' . ' + list
@@ -1472,12 +1487,18 @@ var formatList = function (list){
         else if (list[0].constructor == Vector){
             display_string = display_string + ' ' + formatArrayString(list[0].value)
         }
+        else if (list[0].constructor == Number){
+            if (list[0].constructor === 'rational')
+                display_string = display_string + ' ' + (list[0].numer+"/"+list[0].denom)
+            else
+                display_string = display_string + ' ' + list[0].numer
+        }
         else{
             display_string = display_string + ' ' + formatList(list[0])
         }
         list = list[1]
     }
-    display_string += ')'
+    display_string += ")"
     display_string = display_string.slice(1)
     display_string = "(" + display_string
     return display_string
@@ -1492,8 +1513,12 @@ var display = function(arg){
     else if (arg.constructor == Vector){
         console.log(formatArrayString(arg.value))    
     }
+    // fraction
     else if (arg.constructor == Number){
-        console.log(arg.value)    
+        if (arg.type === 'rational')
+            console.log(arg.numer+"/"+arg.denom)    
+        else 
+            console.log(arg.numer)
     }
     else 
         displayList(arg)
