@@ -837,6 +837,42 @@ var toy = function(tree,env,module_name){
                 var value = toy(tree[1][0],env, module_name)
                 return new Number(Math.log(value.numer / value.denom), 1, 'float')
             }
+            else if (tree[0]=='floor'){
+                var value = toy(tree[1][0],env, module_name)
+                return new Number(Math.floor(value.numer / value.denom), 1, 'float')
+            }
+            else if (tree[0]=='ceil'){
+                var value = toy(tree[1][0],env, module_name)
+                return new Number(Math.ceil(value.numer / value.denom), 1, 'float')
+            }
+            // judge number type
+            else if (tree[0]=='number?'){
+                var value = toy(tree[1][0],env, module_name)
+                if (value.constructor == Number)
+                    return 'true'
+                return []
+            }
+            // judge int
+            else if (tree[0]=='int?'){
+                var value = toy(tree[1][0],env, module_name)
+                if (value.constructor == Number && value.type == 'int')
+                    return 'true'
+                return []
+            }
+            // judge float
+            else if (tree[0]=='float?'){
+                var value = toy(tree[1][0],env, module_name)
+                if (value.constructor == Number && value.type == 'float')
+                    return 'true'
+                return []
+            }
+            // judge rational?
+            else if (tree[0]=='rational?'){
+                var value = toy(tree[1][0],env, module_name)
+                if (value.constructor == Number && (value.type == 'rational' || value.type == 'int'))
+                    return 'true'
+                return []
+            }
             // defmacro
             /*
 
@@ -850,6 +886,45 @@ var toy = function(tree,env,module_name){
                 var macro_value = ["macro",tree[1][1][0],cdr(cdr(cdr(tree)))]
                 env[env.length - 1][macro_name] = macro_value
                 return macro_value
+            }
+            // get numerator of rational number
+            else if (tree[0] == 'get-numerator'){
+                var value = toy(tree[1][0], env, module_name)
+                if (value.constructor == Number)
+                    return new Number(value.numer, 1, 'int')
+                else 
+                    return 'undefined'
+            }
+            // get denominator of rational number
+            else if (tree[0] == 'get-denominator'){
+                var value = toy(tree[1][0], env, module_name)
+                if (value.constructor == Number)
+                    return new Number(value.denom, 1, 'int')
+                else 
+                    return 'undefined'
+            }
+            // change number to fraction
+            else if (tree[0] == '->rational'){
+                var getNumOfNumberAfterDot = function(num){
+                    num = "" + num
+                    var i = num.indexOf('.')+1
+                    return num.length - i;
+                }
+                var value = toy(tree[1][0], env, module_name)
+                if (value.constructor == Number){
+                    if (value.type == 'float'){
+                        var num_behind = getNumOfNumberAfterDot(value.numer)
+                        var denom = 1
+                        for(var i = 0; i < num_behind; i++){
+                            denom = denom*10
+                        }
+                        var numer = value.numer*denom
+                        var rat = make_rat(numer,denom)
+                        return new Number(rat[0], rat[1], 'rational')
+                    }
+                    return value
+                }
+                return 'undefined'
             }
             /*
                 (macroexpand '(square 3))
