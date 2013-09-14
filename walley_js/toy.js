@@ -8,6 +8,15 @@
 /*
 	7 primitive functions
 	quote atom eq car cdr cons cond
+
+    Data Type:
+        atom
+        list
+        string
+        number : int float rational(fraction)
+        vector
+        dict
+
 */
 // convert array to linked list
 // [1,2,3] -> [1,[2,[3,[]]]]
@@ -295,6 +304,14 @@ var Number = function(numer, denom, type){
     this.type = type
 }
 
+var Dict = function(value){
+    this.value = value
+}
+
+var Toy_String = function(value){
+    this.value = value
+}
+
 /*
     TOY DATA TYPE
 
@@ -406,7 +423,7 @@ var toy = function(tree,env,module_name){
 
     if (typeof(tree)=="string")
         return assoc(tree,env)
-    else if (tree.constructor == Number || tree.constructor == Vector)
+    else if (tree.constructor == Number || tree.constructor == Vector || tree.constructor == Toy_String || tree.constructor == Dict)
         return tree
         //return ['number',tree]
     // atom
@@ -758,6 +775,17 @@ var toy = function(tree,env,module_name){
                 var return_value = new Vector(value.value.slice(0))
                 return return_value
             }
+
+            /*
+                Dict data type
+            */
+            else if (tree[0]=="#dict"){
+                var value = tree[1]
+                for(var i in value){
+                    value[i] = toy(value[i], env, module_name)
+                }
+                return new Dict(value)
+            }
             
 
             /*
@@ -873,6 +901,13 @@ var toy = function(tree,env,module_name){
                     return 'true'
                 return []
             }
+            // check string type
+            else if (tree[0]=='string?'){
+                var value = toy(tree[1][0],env, module_name)
+                if (value.constructor == Toy_String)
+                    return 'true'
+                return []
+            }
             // defmacro
             /*
 
@@ -947,6 +982,25 @@ var toy = function(tree,env,module_name){
                 var expanded = macroexpand(value,env,module_name)
                 return expanded
             }
+
+            /*
+                Walley System Command
+                
+                ls
+            
+            */
+            else if (tree[0] == 'cmd'){
+                if( typeof(window.localStorage) == 'undefined'){
+                    console.log("can not use comd")
+                    return 'undefined'
+                }
+                else{
+                    var command = toy(tree[1][0], env, module_name)
+                    console.log('command: ' + command)
+                    return undefined
+                }
+            }
+
             //procedure value
             else{
                 var value = assoc(tree[0],env)
@@ -957,6 +1011,20 @@ var toy = function(tree,env,module_name){
                 return toy(cons(value , cdr(tree)),env,module_name)
             }
         }
+        else if (tree[0].constructor == Vector){
+            // get index
+            var index = toy(tree[1][0], env, module_name)
+            return tree[0].value[index.numer]
+        }
+        else if (tree[0].constructor == Dict){
+            // get value according to key
+            var key = tree[1][0]
+            if (typeof(key) == 'string' && key[0]==':')
+                return tree[0].value[key]
+            var key = toy(tree[1][0], env, module_name)
+            return tree[0].value[key]
+        }
+
         else{
             /*
                 (
@@ -1377,6 +1445,38 @@ var indexOfLastParenthesis = function (input_str,start){
     }
     return -1
 }
+// get } index,
+// start is index of first {}
+var indexOfLastBigParenthesis = function (input_str,start){
+    var count = 0
+    for(var i = start; i < input_str.length; i = i + 1){
+        if (input_str[i]=="{"){
+            count+=1
+            continue
+        }
+        else if (input_str[i]=="}"){
+            count-=1
+            if (count==0){
+                return i
+            }
+            continue
+        }
+    }
+    return -1
+}
+
+var dealWith_string = function(input_str,result){
+ if (input_str==""){
+     console.log("Invalid String")
+     return ["",""]
+ }
+ else if (input_str[0]=='\\')
+     return dealWith_string(input_str.slice(2,input_str.length), result+input_str.slice(0,2))
+ else if (input_str[0]=="\"")
+     return [input_str.slice(1),result]
+ else
+     return dealWith_string(input_str.slice(1),result+input_str[0])
+}
 
 // 12 -> Number(12,1,'int')
 // if its type is not Number
@@ -1414,12 +1514,29 @@ var formatArray = function(input_str){
         }
         else if (input_str[i] == '['){
             var index = indexOfLastBracket(input_str, i )
-            output.push(formatArray(input_str.slice(1,index)))
+            output.push(formatArray(input_str.slice(i + 1, index)))
             i = index
         }
-        else if (input_str[0]==";"){
+        else if (input_str[i] == '{'){
+            var index = indexOfLastBigParenthesis(input_str, i )
+            output.push(formatDict(input_str.slice(i + 1, index)))
+            i = index
+        }
+        else if (input_str[i]==";"){
             while( i!=input_str.length && input_str[i]!='\n'){i++}
             continue
+        }
+        else if (input_str[i]=='"'){
+            var start = i + 1
+            for(i = start; i < input_str.length; i++){
+                if (input_str[i]=='//'){
+                    i++
+                    continue
+                }
+                if (input_str[i]=='"')
+                    break
+            }
+            output.push(new Toy_String(input_str.slice(start,i)))
         }
         else{
             var start = i
@@ -1431,6 +1548,117 @@ var formatArray = function(input_str){
         }
     }
     return ["#vector", output]
+}
+// format dictionary
+// odd key
+// even value
+// {:a 12 :b 13}
+var formatDict = function(input_str){
+    var output = {}
+    var key 
+    var count = 0
+    for(var i = 0; i < input_str.length; i = i + 1){
+        if (input_str[i] == ' ' || input_str[i]== '\t' || input_str[i] == '\n'){
+            continue
+        }
+        // list
+        else if (input_str[i] == '('){
+            var index = indexOfLastParenthesis(input_str,i)
+            count++
+            // key
+            if (count%2!=0){
+                console.log("Invalid key, key must start with :, like {:a 12}")
+                return ['#dict',{}]
+            }
+            // value
+            else{
+                output[key] = parseOneSentence(input_str.slice(i+1,index))
+            }
+            i = index 
+        }
+        // vector
+        else if (input_str[i] == '['){
+            var index = indexOfLastBracket(input_str, i )
+            count++
+
+            // key
+            if (count%2!=0){
+                console.log("Invalid key, key must start with :, like {:a 12}")
+                return ['#dict',{}]
+            }
+            // value
+            else{
+                output[key] = formatArray(input_str.slice(i + 1,index))
+            }
+            i = index
+        }
+        // dict
+        else if (input_str[i] == '{'){
+            var index = indexOfLastBigParenthesis(input_str, i )
+            count++
+
+            // key
+            if (count%2!=0){
+                console.log("Invalid key, key must start with :, like {:a 12}")
+                return ['#dict',{}]
+            }
+            // value
+            else{
+                output[key] = formatDict(input_str.slice(i + 1,index))
+            }
+            i = index
+        }
+        else if (input_str[i]==";"){
+            while( i!=input_str.length && input_str[i]!='\n'){i++}
+            continue
+        }
+        // string
+        else if (input_str[i]=='"'){
+            var start = i + 1
+            for(i = start; i < input_str.length; i++){
+                if (input_str[i]=='//'){
+                    i++
+                    continue
+                }
+                if (input_str[i]=='"')
+                    break
+            }
+            count++
+            // key
+            if (count%2!=0){
+                console.log("Invalid key, key must start with :, like {:a 12}")
+                return ['#dict',{}]
+            }
+            // value
+            else{
+                output[key] = new Toy_String(input_str.slice(start,i))
+            }
+        }
+        // key 
+        else{
+            var start = i
+            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
+                i = i + 1
+            }
+            var the_atom = formatNumber(input_str.slice(start,i))
+
+            count++
+            // key
+            if (count%2!=0){
+                if (the_atom[0]!=':'){
+                    console.log("Invalid key, key must start with :, like {:a 12}")
+                    return ['#dict',{}]
+                }
+                key = the_atom
+            }
+            // value
+            else{
+                output[key] = the_atom
+            }
+        }
+    }
+    console.log(output)
+    return ["#dict", output]
 }
 /*
     one complete statement at a time
@@ -1465,6 +1693,10 @@ var parseOneSentence = function (input_str){
         var i = indexOfLastBracket(input_str,0)
         return cons(formatArray(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
     }
+    else if (input_str[0] == '{'){
+        var i = indexOfLastBigParenthesis(input_str,0)
+        return cons(formatDict(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
+    }
     else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
         var flag;
         if (input_str[0]=="'")
@@ -1498,6 +1730,11 @@ var parseOneSentence = function (input_str){
         var rest = rest_result[0]
         var result = rest_result[1]
         return cons(cons(flag, parseOneSentence(result)), parseOneSentence(rest))
+    }
+    // string is not atom
+    else if (input_str[0]=='"'){
+       var rest_result = dealWith_string(input_str.slice(1),"")
+       return cons(new Toy_String(rest_result[1]), parseOneSentence(rest_result[0]))
     }
     else {
         var i = 0
@@ -1580,16 +1817,26 @@ var formatArrayString = function (arr){
     var output = "["
     var i = 0
     while (i < arr.length){
+        // atom
         if (typeof(arr[i]) == 'string')
             output = output + ' ' + arr[i]
+        // string
+        else if (arr[i].constructor == Toy_String)
+            output = output + ' ' + arr[i].value
+        // number
         else if (arr[i].constructor == Number){
             if (arr[i].type === 'rational')
                 output = output + ' ' + (arr[i].numer + "/" + arr[i].denom)
             else
                 output = output + ' ' + (arr[i].numer)
         }
+        // vector
         else if (arr[i].constructor == Vector)
             output = output + ' ' + formatArrayString(arr[i].value)
+        // dict
+        else if (arr[i].constructor == Dict)
+            output = output + ' ' + formatDictString(arr[i].value)
+        // list
         else
             output = output + ' ' + formatList(arr[i])
         i = i + 1
@@ -1598,34 +1845,81 @@ var formatArrayString = function (arr){
     return output
 }
 var formatList = function (list){
-    var display_string = "("
+    var output = "("
     while(1){
         if(typeof(list) == 'string'){
-            display_string = display_string + ' . ' + list
+            output = output + ' . ' + list
             break
         }
+        else if (list.constructor ==  Toy_String){
+            output = output + list.value
+            break
+        }
+
         if(list.length == 0)
             break
+        // atom
         if (typeof(list[0]) == 'string')
-            display_string = display_string + ' ' + list[0]
-        else if (list[0].constructor == Vector){
-            display_string = display_string + ' ' + formatArrayString(list[0].value)
-        }
+            output = output + ' ' + list[0]
+        // number
         else if (list[0].constructor == Number){
             if (list[0].constructor === 'rational')
-                display_string = display_string + ' ' + (list[0].numer+"/"+list[0].denom)
+                output = output + ' ' + (list[0].numer+"/"+list[0].denom)
             else
-                display_string = display_string + ' ' + list[0].numer
+                output = output + ' ' + list[0].numer
         }
+        // string 
+        else if (list[0].constructor == Toy_String){
+            output = output + ' ' + list[0].value
+        }
+        // vector
+        else if (list[0].constructor == Vector){
+            output = output + ' ' + formatArrayString(list[0].value)
+        }
+        // dict
+        else if (list[0].constructor == Dict)
+            output = output + ' ' + formatDictString(list[0].value)
+        // list
         else{
-            display_string = display_string + ' ' + formatList(list[0])
+            output = output + ' ' + formatList(list[0])
         }
         list = list[1]
     }
-    display_string += ")"
-    display_string = display_string.slice(1)
-    display_string = "(" + display_string
-    return display_string
+    output += ")"
+    output = output.slice(2)
+    output = "(" + output
+    return output
+}
+var formatDictString = function(value){
+    var output = "{"
+    for(var i in value){
+        output = output + ' ' + i 
+        var v = value[i]
+        // atom
+        if (typeof(v) == 'string')
+            output = output + ' ' + v + ','
+        // number
+        else if (v.constructor == Number){
+            if (v.constructor === 'rational')
+                output = output + ' ' + (v.numer+"/"+v.denom) + ','
+            else
+                output = output + ' ' + v.numer + ','
+        }
+        // string
+        else if (v.constructor == Toy_String)
+            output = output + ' ' + v.value + ','
+        // vector
+        else if (v.constructor == Vector)
+            output = output + ' ' + formatArrayString(v.value) + ','
+        // dict
+        else if (v.constructor == Dict)
+            output = output + ' ' + formatDictString(v) + ','
+        // list
+        else
+            output = output + ' ' + formatList(v) + ','
+    }
+    output = '{' + output.slice(2,output.length - 1) + '}'
+    return output
 }
 var displayList = function (list){
     console.log(formatList(list))
@@ -1633,6 +1927,9 @@ var displayList = function (list){
 var display = function(arg){
     if (typeof(arg) == 'string')
         console.log(arg)
+    else if (arg.constructor == Toy_String){
+        console.log(arg.value)
+    }
     // does not support vector yet
     else if (arg.constructor == Vector){
         console.log(formatArrayString(arg.value))    
@@ -1644,8 +1941,11 @@ var display = function(arg){
         else 
             console.log(arg.numer)
     }
+    else if (arg.constructor == Dict){
+        console.log(formatDictString(arg.value))
+    }
     else 
-        displayList(arg)
+        console.log(formatList(arg))
     return 'undefined'
 }
 //var output = TOY_Parse("(define x (lambda (a b) (define x 12) (+ a b))) (define y 12) (define z 13)")
