@@ -10,7 +10,7 @@
 	quote atom eq car cdr cons cond
 
     Data Type:
-        atom
+        atom  (string)
         list
         string
         number : int float rational(fraction)
@@ -20,10 +20,11 @@
     ^^^^^^^^^^^^^^^^
         atom:
             abcx x * ^^ 
-        list:
-            (add 3 4)  (define add (lambda (a b) (+ a b)))
         string:
             "hello world"
+        list:
+            (add 3 4)  (define add (lambda (a b) (+ a b)))
+        
         number : 
         vector : [1 2 3 x]
         dictionary : {:a 12 :b 13}
@@ -913,6 +914,7 @@ var toy = function(tree,env,module_name){
                     return 'true'
                 return []
             }
+            /*
             // check string type
             else if (tree[0]=='string?'){
                 var value = toy(tree[1][0],env, module_name)
@@ -920,6 +922,7 @@ var toy = function(tree,env,module_name){
                     return 'true'
                 return []
             }
+            */
             // defmacro
             /*
 
@@ -1021,6 +1024,26 @@ var toy = function(tree,env,module_name){
                     return "undefined"
                 }
                 return toy(cons(value , cdr(tree)),env,module_name)
+            }
+        }
+        else if (typeof(tree[0]) == 'number'){
+            // vector
+            if (tree[0] == 0){
+                var value_tree = tree[1]
+                var i = 0
+                while (i < value_tree.length){
+                    value_tree[i] = toy(value_tree[i],env,module_name)
+                    i = i + 1
+                }
+                return new Vector(tree[1])
+            }
+            // dict
+            else if (tree[0] == 1){
+                var value = tree[1]
+                for(var i in value){
+                    value[i] = toy(value[i], env, module_name)
+                }
+                return new Dict(value)
             }
         }
         else if (tree[0].constructor == Vector){
@@ -1553,7 +1576,8 @@ var formatArray = function(input_str){
                 if (input_str[i]=='"')
                     break
             }
-            output.push(new Toy_String(input_str.slice(start,i)))
+            //output.push(new Toy_String(input_str.slice(start,i)))
+            output.push( cons('quote', cons(input_str.slice(start,i),[])) )
         }
         else{
             var start = i
@@ -1564,7 +1588,7 @@ var formatArray = function(input_str){
             output.push(formatNumber(the_atom))
         }
     }
-    return ["#vector", output]
+    return [0, output]
 }
 // format dictionary
 // odd key
@@ -1648,7 +1672,8 @@ var formatDict = function(input_str){
             }
             // value
             else{
-                output[key] = new Toy_String(input_str.slice(start,i))
+                //output[key] = new Toy_String(input_str.slice(start,i))
+                output[key] = cons('quote', cons(input_str.slice(start,i),[]))
             }
         }
         // key 
@@ -1674,7 +1699,7 @@ var formatDict = function(input_str){
             }
         }
     }
-    return ["#dict", output]
+    return [1, output]
 }
 /*
     one complete statement at a time
@@ -1750,7 +1775,8 @@ var parseOneSentence = function (input_str){
     // string is not atom
     else if (input_str[0]=='"'){
        var rest_result = dealWith_string(input_str.slice(1),"")
-       return cons(new Toy_String(rest_result[1]), parseOneSentence(rest_result[0]))
+       return cons(cons('quote', cons(rest_result[1],[])), parseOneSentence(rest_result[0]))
+       //return cons(new Toy_String(rest_result[1]), parseOneSentence(rest_result[0]))
     }
     else {
         var i = 0
@@ -1835,29 +1861,29 @@ var formatArrayString = function (arr){
     while (i < arr.length){
         // atom
         if (typeof(arr[i]) == 'string')
-            output = output + ' ' + arr[i]
+            output = output + ' ' + arr[i] + ','
         // string
         else if (arr[i].constructor == Toy_String)
-            output = output + ' ' + arr[i].value
+            output = output + ' ' + arr[i].value + ','
         // number
         else if (arr[i].constructor == Number){
             if (arr[i].type === 'rational')
-                output = output + ' ' + (arr[i].numer + "/" + arr[i].denom)
+                output = output + ' ' + (arr[i].numer + "/" + arr[i].denom) + ','
             else
-                output = output + ' ' + (arr[i].numer)
+                output = output + ' ' + (arr[i].numer) + ','
         }
         // vector
         else if (arr[i].constructor == Vector)
-            output = output + ' ' + formatArrayString(arr[i].value)
+            output = output + ' ' + formatArrayString(arr[i].value) + ','
         // dict
         else if (arr[i].constructor == Dict)
-            output = output + ' ' + formatDictString(arr[i].value)
+            output = output + ' ' + formatDictString(arr[i].value) + ','
         // list
         else
-            output = output + ' ' + formatList(arr[i])
+            output = output + ' ' + formatList(arr[i]) + ','
         i = i + 1
     }
-    output = output + "]"
+    output = "["+ output.slice(2,output.length-1) + "]"
     return output
 }
 var formatList = function (list){
