@@ -3,8 +3,7 @@ Walley0.2
 Toy language is a lisp dialect written in Python 2.7.5 ......
 Well now in JavaScript and Python version has been stopped  
 Well.... It cannot be regarded as lisp dialect cuz I did not learn lisp very well  
-It does not support "Macro" now cuz.... idk what macro really is ..... so hard... XD  
-The whole language is like Scheme
+The whole language is like Scheme and has some js py style
 	./----  
 		toy        
 		init.py  
@@ -13,42 +12,77 @@ The whole language is like Scheme
 		test.py       test file  
 		test.toy      test file  
 		test2.toy     test file
+    ./walley_ks
+        ... 
 
 For the JavaScript Version, please check walley_js folder
 
 Attention:: Python version is stopped...
-
-
-    Toy Language Data Type:
-
-        atom list .
-
-    list is mutable data... attention
-
-
-
-
-#=================  
-In toy.py file:  
-	function:  
-		lexer: used to tokenize string, return array, array[0] is token list, array[1] is the   result of lexical analysis  
-		parser: used to parse token list to generate tree  
-		interpreter: used to run parsed tree  
-  
-		to run one string, eg:    
-			interpreter(parser(lexer("(That is the string you want to run)")[0]))  
-			  
-#================  
-To Run Toy Language, run "toy" file in walley folder  
-type "./toy" in terminal or cmd  
 
 	commands:  
 		toy    								# Run toy repl 一行一行地运行  
 		toy [file_name]						# Run file [file_name] 运行[file_name]文件  
 		toy compress [file_name]			# Compress file [file_name] to make it smaller  
 											# will remove \n and extra spaces 压缩文件  
+==================================
 
+    Toy Language Data Type:
+     5 data types
+     <strong> atom(string) list vector dict number </strong>
+
+    list is mutable data... attention
+
+
+==================================
+About Data Type
+
+Atom:
+    'abc - > (quote abc) return 'abc'
+    "hello world" -> (quote hello world) return 'hello world'
+    define:
+        (define x "Hello World")
+        (define y 'hello)
+List:
+    '(1 2 3)
+    define:
+        (define x '(1 2 3))
+Number:
+    12 13.4 3/4
+    only support int float fraction(rational) now
+    define:
+        (define x 12)
+        (define y 3/4)
+        (define z 12.34)
+
+Vector:
+[value1 value2 value3 ...]
+    [1 2 3]
+    [1 x 2]
+    define:
+        (define x 12)
+        (define y [1 2 3]) -> y is [1 2 3]
+        (define z [x 1 2]) -> z is [12 1 2]
+        
+    quick access value at index:
+        (vector index)
+        eg:
+            (define x [1 2 3])
+            (x 2) -> 3
+
+Dict:
+{:key value :key value ...}
+    key must start with ':' char
+    {:a 12 :b 13}
+    define:
+        (define x {:a 12 :b 13})
+        
+    quick access value at key
+        (dict key)
+        eg:
+            (define x {:Author 'Yiyi})
+            (x :Author) -> Yiyi
   
+=====================================
 我想把Toy语言做成一种“寄生”语言。。  
 我试图把Toy解释器做的尽可能小。。 I am trying to make Toy interpreter as tiny as possible  
 然后便于用其他语言编写Toy解释器，已助于移植代码。。  
@@ -144,6 +178,9 @@ embeded functions:
 		number? :-	float eg: 2.3  
 				:-  int   eg: 3  
 				:-  fraction eg: 1/3  
+    int? 
+    float?
+    rational?
 	#########  
 	list? 检查值是否为列表  
 		eg:  
@@ -183,6 +220,8 @@ embeded functions:
     if I input (if 1 (/ 12 0) 13) then 
     'params' will be assigned value (1 (/ 12 0) 13) without 
 
+
+    # deprecated
     ######### embed list function
     
     Function 'len':
