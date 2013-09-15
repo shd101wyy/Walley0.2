@@ -799,6 +799,16 @@ var toy = function(tree,env,module_name){
                 }
                 return new Dict(value)
             }
+            // return vector(array)
+            // {:a 12 :b 13} -> [:a :b]
+            else if (tree[0]=='dict-keys'){
+                var value = toy(tree[1][0],env,module_name).value
+                var output = []
+                for(var i in value){
+                    output.push(i)
+                }
+                return new Vector(output)
+            }
             
 
             /*
@@ -825,15 +835,16 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="for"){
                 var var_name = tree[1][0]
                 var in_value = toy(tree[1][1][1][0],env,module_name)
-                var i = 0
+                // create local env
+                env.push({})
                 while (in_value.length!=0){
                     // update var_name value
                     //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
                     env[env.length-1][var_name] = in_value[0]
                     in_value = cdr(in_value)
-                    toy(cons('begin',tree[1][1][1][1],env,module_name))
-                    i=i+1
+                    toy(cons('begin',tree[1][1][1][1]),env,module_name)
                 }
+                env.pop()
                 return "undefined"
             }
             // implement math functions
@@ -1836,7 +1847,6 @@ var TOY_Eval = function (input_str,env,module_name){
             var start = i
             i = indexOfLastParenthesis(input_str, start)
             var parsed = parseOneSentence(input_str.slice(start+1,i))
-            
             //console.log(parsed)
             //display(parsed)
             return_value = toy(parsed,env,module_name)
@@ -1919,8 +1929,18 @@ var formatList = function (list){
         if(list.length == 0)
             break
         // atom
-        if (typeof(list[0]) == 'string')
+        if (typeof(list[0]) === 'string')
             output = output + ' ' + list[0]
+        // array
+        else if (list[0] == 0){
+            output = output + ' ' + formatArrayString(list[1])
+            break
+        }
+        // dict
+        else if (list[0] == 1){
+            output = output + ' ' + formatDictString(list[1])
+            break
+        }
         // number
         else if (list[0].constructor == Number){
             if (list[0].constructor === 'rational')
@@ -1941,7 +1961,14 @@ var formatList = function (list){
             output = output + ' ' + formatDictString(list[0].value)
         // list
         else{
-            output = output + ' ' + formatList(list[0])
+            // array
+            if (list[0][0] == 0)
+                output = output + ' ' + formatArrayString(list[0][1])
+            // dict
+            else if (list[0][0] == 1)
+                output = output + ' ' + formatDictString(list[0][1])
+            else
+                output = output + ' ' + formatList(list[0])
         }
         list = list[1]
     }
