@@ -1674,7 +1674,6 @@ var formatDict = function(input_str){
             }
         }
     }
-    console.log(output)
     return ["#dict", output]
 }
 /*
@@ -1868,11 +1867,29 @@ var formatList = function (list){
             output = output + ' . ' + list
             break
         }
+        // string 
         else if (list.constructor ==  Toy_String){
             output = output + list.value
             break
         }
-
+        // number
+        else if (list.constructor ==  Number){
+            if (list.type == 'rational')
+                output = output + (list.numer + '/' + list.denom)
+            else 
+                output = output + list.numer
+            break
+        }
+        // vector
+        else if (list.constructor ==  Vector){
+            output = output + formatArrayString(list.value)
+            break
+        }
+        // dict
+        else if (list.constructor ==  Toy_String){
+            output = output + formatDictString(list.value)
+            break
+        }
         if(list.length == 0)
             break
         // atom
@@ -1930,7 +1947,7 @@ var formatDictString = function(value){
             output = output + ' ' + formatArrayString(v.value) + ','
         // dict
         else if (v.constructor == Dict)
-            output = output + ' ' + formatDictString(v) + ','
+            output = output + ' ' + formatDictString(v.value) + ','
         // list
         else
             output = output + ' ' + formatList(v) + ','
