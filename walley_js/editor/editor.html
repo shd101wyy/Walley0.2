@@ -7,7 +7,7 @@
 		<!-- ACE -->
 		<script src='./src-min-noconflict/ace.js'></script>
 		<!-- Toy -->
-		<script src='./toy.js'></script>
+		<script src='../toy.js'></script>
 		<!-- Virtual File System -->
 		<script src="./virtual_file_system.js"></script>
 		<!-- jquery -->
@@ -216,10 +216,10 @@
     			_console_.innerHTML = _console_.innerHTML+"<br>"
 
 	    		var content = editor.getValue()
-	    		var parsed_obj = parseString(content)
-                var new_env = ENV_LIST.slice(0)
-	    		toy_language(parsed_obj,new_env,"")
-    			
+	    		//var parsed_obj = parseString(content)
+                //var new_env = ENV_LIST.slice(0)
+	    		//toy_language(parsed_obj,new_env,"")
+    			TOY_Eval(content, ENV_LIST, "")
 
     			// scroll to bottom
     			_console_.scrollTop = _console_.scrollHeight;

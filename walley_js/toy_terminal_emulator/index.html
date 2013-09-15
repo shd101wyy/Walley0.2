@@ -41,7 +41,8 @@
 			            try {
 			            	var result = TOY_Eval(command, ENV_LIST, "")
 			            	if (result !== undefined) {
-			                    term.echo(new String(result));
+			            		display(result)
+			                    //term.echo(new String(result));
 			                }
 			          
 			            } catch(e) {

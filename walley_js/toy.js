@@ -621,7 +621,7 @@ var toy = function(tree,env,module_name){
                 if (load_module in VirtualFileSystem){
                     var module_content = VirtualFileSystem[load_module]
                     if (typeof(module_content)==='string')
-                        toy_language( parseString(VirtualFileSystem[load_module]), env,as_name)
+                        TOY_Eval( VirtualFileSystem[load_module], env,as_name)
                     else
                         toy_language(VirtualFileSystem[load_module],env,as_name)
                 }
