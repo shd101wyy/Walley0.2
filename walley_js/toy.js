@@ -810,6 +810,36 @@ var toy = function(tree,env,module_name){
                 return new Vector(output)
             }
             
+            // set dict according to key
+            // (dict-set! {:a 12} :a 15)
+            else if (tree[0] == 'dict-set!'){
+                var value = toy(tree[1][0], env, module_name)
+                if (value.constructor!=Dict){
+                    console.log("Error...dict-set! type error")
+                    return 'undefined'
+                }
+                value = value.value
+                var key = tree[1][1][0]
+                if (key[0]!=':')
+                    key = toy(key, env, module_name)
+                var new_value = toy(tree[1][1][1][0], env, module_name)
+                value[key] = new_value
+                return new Dict(value)
+            }
+            // get value from dict according to key
+            // (dict-get {:a 12} :a) -> 12
+            else if (tree[0] == 'dict-get'){
+                var value = toy(tree[1][0], env, module_name)
+                if (value.constructor!=Dict){
+                    console.log("Error...dict-get type error")
+                    return 'undefined'
+                }
+                value = value.value
+                var key = tree[1][1][0]
+                if (key[0]!=':')
+                    key = toy(key, env, module_name)
+                return value[key]
+            }
 
             /*
                 for while statements
