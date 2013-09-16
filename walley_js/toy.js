@@ -571,8 +571,9 @@ var toy = function(tree,env,module_name){
                 env.pop()
                 return return_value
             }
-            else if (tree[0]=="lambda")
+            else if (tree[0]=="lambda"){
                 return tree
+            }
                 /*
 
             (define square (macro (x) @(* ,x ,x)  ))
@@ -842,6 +843,25 @@ var toy = function(tree,env,module_name){
             }
 
             /*
+                Universal function for dict array list atom
+            */
+            else if (tree[0] == 'len'){
+                var value = toy(tree[1][0],env,module_name)
+                if (typeof(value) == 'string')
+                    return new Number(value.length, 1, 'int')
+                else if (value.constructor == Vector)
+                    return new Number(value.value.length, 1, 'int')
+                else if (value.constructor == Dict)
+                    return new Number(Object.keys( value.value ).length, 1, 'int')
+                else if (value.constructor == Number){
+                    console.log("Error...cannot get length of number")
+                    return 'undefined'
+                }
+                else 
+                    tree[0]='list-length'
+                    return toy(tree, env, module_name)
+            }
+            /*
                 for while statements
 
                 for:
@@ -865,14 +885,21 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="for"){
                 var var_name = tree[1][0]
                 var in_value = toy(tree[1][1][1][0],env,module_name)
+                if (in_value.constructor != Vector){
+                    console.log("Error...for function only support vector(array) iteration")
+                    return 'undefined'
+                }
+
                 // create local env
                 env.push({})
-                while (in_value.length!=0){
+                var i = 0
+
+                while (i < in_value.value.length){
                     // update var_name value
                     //toy(['set!',var_name,['quote',in_value[i]]],env,module_name)
-                    env[env.length-1][var_name] = in_value[0]
-                    in_value = cdr(in_value)
+                    env[env.length-1][var_name] = in_value.value[i]
                     toy(cons('begin',tree[1][1][1][1]),env,module_name)
+                    i = i + 1
                 }
                 env.pop()
                 return "undefined"
@@ -1626,7 +1653,7 @@ var formatArray = function(input_str){
                 i = i + 1
             }
             var the_atom = input_str.slice(start,i)
-            output.push(formatNumber(the_atom))
+            output.push(parseOneSentence(the_atom)[0])
         }
     }
     return [0, output]
@@ -1723,7 +1750,7 @@ var formatDict = function(input_str){
             while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
                 i = i + 1
             }
-            var the_atom = formatNumber(input_str.slice(start,i))
+            var the_atom = parseOneSentence(input_str.slice(start,i))[0]
 
             count++
             // key
@@ -1902,9 +1929,6 @@ var formatArrayString = function (arr){
         // atom
         if (typeof(arr[i]) == 'string')
             output = output + ' ' + arr[i] + ','
-        // string
-        else if (arr[i].constructor == Toy_String)
-            output = output + ' ' + arr[i].value + ','
         // number
         else if (arr[i].constructor == Number){
             if (arr[i].type === 'rational')
@@ -1933,11 +1957,6 @@ var formatList = function (list){
             output = output + ' . ' + list
             break
         }
-        // string 
-        else if (list.constructor ==  Toy_String){
-            output = output + list.value
-            break
-        }
         // number
         else if (list.constructor ==  Number){
             if (list.type == 'rational')
@@ -1952,7 +1971,7 @@ var formatList = function (list){
             break
         }
         // dict
-        else if (list.constructor ==  Toy_String){
+        else if (list.constructor ==  Dict){
             output = output + formatDictString(list.value)
             break
         }
@@ -1962,12 +1981,12 @@ var formatList = function (list){
         if (typeof(list[0]) === 'string')
             output = output + ' ' + list[0]
         // array
-        else if (list[0] == 0){
+        else if (typeof(list)=='number' && list[0] == 0){
             output = output + ' ' + formatArrayString(list[1])
             break
         }
         // dict
-        else if (list[0] == 1){
+        else if (typeof(list)=='number' && list[0] == 1){
             output = output + ' ' + formatDictString(list[1])
             break
         }
@@ -1978,10 +1997,6 @@ var formatList = function (list){
             else
                 output = output + ' ' + list[0].numer
         }
-        // string 
-        else if (list[0].constructor == Toy_String){
-            output = output + ' ' + list[0].value
-        }
         // vector
         else if (list[0].constructor == Vector){
             output = output + ' ' + formatArrayString(list[0].value)
@@ -1991,8 +2006,11 @@ var formatList = function (list){
             output = output + ' ' + formatDictString(list[0].value)
         // list
         else{
+            // list
+            if (list[0].length == 0)
+                output = output + ' ' + '()'
             // array
-            if (list[0][0] == 0)
+            else if (list[0][0] == 0)
                 output = output + ' ' + formatArrayString(list[0][1])
             // dict
             else if (list[0][0] == 1)
@@ -2022,9 +2040,6 @@ var formatDictString = function(value){
             else
                 output = output + ' ' + v.numer + ','
         }
-        // string
-        else if (v.constructor == Toy_String)
-            output = output + ' ' + v.value + ','
         // vector
         else if (v.constructor == Vector)
             output = output + ' ' + formatArrayString(v.value) + ','
