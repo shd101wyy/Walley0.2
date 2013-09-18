@@ -1605,320 +1605,6 @@ var formatNumber = function(input_str){
     return input_str
 }
 
-// a b c d -> ['a','b','c','d']
-var formatArray = function(input_str){
-    var output = []
-    for(var i = 0; i < input_str.length; i = i + 1){
-        if (input_str[i] == ' ' || input_str[i]== '\t' || input_str[i] == '\n'){
-            continue
-        }
-        // list
-        else if (input_str[i] == '('){
-            var index = indexOfLastParenthesis(input_str,i)
-            output.push(parseOneSentence(input_str.slice(i+1,index)))
-            i = index 
-        }
-        else if (input_str[i] == '['){
-            var index = indexOfLastBracket(input_str, i )
-            output.push(formatArray(input_str.slice(i + 1, index)))
-            i = index
-        }
-        else if (input_str[i] == '{'){
-            var index = indexOfLastBigParenthesis(input_str, i )
-            output.push(formatDict(input_str.slice(i + 1, index)))
-            i = index
-        }
-        else if (input_str[i]==";"){
-            while( i!=input_str.length && input_str[i]!='\n'){i++}
-            continue
-        }
-        else if (input_str[i]=='"'){
-            var start = i + 1
-            for(i = start; i < input_str.length; i++){
-                if (input_str[i]=='//'){
-                    i++
-                    continue
-                }
-                if (input_str[i]=='"')
-                    break
-            }
-            //output.push(new Toy_String(input_str.slice(start,i)))
-            output.push( cons('quote', cons(input_str.slice(start,i),[])) )
-        }
-        else{
-            var start = i
-            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
-                i = i + 1
-            }
-            var the_atom = input_str.slice(start,i)
-            output.push(parseOneSentence(the_atom)[0])
-        }
-    }
-    return [0, output]
-}
-// format dictionary
-// odd key
-// even value
-// {:a 12 :b 13}
-var formatDict = function(input_str){
-    var output = {}
-    var key 
-    var count = 0
-    for(var i = 0; i < input_str.length; i = i + 1){
-        if (input_str[i] == ' ' || input_str[i]== '\t' || input_str[i] == '\n'){
-            continue
-        }
-        // list
-        else if (input_str[i] == '('){
-            var index = indexOfLastParenthesis(input_str,i)
-            count++
-            // key
-            if (count%2!=0){
-                console.log("Invalid key, key must start with :, like {:a 12}")
-                return ['#dict',{}]
-            }
-            // value
-            else{
-                output[key] = parseOneSentence(input_str.slice(i+1,index))
-            }
-            i = index 
-        }
-        // vector
-        else if (input_str[i] == '['){
-            var index = indexOfLastBracket(input_str, i )
-            count++
-
-            // key
-            if (count%2!=0){
-                console.log("Invalid key, key must start with :, like {:a 12}")
-                return ['#dict',{}]
-            }
-            // value
-            else{
-                output[key] = formatArray(input_str.slice(i + 1,index))
-            }
-            i = index
-        }
-        // dict
-        else if (input_str[i] == '{'){
-            var index = indexOfLastBigParenthesis(input_str, i )
-            count++
-
-            // key
-            if (count%2!=0){
-                console.log("Invalid key, key must start with :, like {:a 12}")
-                return ['#dict',{}]
-            }
-            // value
-            else{
-                output[key] = formatDict(input_str.slice(i + 1,index))
-            }
-            i = index
-        }
-        else if (input_str[i]==";"){
-            while( i!=input_str.length && input_str[i]!='\n'){i++}
-            continue
-        }
-        // string
-        else if (input_str[i]=='"'){
-            var start = i + 1
-            for(i = start; i < input_str.length; i++){
-                if (input_str[i]=='//'){
-                    i++
-                    continue
-                }
-                if (input_str[i]=='"')
-                    break
-            }
-            count++
-            // key
-            if (count%2!=0){
-                console.log("Invalid key, key must start with :, like {:a 12}")
-                return ['#dict',{}]
-            }
-            // value
-            else{
-                //output[key] = new Toy_String(input_str.slice(start,i))
-                output[key] = cons('quote', cons(input_str.slice(start,i),[]))
-            }
-        }
-        // key 
-        else{
-            var start = i
-            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
-                i = i + 1
-            }
-            var the_atom = parseOneSentence(input_str.slice(start,i))[0]
-
-            count++
-            // key
-            if (count%2!=0){
-                if (the_atom[0]!=':'){
-                    console.log("Invalid key, key must start with :, like {:a 12}")
-                    return ['#dict',{}]
-                }
-                key = the_atom
-            }
-            // value
-            else{
-                output[key] = the_atom
-            }
-        }
-    }
-    return [1, output]
-}
-/*
-    one complete statement at a time
-    (define x 12) -> ['define' ['x' ['12' []]]]
-                     linked list
-    only valid () string
-    no atom, comment...
-*/
-var parseOneSentence = function (input_str){
-    if (input_str == "" )
-        return []
-    else if (input_str[0] == ' ' || input_str[0] == '\t' || input_str[0] == '\n')
-        return parseOneSentence(input_str.slice(1))
-    else if (input_str[0]==";"){
-        // ; 123\n4 -> 4
-        var i = 0
-        while( i!=input_str.length && input_str[i]!='\n'){i++}
-        return parseOneSentence(input_str.slice(i))
-    }
-    else if (input_str[0] == '('){
-        var i = indexOfLastParenthesis(input_str, 0)
-        if (i==-1){
-            console.log("Error code 1")
-            return ;
-        }
-        var arg0 = parseOneSentence(input_str.slice(1,i))
-        var arg1 = parseOneSentence(input_str.slice(i+1))
-        return cons( arg0, arg1  )
-    }
-    // vector
-    else if (input_str[0] == '['){
-        var i = indexOfLastBracket(input_str,0)
-        return cons(formatArray(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
-    }
-    else if (input_str[0] == '{'){
-        var i = indexOfLastBigParenthesis(input_str,0)
-        return cons(formatDict(input_str.slice(1,i)),parseOneSentence(input_str.slice(i+1)))
-    }
-    else if (input_str[0] == "'" || input_str[0]==',' || input_str[0]=='@' || input_str == '#'){
-        var flag;
-        if (input_str[0]=="'")
-            flag = 'quote'
-        else if (input_str[0]==',')
-            flag = 'unquote'
-        else  if (input_str[0]=='@')
-            flag = 'quasiquote'
-        else
-            flag = '#vector'
-
-        var dealWith_Quote_Unquote_Quasiquote = function (input_str , result , count_of_double_quote, count_of_bracket) {
-               if (input_str=="")
-                   return ["",result]
-               else if (count_of_bracket==0 && (input_str[0]=="\n" || input_str[0]==" "))
-                   return [input_str.slice(1) , result ]
-               else if (input_str[0]=="\"")
-                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+"\"" , count_of_double_quote+1 , count_of_bracket )
-               else if (input_str[0]=="(" && count_of_double_quote%2==0 )
-                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+"(" , count_of_double_quote, count_of_bracket+1 )
-               else if (input_str[0]==")" && count_of_double_quote%2==0 ){
-                   if (count_of_bracket==0)
-                       return [input_str ,result]
-                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1) , result+")", count_of_double_quote , count_of_bracket-1)
-               }
-               else
-                   return dealWith_Quote_Unquote_Quasiquote(input_str.slice(1), result+input_str[0],count_of_double_quote,count_of_bracket)
-           }
-
-        var rest_result = dealWith_Quote_Unquote_Quasiquote(input_str.slice(1), "", 0, 0)
-        var rest = rest_result[0]
-        var result = rest_result[1]
-        return cons(cons(flag, parseOneSentence(result)), parseOneSentence(rest))
-    }
-    // string is not atom
-    else if (input_str[0]=='"'){
-       var rest_result = dealWith_string(input_str.slice(1),"")
-       return cons(cons('quote', cons(rest_result[1],[])), parseOneSentence(rest_result[0]))
-       //return cons(new Toy_String(rest_result[1]), parseOneSentence(rest_result[0]))
-    }
-    else {
-        var i = 0
-        // should check for / fraction when loading
-        // if found /, then check ahead.
-        // if ahead is number
-        // then assume that is fraction
-        // and behind must be number
-        while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
-            i = i + 1
-        }
-        var the_atom = input_str.slice(0,i)
-        return cons(formatNumber(the_atom), parseOneSentence(input_str.slice(i+1)))
-    }
-}
-/*
-    mode :
-        parse    0
-        eval     1
-        compile  2
-*/
-var TOY_Parse = function (input_str){
-    for(var i = 0; i < input_str.length; i = i + 1){
-        if (input_str[i] == ' ' || input_str[i] == '\t' || input_str[i] == '\n')
-            continue
-        else if (input_str[i]==";"){
-            // ; 123\n4 -> 4
-            while( i!=input_str.length && input_str[i]!='\n'){i++}
-            continue
-        }
-        else if (input_str[i]=='('){
-            var start = i
-            i = indexOfLastParenthesis(input_str, start)
-            var parsed = parseOneSentence(input_str.slice(start+1,i))
-            displayList(parsed)
-            continue
-        }
-        else{
-            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
-                i = i + 1
-            }
-            continue
-        }
-    }
-}
-var TOY_Eval = function (input_str,env,module_name){
-    var return_value;
-    for(var i = 0; i < input_str.length; i = i + 1){
-        if (input_str[i] == ' ' || input_str[i] == '\t' || input_str[i] == '\n')
-            continue
-        else if (input_str[i]==";"){
-            // ; 123\n4 -> 4
-            while( i!=input_str.length && input_str[i]!='\n'){i++}
-            continue
-        }
-        else if (input_str[i]=='('){
-            var start = i
-            i = indexOfLastParenthesis(input_str, start)
-            var parsed = parseOneSentence(input_str.slice(start+1,i))
-            //console.log(parsed)
-            //display(parsed)
-            return_value = toy(parsed,env,module_name)
-           // display(return_value)
-            continue
-        }
-        else{
-            var start = i
-            while (i!=input_str.length && input_str[i]!=' ' && input_str[i]!='(' && input_str[i]!=')' && input_str[i]!='\n' && input_str[i]!='\t' && input_str[i]!=';'){
-                i = i + 1
-            }
-            return_value = toy(input_str.slice(start, i), env, module_name)
-            continue
-        }
-    }
-    return return_value
-}
 // ['a','b','c'] -> [1 2]
 var formatArrayString = function (arr){
     var output = "["
@@ -2089,7 +1775,7 @@ var display = function(arg){
 //console.log(output)
 //displayList(output)
 
-
+// tokenize input string
 var Tokenize_String = function(input_str){
     var output = []
     for(var i = 0; i < input_str.length; i++){
@@ -2114,7 +1800,10 @@ var Tokenize_String = function(input_str){
                     i = i + 1
                 i = i + 1
             }
-            output.push(input_str.slice(start, i+1))
+            output.push('(')
+            output.push('quote')
+            output.push(input_str.slice(start+1, i))
+            output.push(')')
         }
         else { // atom or number
             var start = i
@@ -2133,6 +1822,7 @@ var Tokenize_String = function(input_str){
     return output
 }
 
+// parse string and generate linked list
 var ParseString = function(token_list){
     var rest;
     var parseList = function(token_list){
@@ -2288,13 +1978,20 @@ var ParseString = function(token_list){
     }
     return ParseString_iter(token_list)
 }
-var x = "(define x {:a [1]})"
+var x = "(define x {:a [1]}) 13 14 (define x 1234)"
 var y = Tokenize_String(x)
-console.log(y)
 var z = ParseString(y)
-console.log(z)
-console.log(z[0][1][1])
-display(z)
+
+var TOY_Eval = function(input_str, env, module){
+    var tokenized_list = Tokenize_String(input_str)
+    var parsed_obj = ParseString(tokenized_list)
+    var TOY_Eval_iter = function(list, value){
+        if(list.length == 0)
+            return value
+        return TOY_Eval_iter(cdr(list), toy(car(list), env, module) )
+    }
+    return TOY_Eval_iter(parsed_obj, 'undefined')
+}
 // 
 // exports to Nodejs 
 if (typeof(module)!="undefined"){
