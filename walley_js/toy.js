@@ -88,6 +88,9 @@ var cdr = function (arg){
         console.log("Error...cannot get cdr of empty list")
         return 'undefined'
     }
+    if (typeof(arg) === 'string'){
+        return arg.slice(1)
+    }
     // vector
     else if (arg.constructor == Vector)
         return arg.value.slice(1)
@@ -1644,9 +1647,9 @@ var formatList = function (list){
         // number
         else if (list.constructor ==  Number){
             if (list.type == 'rational')
-                output = output + (list.numer + '/' + list.denom)
+                output = output + ' . ' + (list.numer + '/' + list.denom)
             else 
-                output = output + list.numer
+                output = output + ' . ' + list.numer
             break
         }
         // vector
@@ -1838,6 +1841,21 @@ var ParseString = function(token_list){
             return cons(parseDictionary(token_list.slice(1)), parseList(rest))
         else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==',')
             return cons(parseSpecial(token_list.slice(1), token_list[0]), parseList(rest))
+        // pair
+        else if (token_list[0]==='.'){
+            if(token_list[1]==='('){
+                return parseList(token_list.slice(2))
+                //return cons(parseList(token_list.slice(2)), parseList(rest))
+            }
+            else{
+                if (token_list[2]!==')'){
+                    console.log("Error...invalid pair")
+                    return []
+                }
+                rest = token_list.slice(3)
+                return formatNumber(token_list[1])
+            }
+        }
         else 
             return cons(formatNumber(token_list[0]), parseList(token_list.slice(1)))
     }
