@@ -425,6 +425,12 @@ var ENV_LIST = [{
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'vector':'vector','vector?':'vector?','#vector':'#vector',
     'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
+    '#dict':'#dict', 'dict-keys':'dict-keys', 'dict-set!':'dict-set!', 'dict-get':'dict-get', 
+    'len':'len',
+    '^':'^', 'sin':'sin', 'cos':'cos', 'tan':'tan', 'exp':'exp', 'log':'log', 'floor':'floor', 'ceil':'ceil', 
+    'number?':'number?', 'int?':'int?', 'float?':'float?', 'rational?':'rational?',
+    'get-numerator':'get-numerator', "get-denominator":'get-denominator','->rational':'->rational',
+    'file-read':'file-read', 'file-write':'file-write',
     'while':'while','for':'for',
     'true':'true','false':[]
     }]
@@ -687,22 +693,8 @@ var toy = function(tree,env,module_name){
             }
             // (vector-ref [1,2,3] 0) -> 1
             else if (tree[0]=="vector-ref"){
-                var index = toy(tree[1][1][0],env,module_name)
-                var value = toy(tree[1][0],env,module_name)
-                if (value.constructor != Vector){
-                    console.log("Error...function vector-ref wrong type var")
-                    return 'undefined'
-                }
-                if (index.constructor!=Number || index.type != 'int'){
-                    console.log("Error...function vector-ref invalid index")
-                    return 'undefined'
-                }
-
-                if (index.numer<0 || index.numer>=value.length){
-                    console.log("Error...ref index out of boundary")
-                    return 'undefined'
-                }
-                return value.value[index.numer]
+                tree[1][0] = toy(tree[1][0], env, module_name)
+                return toy(tree[1],env,module_name)
             }
             // (len '(a b c)) ->3
             // get length of value
@@ -830,16 +822,8 @@ var toy = function(tree,env,module_name){
             // get value from dict according to key
             // (dict-get {:a 12} :a) -> 12
             else if (tree[0] == 'dict-get'){
-                var value = toy(tree[1][0], env, module_name)
-                if (value.constructor!=Dict){
-                    console.log("Error...dict-get type error")
-                    return 'undefined'
-                }
-                value = value.value
-                var key = tree[1][1][0]
-                if (key[0]!=':')
-                    key = toy(key, env, module_name)
-                return value[key]
+                tree[1][0] = toy(tree[1][0],env,module_name)
+                return toy(tree[1], env, module_name)
             }
 
             /*
@@ -919,7 +903,7 @@ var toy = function(tree,env,module_name){
                     return new Number(numer/denom, 1, 'float')
                 }
                 else{
-                    var answer = toy(Math.pow( value1.numer/value1.denom  , power.numer/power.denom ))
+                    var answer = Math.pow( value1.numer/value1.denom  , power.numer/power.denom )
                     if (isInt(answer))
                         return new Number(answer, 1, 'int')
                     return new Number(answer, 1, 'float')
@@ -1117,15 +1101,29 @@ var toy = function(tree,env,module_name){
         else if (tree[0].constructor == Vector){
             // get index
             var index = toy(tree[1][0], env, module_name)
+            if (index.constructor!=Number || index.type!='int'){
+                console.log("Error...invalid index type.")
+                return 'undefined'
+            }
+            if(index.numer<0 || index.numer >= tree[0].value.length){
+                console.log("Error...index out of boundary")
+                return 'undefined'
+            }
             return tree[0].value[index.numer]
         }
         else if (tree[0].constructor == Dict){
             // get value according to key
             var key = tree[1][0]
+            var value;
             if (typeof(key) == 'string' && key[0]==':')
-                return tree[0].value[key]
-            var key = toy(tree[1][0], env, module_name)
-            return tree[0].value[key]
+                value = tree[0].value[key]
+            else{
+                var key = toy(tree[1][0], env, module_name)
+                value = tree[0].value[key]
+            }
+            if(typeof(value)=='undefined')
+                return 'undefined'
+            return value
         }
 
         else{
@@ -2010,11 +2008,12 @@ var formatList = function (list){
             if (list[0].length == 0)
                 output = output + ' ' + '()'
             // array
-            else if (list[0][0] == 0)
+            else if (typeof(list[0][0])=='number' && list[0][0] === 0)
                 output = output + ' ' + formatArrayString(list[0][1])
             // dict
-            else if (list[0][0] == 1)
+            else if (typeof(list[0][0])=='number' && list[0][0] === 1){
                 output = output + ' ' + formatDictString(list[0][1])
+            }
             else
                 output = output + ' ' + formatList(list[0])
         }
@@ -2041,8 +2040,14 @@ var formatDictString = function(value){
                 output = output + ' ' + v.numer + ','
         }
         // vector
+        else if (v[0]===0)
+            output = output + ' ' + formatArrayString(v[1]) + ','
+        // vector
         else if (v.constructor == Vector)
             output = output + ' ' + formatArrayString(v.value) + ','
+        // vector
+        else if (v[0]===1)
+            output = output + ' ' + formatDictString(v[1]) + ','
         // dict
         else if (v.constructor == Dict)
             output = output + ' ' + formatDictString(v.value) + ','
@@ -2085,6 +2090,211 @@ var display = function(arg){
 //displayList(output)
 
 
+var Tokenize_String = function(input_str){
+    var output = []
+    for(var i = 0; i < input_str.length; i++){
+        if (input_str[i]==' '||input_str[i]=='\t'||input_str[i]=='\n'){
+            continue
+        }
+        else if (input_str[i]=='('||input_str[i]==')'||
+            input_str[i]=='['||input_str[i]==']'||
+            input_str[i]=='{'||input_str[i]=='}'||
+            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','){
+            output.push(input_str[i])
+        }
+        else if (input_str[i]==";"){ // comment
+            while( i!=input_str.length && input_str[i]!='\n'){i++}
+            continue
+        }
+        else if (input_str[i]=='"'){ // string
+            var start = i
+            i = i + 1
+            while(input_str[i]!='"' && i!=input_str.length){
+                if(input_str[i]=='\\')
+                    i = i + 1
+                i = i + 1
+            }
+            output.push(input_str.slice(start, i+1))
+        }
+        else { // atom or number
+            var start = i
+            while (i!=input_str.length && input_str[i]!=' ' 
+                && input_str[i]!='(' && input_str[i]!=')' 
+                && input_str[i]!='[' && input_str[i]!=']' 
+                && input_str[i]!='{' && input_str[i]!='}' 
+                && input_str[i]!='\n' && input_str[i]!='\t'
+                 && input_str[i]!=';'){
+                    i = i + 1
+                }
+            output.push(input_str.slice(start, i))
+            i = i - 1
+        }
+    }
+    return output
+}
+
+var ParseString = function(token_list){
+    var rest;
+    var parseList = function(token_list){
+        if(token_list[0]==')'){ // finish
+            rest = token_list.slice(1)
+            return []
+        }
+        else if (token_list[0]=='(')
+            return cons(parseList(token_list.slice(1)), parseList(rest))
+        else if (token_list[0]=='[')
+            return cons(parseVector(token_list.slice(1)), parseList(rest))
+        else if (token_list[0]=='{')
+            return cons(parseDictionary(token_list.slice(1)), parseList(rest))
+        else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==',')
+            return cons(parseSpecial(token_list.slice(1), token_list[0]), parseList(rest))
+        else 
+            return cons(formatNumber(token_list[0]), parseList(token_list.slice(1)))
+    }
+    // parse @ ' ,
+    var parseSpecial = function(token_list, sign){
+        var flag 
+        if (sign == '@')
+            flag = 'quasiquote'
+        else if (sign == "'")
+            flag = 'quote'
+        else 
+            flag = 'unquote'
+        if (token_list[0]=='(')
+            return cons(flag, cons(parseList(token_list.slice(1))))
+        else if (token_list[0]=='[')
+            return cons(flag, cons(parseVector(token_list.slice(1))))
+        else if (token_list[0]=='{')
+            return cons(flag, cons(parseDictionary(token_list.slice(1))))
+        else{
+            rest = token_list.slice(1)
+            return cons(flag, cons(formatNumber(token_list[0]), []))
+        }
+    }
+    var parseVector = function(token_list){
+        var parseVector_iter = function(token_list, output){
+            // finish
+            if (token_list[0]==']'){
+                rest = token_list.slice(1)
+                return output
+            }
+            else if (token_list[0]=='['){
+                output.push(parseVector(token_list.slice(1)))
+                return parseVector_iter(rest, output)
+            }
+            else if (token_list[0]=='('){
+                output.push(parseList(token_list.slice(1)))
+                return parseVector_iter(rest, output)
+            }
+            else if (token_list[0]=='{'){
+                output.push(parseDictionary(token_list.slice(1)))
+                return parseVector_iter(rest, output)
+            }
+            else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
+                output.push(parseSpecial(token_list.slice(1), token_list[0]))
+                return parseVector_iter(rest, output)
+            }
+            else{
+                output.push(formatNumber(token_list[0]))
+                return parseVector_iter(token_list.slice(1), output)
+            }
+        }
+        return [0, parseVector_iter(token_list, [])]
+    }
+    var parseDictionary = function(token_list){
+        var parseDictionary_iter = function(token_list, output, is_key, key){
+            // finish
+            if (token_list[0]=='}'){
+                rest = token_list.slice(1)
+                return output
+            }
+            else if (token_list[0]=='{'){
+                if (is_key){
+                    console.log("Error...invalid key")
+                    return output
+                }
+                else{
+                    output[key] = ParseString_iter(token_list.slice(1), {}, false, "")
+                    return parseDictionary_iter(rest, output, true, key)
+                }
+            }
+            else if (token_list[0]=='['){
+                if (is_key){
+                    console.log("Error...invalid key")
+                    return output
+                }
+                else{
+                    output[key] = parseVector(token_list.slice(1))
+                    return parseDictionary_iter(rest, output, true, key)
+                }
+            }
+            else if (token_list[0]=='('){
+                if (is_key){
+                    console.log("Error...invalid key")
+                    return output
+                }
+                else{
+                    output[key] = parseList(token_list.slice(1))
+                    return parseDictionary_iter(rest, output, true, key)
+                }
+            }
+            // quasiquote quote unquote
+            else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
+                if (is_key){
+                    console.log("Error...invalid key")
+                    return output
+                }
+                else{
+                    output[key] = parseSpecial(token_list.slice(1), token_list[0])
+                    return parseDictionary_iter(rest, output, true, key)
+                }          
+            }
+            else{
+                if(is_key){
+                    return parseDictionary_iter(token_list.slice(1), output, false, token_list[0])
+                }
+                else{
+                    output[key] = formatNumber(token_list[0])
+                    return parseDictionary_iter(token_list.slice(1), output, true, key)
+                }
+            }
+        }
+        return [1, parseDictionary_iter(token_list, {}, true, "")]
+    }
+    var ParseString_iter = function(token_list){
+        // finish
+        if(token_list.length == 0)
+            return []
+        // list
+        if(token_list[0]=='('){
+            return cons(parseList(token_list.slice(1)), ParseString_iter(rest))
+        }
+        // vector
+        else if (token_list[0]=='['){
+            return cons(parseVector(token_list.slice(1)), ParseString_iter(rest))
+        }
+        // dictionary
+        else if (token_list[0]=='{'){
+            return cons(parseDictionary(token_list.slice(1)), ParseString_iter(rest))
+        }
+        // quasiquote quote unquote
+        else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
+            return cons(parseSpecial(token_list.slice(1), token_list[0]), ParseString_iter(rest))
+        }
+        // atom
+        else{
+            return cons(formatNumber(token_list[0]), ParseString_iter(token_list.slice(1)))
+        }
+    }
+    return ParseString_iter(token_list)
+}
+var x = "(define x {:a [1]})"
+var y = Tokenize_String(x)
+console.log(y)
+var z = ParseString(y)
+console.log(z)
+console.log(z[0][1][1])
+display(z)
 // 
 // exports to Nodejs 
 if (typeof(module)!="undefined"){

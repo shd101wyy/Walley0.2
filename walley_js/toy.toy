@@ -1,10 +1,11 @@
-(cond
- ;; it is empty
- ((eq x '())
-    1
-  )
- ;; found existed key
- ((eq (car x) key)
-  (set-ref! x 1 value)
-  )
- )
+(define Apple {})
+(dict-set! Apple :init (lambda ()
+	(define self {})
+	(dict-set! self :hi (lambda ()
+		(display a)
+		))
+	self
+	)
+)
+(define x ((Apple :init)))
+((x :hi))
