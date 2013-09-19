@@ -921,6 +921,78 @@ var toy = function(tree,env,module_name){
                 env.pop()
                 return "undefined"
             }
+            /*
+                browser-save 
+                browser-load 
+                browser-list
+                browser-remove
+            */
+            // (browser-save save-name)
+            // save current env
+            else if (tree[0]=='browser-save'){
+                if (window.localStorage === undefined){
+                    console.log("Sorry...Cannot use browser-save function cuz ur browser does not support localStorage or any other reason\n")
+                    return 'undefined'
+                }
+                var save_name = toy(tree[1][0], env, module_name)
+                window.localStorage[save_name] = JSON.stringify(env[0])
+                console.log("Save successfully\nData Name: "+save_name)
+                return 'undefined'
+            }
+            // (browser-load load-name)
+            // load current env
+            // cannot overwrite already existed data
+            // eg if (x 2) already existed, then (x 3) from saved data cannot be used
+            else if (tree[0]=='browser-load'){
+                if (window.localStorage === undefined){
+                    console.log("Sorry...Cannot use browser-load function cuz ur browser does not support localStorage or any other reason\n")
+                    return 'undefined'
+                }
+                var load_name = toy(tree[1][0], env, module_name)
+                if(load_name in window.localStorage){
+                    var symbolic_table = JSON.parse(window.localStorage[load_name])
+                    console.log("Retrieve Data: "+load_name +" successfully")
+                    for(var i in symbolic_table){
+                        console.log("Get Var: "+i+" with Value: "+symbolic_table[i])
+                        if (i in env[0]){
+                            continue
+                        }
+                        else{
+                            env[0][i] = symbolic_table[i]
+                        }
+                    }
+                    console.log("Load Successfully")
+                    return 'undefined'
+                }
+                // save data does not exist
+                else{
+                    console.log("Data: "+load_name +" does not exist :(")
+                    return 'undefined'
+                }
+            }
+            // (browser-list)
+            // show save items list
+            else if (tree[0]=='browser-list'){
+                if (window.localStorage === undefined){
+                    console.log("Sorry...Cannot use browser-list function cuz ur browser does not support localStorage or any other reason\n")
+                    return 'undefined'
+                }
+                var save_item_names = Object.keys(window.localStorage)
+                return arrayToList(save_item_names)
+            }
+            // (browser-remove 'data-name)
+            // remove saved data
+            else if (tree[0]=='browser-remove'){
+                if (window.localStorage === undefined){
+                    console.log("Sorry...Cannot use browser-remove function cuz ur browser does not support localStorage or any other reason\n")
+                    return 'undefined'
+                }          
+                var remove_data_name = toy(tree[1][0], env, module_name) 
+                window.localStorage.removeItem(remove_data_name)
+                console.log("Remove Data: "+remove_data_name + ' successfully')
+                return 'undefined'
+            }
+
             // implement math functions
             else if (tree[0]=="^"){
                 var isInt = function(n){
