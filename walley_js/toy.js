@@ -67,9 +67,19 @@ var eq = function(arg0, arg1){
 	var type1 = typeof(arg1)
 	if (type0!=type1)
 		return []
-	else if (arg0==arg1)
-		return "true"
-	else
+    if (type0=='string'){
+        if (arg0==arg1)
+            return 'true'
+        return []
+    }
+	else if (arg0.constructor == Number && arg1.constructor == Number){
+        if (arg0.numer/arg0.denom == arg1.numer/arg1.denom)
+            return 'true'
+        return []
+    }
+	else if (arg0 == arg1)
+        return "true"
+    else
 		return []
 }
 var car = function ( arg ){ 
