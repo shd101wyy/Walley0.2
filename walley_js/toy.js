@@ -324,10 +324,6 @@ var Dict = function(value){
     this.value = value
 }
 
-var Toy_String = function(value){
-    this.value = value
-}
-
 /*
     TOY DATA TYPE
 
@@ -426,6 +422,7 @@ var ENV_LIST = [{
     'show-env':'show-env',
     'set-car!':'set-car!','set-cdr!':'set-cdr!',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
+    'atom-slice':'atom-slice','atom-ref':'atom-ref',
     'vector':'vector','vector?':'vector?','#vector':'#vector',
     'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
     '#dict':'#dict', 'dict-keys':'dict-keys', 'dict-set!':'dict-set!', 'dict-get':'dict-get', 
@@ -445,7 +442,7 @@ var toy = function(tree,env,module_name){
 
     if (typeof(tree)=="string")
         return assoc(tree,env)
-    else if (tree.constructor == Number || tree.constructor == Vector || tree.constructor == Toy_String || tree.constructor == Dict)
+    else if (tree.constructor == Number || tree.constructor == Vector || tree.constructor == Dict)
         return tree
         //return ['number',tree]
     // atom
@@ -468,9 +465,8 @@ var toy = function(tree,env,module_name){
             else if (tree[0]=="cdr")
                 return cdr(toy(tree[1][0],env,module_name))
             // (cons x y)
-            else if (tree[0]=="cons"){
+            else if (tree[0]=="cons")
                 return cons(toy(tree[1][0],env,module_name),toy(tree[1][1][0],env,module_name))
-            }
             else if (tree[0]=="cond")
                 return cond(cdr(tree),env,module_name)
             // add + - * / functions to calculate numbers
@@ -639,6 +635,13 @@ var toy = function(tree,env,module_name){
                     console.log("Error...Module " + load_module + "does not exist")
                 return 'undefined'
          	}
+            // i want to implement if for efficiency purpose
+            else if (tree[0]=="if"){
+                var judge = toy(tree[1][0], env, module_name)
+                if (judge==0)
+                    return toy(tree[1][1][1][0], env, module_name)
+                return toy(tree[1][1][0], env, module_name)
+            }
             // io function
             else if (tree[0]=="display")
                 return display(toy(tree[1][0],env,module_name))
@@ -647,6 +650,33 @@ var toy = function(tree,env,module_name){
             	printArray(env)
                 // here has some problem ... 
             	return env
+            }
+            /*
+                atom
+            */
+            else if (tree[0]=='atom-slice'){
+                var value = toy(tree[1][0],env,module_name)
+                if(typeof(value)=='string'){
+                    var left = toy(tree[1][1][0],env,module_name)
+                    var right = toy(tree[1][1][1][0],env,module_name)
+                    if(left.constructor == Number && right.constructor == Number &&
+                        left.type == 'int' && right.type == 'int' ){
+                        return value.slice(left.numer, right.numer)
+                    }
+                }
+                console.log("Error...function atom-slice invalid params")
+                return 'undefined'
+            }
+            else if (tree[0]=='atom-ref'){
+                var value = toy(tree[1][0],env,module_name)
+                if(typeof(value)=='string'){
+                    var index = toy(tree[1][1][0],env,module_name)
+                    if(index.constructor == Number && index.type == 'int'){
+                        return value[index.numer]
+                    }
+                }
+                console.log("Error...function atom-ref invalid params")
+                return 'undefined'
             }
             // mutable list funcions
             // set-car! set-cdr!
@@ -969,15 +999,6 @@ var toy = function(tree,env,module_name){
                     return 'true'
                 return []
             }
-            /*
-            // check string type
-            else if (tree[0]=='string?'){
-                var value = toy(tree[1][0],env, module_name)
-                if (value.constructor == Toy_String)
-                    return 'true'
-                return []
-            }
-            */
             // defmacro
             /*
 
@@ -1638,6 +1659,8 @@ var formatArrayString = function (arr){
     return output
 }
 var formatList = function (list){
+    if (list.length == 0)
+        return "()"
     var output = "("
     while(1){
         if(typeof(list) == 'string'){
@@ -1753,9 +1776,6 @@ var displayList = function (list){
 var display = function(arg){
     if (typeof(arg) == 'string')
         console.log(arg)
-    else if (arg.constructor == Toy_String){
-        console.log(arg.value)
-    }
     // does not support vector yet
     else if (arg.constructor == Vector){
         console.log(formatArrayString(arg.value))    
