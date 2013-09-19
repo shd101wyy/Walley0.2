@@ -1434,9 +1434,17 @@ var _lt_array_ = function(arr,env,module_name){
 	var value1 = toy(arr[0],env,module_name)
 	return _lt_array_iter_(value1,cdr(arr),env,module_name)
 }
+var list_reverse = function(arr){
+    var list_reverse_iter = function(arr, output){
+        if (arr.length == 0)
+            return output
+        return list_reverse_iter(cdr(arr), cons(car(arr), output))
+    }
+    return list_reverse_iter(arr,[])
+}
 // >
 var _gt_array_ = function(arr,env,module_name){
-	return _lt_array_(arr.reverse(),env,module_name)
+	return _lt_array_(list_reverse( arr) ,env,module_name)
 }
 
 // =
@@ -1465,7 +1473,7 @@ var _equal_two_values = function(value1,value2){
 		return []
 	else{
         if (value1.constructor == Number && value2.constructor == Number){
-            if (value1.numer/valu1.denom == value2.numer/value2.denom)
+            if (value1.numer/value1.denom == value2.numer/value2.denom)
                 return "true"
             else
                 return []
@@ -1530,7 +1538,7 @@ var _le_array_ = function(arr,env,module_name){
 }
 // >=
 var _ge_array_ = function(arr,env,module_name){
-	return _le_array_(arr.reverse(),env,module_name)
+	return _le_array_(list_reverse( arr ), env, module_name)
 }
 
 var VirtualFileSystem = {}
