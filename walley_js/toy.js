@@ -1354,8 +1354,11 @@ var _sub_array_ = function(arr){
 			return result
 		return _sub_array_iter_(cdr(list),_sub_(result,list[0]))
 	}
-	if (arr.length==1)
-		return "-"+arr[0]
+    // (- 12)
+	if (arr[1].length == 0 ){
+        arr[0].numer = arr[0].numer * (-1)
+		return arr[0]
+    }
 	return _sub_array_iter_(cdr(arr),arr[0])
 }
 var _mul_array_ = function(arr){
