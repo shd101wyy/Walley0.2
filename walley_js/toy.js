@@ -2537,9 +2537,10 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             else if (tree[0]=="set!"){
                 var var_name = getVar( tree[1], symbol_table)
                 var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
-                output.push([Set, var_name, var_value])
 
                 if (typeof(var_value)==='string')
+                	output.push([Set, var_name[0], var_name[1], var_value])
+                else if (typeof(var_value)==='number')
                 	output.push([Set, var_name[0], var_name[1], var_value])
               	else
                 	output.push([Set, var_name[0], var_name[1], var_value[0], var_value[1]])
@@ -2964,7 +2965,7 @@ var printInstructions = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x 12)(define y (lambda (a) (__ADD__ a x)))"
+var x = "(define x 12)(define y (lambda (a) (set! x a)))"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
