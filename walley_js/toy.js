@@ -2146,6 +2146,46 @@ if (typeof(module)!="undefined"){
     Toy Language JS compiler
 */
 
+
+var MakeList = function(){
+	this.value = null
+}
+var ListPush = function(list, push_value){
+	if(list.value == null)
+		list.value = push_value
+	else 
+		list.value = [list.value, push_value]
+	return list
+}
+var ArrayPush = function(arr, push_value){
+	arr.push(push_value)
+}
+var DictionarySet = function(dict, key, value){
+	dict[key] = value
+}
+
+var Call = function(temp_name, func, params_str){
+	// array
+	if( Object.prototype.toString.call( func ) === '[object Array]' ) {
+    	var index = eval(params_str[0])
+    	return func[index]
+	}
+	// dictionary
+	if(typeof(func)==='object'){
+		var key = params_str[0]
+		if(key[0]!=':')
+			key = eval(key)
+		key = key.slice(1)
+		eval(temp_name+" = "+JSON.stringify(func[key]))
+	}
+	// func
+	else{
+
+	}
+}
+
+
+
 var parseStringToArray = function(input_array){
     var output = []
     var i = 0
@@ -2290,42 +2330,53 @@ var Set = function(var_name, var_value){
 var MakeString = function(x){return "\""+x+"\""}
 
 var tempName = function(count){ // make temp name
-	return "temp["+count[0]+"]"
+	return "temp_"+count[0]+"___"
 }
 
 
 /*
-	Define 
+	Define 				
 	Set
 
-	ListPush
+	ListPush : dest
 	MakeList
 
-	MakeFunction
+	MakeFunction : dest
 	AddParam
+	EndParam
 	EndFunction
 	Call
 
-	MakeArray
+	MakeArray : dest
 	ArrayPush
+	ArrayPop
+	ArraySet
 
-	MakeDictionary
+	MakeDictionary : dest
 	DictionarySet
+
+	MakeNumber  : dest numer denom type
+
+	#ADD#
+	#SUB#
+	#MULT#
+	#DIV#
 
 
 */
 var Toy_JS = function(tree, module_name, output, count){
 
 	var quoteFormatList = function(list, output, temp_name){
-		output.push("MakeList(" + temp_name + ")")
+		output.push("MakeList " + temp_name)
 		for(var i = 0; i < list.length; i++){
 			if(typeof(list[i])==='string')
-				output.push("ListPush("+temp_name+","+MakeString(list[i])+")")
+				output.push("ListPush "+temp_name+" "+MakeString(list[i]))
 			else { // list 
 				quoteFormatList(list[i], output, tempName(count))
-				output.push("ListPush("+temp_name+","+tempName(count)+")")
+				output.push("ListPush "+temp_name+" "+tempName(count))
 			}
 		}
+		output.push("ListPush "+temp_name+" "+"[]")
 		return temp_name
 	}
 
@@ -2354,7 +2405,7 @@ var Toy_JS = function(tree, module_name, output, count){
             else if (tree[0]=="define"){
                 var var_name = tree[1]
                 var var_value = Toy_JS(tree[2],module_name, output, count)
-                output.push( "Define( "+MakeString(var_name) + "," + var_value+")" )
+                output.push( "Define "+var_name + " " + var_value )
                 count[0] = 0 // restore 0
                 return
             }
@@ -2365,24 +2416,51 @@ var Toy_JS = function(tree, module_name, output, count){
             else if (tree[0]=="set!"){
                 var var_name = tree[1]
                 var var_value = Toy_JS(tree[2],module_name, output, count)
-                output.push( "Set( "+MakeString(var_name) + "," + var_value+")" )
+                output.push( "Set "+var_name + " " + var_value )
                 count[0] = 0 // restore 0
                 return
             }
-            // #ADD#(dest, value1, value2)
+            // #ADD# dest value1 value2
             // save value1+value2 - > dest
             else if (tree[0]=="#ADD#"){
             	var temp_name = tempName(count)
             	count[0] = count[0] + 1
             	var value1 = Toy_JS(tree[1],module_name,output,count)
             	var value2 = Toy_JS(tree[2],module_name,output,count)
-            	output.push("#ADD#("+temp_name+","+value1+","+value2+")")
+            	output.push("#ADD# "+temp_name+" "+value1+" "+value2)
             	return temp_name
             }
+            else if (tree[0]=="#SUB#"){
+            	var temp_name = tempName(count)
+            	count[0] = count[0] + 1
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	output.push("#SUB# "+temp_name+" "+value1+" "+value2)
+            	return temp_name
+            }
+
+            else if (tree[0]=="#MULT#"){
+            	var temp_name = tempName(count)
+            	count[0] = count[0] + 1
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	output.push("#MULT# "+temp_name+" "+value1+" "+value2)
+            	return temp_name
+            }
+
+            else if (tree[0]=="#DIV#"){
+            	var temp_name = tempName(count)
+            	count[0] = count[0] + 1
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	output.push("#DIV# "+temp_name+" "+value1+" "+value2)
+            	return temp_name
+            }
+
             // (lambda (a b) (+ a b) (- a b) )
             /*
 				MakeFunction( temp_func_name )
-				addParam(param1)
+				AddParam(param1)
 				...
 				procedure...
 				EndFunction()
@@ -2394,12 +2472,13 @@ var Toy_JS = function(tree, module_name, output, count){
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
             	count[0] = count[0] + 1
-            	output.push("MakeFunction("+temp_name+")") // begin to make function
+            	output.push("MakeFunction "+temp_name) // begin to make function
             	for(var i = 0; i<params.length; i++){
-            		output.push("addParam("+params[i]+")") // add params
+            		output.push("AddParam "+params[i]) // add params
             	}
+            	output.push("EndParam")
             	Toy_JS_iter(stms, module_name, output, count)
-            	output.push("EndFunction()")
+            	output.push("EndFunction ")
             	return temp_name
             }
             // call function
@@ -2408,33 +2487,33 @@ var Toy_JS = function(tree, module_name, output, count){
             	var func_name = tree[0]
             	var params = tree.slice(1)
             	var temp_name = tempName(count)
-            	output.push("MakeList("+temp_name+")")
+            	output.push("MakeArray "+temp_name)
             	for(var i = 0; i < params.length; i++){
             		count[0] = count[0] + 1
             		var o_ = Toy_JS(params[i], module_name, output, count)
             		count[0] = count[0] - 1
-            		output.push("ListPush("+temp_name+","+o_+")")
+            		output.push("ArrayPush "+temp_name+" "+MakeString(o_)) // i have to make it string at first
             	}
-            	output.push("Call("+func_name+","+temp_name+")")
-            	return
+            	output.push("Call "+MakeString(temp_name)+" "+func_name+" "+temp_name)
+            	return temp_name
             }
         }
         else if(typeof(tree[0])=='number'){
             // number
             if(tree[0]==0){
             	var temp_name = tempName(count)
-                output.push("Define("+temp_name+", new Number("+tree[1]+","+tree[2]+","+tree[3]+"))")
-                count[0] = count[0] + 1
+                output.push("MakeNumber "+temp_name+" "+tree[1]+" "+tree[2]+" "+MakeString(tree[3]))
+                // count[0] = count[0] + 1
                 return temp_name
             }
             // array
             if(tree[0]==1){
             	var temp_name = tempName(count)
-                output.push("MakeArray("+temp_name+")")
+                output.push("MakeArray "+temp_name)
                 for(var i = 1; i<tree.length; i++){
                 	count[0] = count[0]+1 // update temp count
                     var value = Toy_JS(tree[i], module_name, output, count)
-                    output.push("ArrayPush(" + temp_name + ","+ value +")")
+                    output.push("ArrayPush " + temp_name + " "+ value )
 					count[0] = count[0]-1 // update temp count
                 }
                 count[0] = count[0]+1 // update temp count
@@ -2443,12 +2522,12 @@ var Toy_JS = function(tree, module_name, output, count){
             // dictionary
             if (tree[0]==2){
             	var temp_name = tempName(count)
-            	output.push("MakeDictionary("+temp_name+")")
+            	output.push("MakeDictionary "+temp_name)
             	for(var i = 1; i<tree.length; i=i+2){
                 	count[0] = count[0]+1 // update temp count
                 	var key = tree[i]
-                    var value = Toy_JS(tree[i+1], module_name, output, count)
-                    output.push("DictionarySet(" + temp_name + "," + MakeString(key) + ","+ value +")")
+                    var value = Toy_JS(tree[i+1], module_name, output, count)   // remove : ahead key
+                    output.push("DictionarySet " + temp_name + " " + MakeString(key.slice(1)) + " "+ value)
 					count[0] = count[0]-1 // update temp count
                 }
                 count[0] = count[0]+1 // update temp count
@@ -2476,10 +2555,175 @@ var printCompiledArray = function(input_array){
 }
 
 
+/*
+	Define x "hello"
+
+*/
+var Toy_JS_Compile = function(instructions){
+	var appendAheadSpace = function(input_str, space_num){
+		for(var i = 0; i < space_num; i++){
+			input_str = " " + input_str
+		}
+		return input_str
+	}
+	var Toy_JS_Compile_iter = function(instructions,output, aheadSpace){
+		if (instructions.length==0)
+			return output
+		instruction = instructions[0].split(" ")
+		// define function
+		if(instruction[0]==='Define'){
+			output.push( appendAheadSpace(
+				"var "+instruction[1]+" = "+instruction[2]+"\n",
+				aheadSpace
+				))
+		}
+		// define function
+		else if(instruction[0]==='Set'){
+			output.push( 
+				appendAheadSpace(
+					instruction[1]+" = "+instruction[2]+"\n",
+					aheadSpace
+					)
+				)
+		}
+		else if (instruction[0]==='MakeList'){
+			output.push( 
+				appendAheadSpace(
+					"var "+instruction[1]+" = " + "new MakeList()"+"\n",
+					aheadSpace
+					)
+				)
+		}
+		else if (instruction[0]==="ListPush"){
+			output.push(
+				appendAheadSpace(
+					"ListPush("+instruction[1]+","+instruction[2]+")"+"\n",
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==="MakeArray"){
+			output.push( appendAheadSpace(
+				"var "+instruction[1]+" = " + "new Array()" + "\n",
+				aheadSpace
+				))
+		}
+		else if (instruction[0]==="ArrayPush"){
+			output.push( 
+				appendAheadSpace( 
+					"ArrayPush(" + instruction[1]+","+instruction[2]+")" + "\n" ,
+					aheadSpace
+					))
+		}
+		else if (instruction[0]==='MakeNumber'){
+			output.push( 
+				appendAheadSpace(
+					"var "+instruction[1]+" = new Number("+instruction[2]+","+instruction[3]+","+instruction[4]+")" + "\n" ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='MakeDictionary'){
+			output.push( 
+				appendAheadSpace( 
+					"var "+instruction[1]+" = new Object()" + "\n",
+					aheadSpace
+					))
+		}
+		else if (instruction[0]==='DictionarySet'){
+			output.push( 
+				appendAheadSpace(
+					"DictionarySet("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
+					aheadSpace
+					))
+		}
+		else if (instruction[0]==='Call'){
+			output.push( 
+				appendAheadSpace( 
+					"Call("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
+					aheadSpace
+					 ))
+		}
+		else if (instruction[0]==='#ADD#'){
+			output.push( 
+				appendAheadSpace( 
+					"var "+instruction[1]+" = _add_("+instruction[2]+","+instruction[3]+")" + "\n" ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='#SUB#'){
+			output.push( 
+				appendAheadSpace(
+				 	"var "+instruction[1]+" = _sub_("+instruction[2]+","+instruction[3]+")" + "\n" ,
+				 	aheadSpace
+				))
+		}
+		else if (instruction[0]==='#MULT#'){
+			output.push( 
+				appendAheadSpace( 
+					"var "+instruction[1]+" = _mul_("+instruction[2]+","+instruction[3]+")" + "\n" ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='#DIV#'){
+			output.push( 
+				appendAheadSpace( 
+					"var "+instruction[1]+" = _div_("+instruction[2]+","+instruction[3]+")" + "\n" ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='MakeFunction'){
+			output.push( 
+				appendAheadSpace(
+					"var "+instruction[1]+" = function(" ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='AddParam'){
+			output.push( 
+				appendAheadSpace( 
+					instruction[1]+',' ,
+					aheadSpace
+				))
+		}
+		else if (instruction[0]==='EndParam'){
+			output[output.length - 1] = output[output.length-1].slice(0, output[output.length-1].length-1)
+			output.push(
+				appendAheadSpace(
+					"){" + "\n",
+					aheadSpace
+				))
+			aheadSpace = aheadSpace + 4
+		}
+		else if (instruction[0]==='EndFunction'){
+			aheadSpace = aheadSpace - 4
+			output.push(
+				appendAheadSpace(
+					"}" + "\n",
+					aheadSpace
+				))
+		}
+		else{
+			output.push( 
+				appendAheadSpace(
+					instruction[0] + "\n",
+					aheadSpace
+				))
+		}
+		return Toy_JS_Compile_iter(instructions.slice(1),output,aheadSpace)
+	}
+	var output_arr = Toy_JS_Compile_iter(instructions, [], 0)
+	var output = ""
+	for(var i = 0; i < output_arr.length; i++){
+		output = output + output_arr[i]
+	}
+	return output
+	// 
+}
+
+
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x 12)(define x [1 a b])(define x 14)(define x 15) (define y {:a 12})"
+var x = "(define x (lambda (a) a)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -2488,6 +2732,15 @@ var count = [0]
 var last = Toy_JS_iter(z, "", output,count)
 
 printCompiledArray(output)
+console.log("\n\n======\n\n")
+
+
+var js = Toy_JS_Compile(output)
+console.log(js)
+console.log("\n\n======\n\n")
+
+
+eval(js)
 
 
 
