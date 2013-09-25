@@ -2330,7 +2330,8 @@ var Set = function(var_name, var_value){
 var MakeString = function(x){return "\""+x+"\""}
 
 var tempName = function(count){ // make temp name
-	return "temp_"+count[0]+"___"
+	return count
+	// return "temp_"+count[0]+"___"
 }
 
 
@@ -2362,21 +2363,106 @@ var tempName = function(count){ // make temp name
 	#MULT#
 	#DIV#
 
-
+	IF 
+	LT
+	EQ
 */
+var Define = 0      // Define dest value
+var Set = 1         // Set dest value
+var MakeList = 2    // MakeList dest 
+var ListPush = 3    // ListPush dest value
+var MakeFunction = 4 // MakeFunction dest 
+var AddParam = 5     // AddParam param
+var EndParam = 6     // EndParam
+var EndFunction = 7  // EndFunction
+var Call = 8         // Call return_to_dest func param_array_addr
+var MakeArray = 9    // MakeArray dest
+var ArrayPush = 10   // ArrayPush dest value
+var ArrayPop = 11    // ArrayPost save_dest pop_array
+var ArraySet = 12    // ArraySet dest index value
+var MakeDictionary = 13 // MakeDictionary dest
+var DictionarySet = 14  // Dictionary dest key value
+var MakeNumber = 15     // MakeNumber dest numer denom type
+var __ADD__ = 16        // __ADD__ dest value1 value2
+var __SUB__ = 17
+var __MULT__ = 18
+var __DIV__ = 19
+var IF = 20            // IF judge jmp  // if pass judge, run next, else jump
+var LT = 21            // LT save_dest value1 value2
+var EQ = 22
+var EQVALUE = 23
+var JMP = 24           // JMP steps  
+
+var INT = 0
+var FLOAT = 1
+var RATIONAL = 2
+
+var opcode = function(num){
+	if(num===0)
+		return "Define"
+	else if (num==1)
+		return "Set"
+	else if (num==2)
+		return "MakeList"
+	else if (num==3)
+		return "ListPush"
+	else if (num==4)
+		return "MakeFunction"
+	else if (num==5)
+		return "AddParam"
+	else if (num==6)
+		return "EndParam"
+	else if (num==7)
+		return "EndFunction"
+	else if (num==8)
+		return "Call"
+	else if (num==9)
+		return "MakeArray"
+	else if (num==10)
+		return "ArrayPush"
+	else if (num==11)
+		return "ArrayPop"
+	else if (num==12)
+		return "ArraySet"
+	else if (num==13)
+		return "MakeDictionary"
+	else if (num==14)
+		return "DictionarySet"
+	else if (num==15)
+		return "MakeNumber"
+	else if (num==16)
+		return "__ADD__"
+	else if (num==17)
+		return "__SUB__"
+	else if (num==18)
+		return "__MULT__"
+	else if (num==19)
+		return "__DIV__"
+	else if (num==20)
+		return "IF"
+	else if (num==21)
+		return "LT"
+	else if (num==22)
+		return "EQ"
+	else if (num==23)
+		return "EQVALUE"
+	else if (num==24)
+		return "JMP"
+}
+
 var Toy_JS = function(tree, module_name, output, count){
 
 	var quoteFormatList = function(list, output, temp_name){
-		output.push("MakeList " + temp_name)
+		output.push( [MakeList, temp_name] )
 		for(var i = 0; i < list.length; i++){
 			if(typeof(list[i])==='string')
-				output.push("ListPush "+temp_name+" "+MakeString(list[i]))
+				output.push([ListPush, temp_name, MakeString(list[i])])
 			else { // list 
 				quoteFormatList(list[i], output, tempName(count))
-				output.push("ListPush "+temp_name+" "+tempName(count))
+				output.push([ListPush, temp_name, tempName(count)])
 			}
 		}
-		output.push("ListPush "+temp_name+" "+"[]")
+		output.push([ListPush, temp_name, []])
 		return temp_name
 	}
 
@@ -2388,7 +2474,7 @@ var Toy_JS = function(tree, module_name, output, count){
         if(typeof(tree[0])=="string"){
             if(tree[0]==="quote"){
             	var temp_name = tempName(count)
-				count[0] = count[0] + 1
+				count[0] = count[0] - 1
             	if (typeof(tree[1]) === 'string'){
 	                return MakeString(tree[1])
             	}
@@ -2405,7 +2491,7 @@ var Toy_JS = function(tree, module_name, output, count){
             else if (tree[0]=="define"){
                 var var_name = tree[1]
                 var var_value = Toy_JS(tree[2],module_name, output, count)
-                output.push( "Define "+var_name + " " + var_value )
+                output.push([Define, var_name, var_value])
                 count[0] = 0 // restore 0
                 return
             }
@@ -2416,44 +2502,83 @@ var Toy_JS = function(tree, module_name, output, count){
             else if (tree[0]=="set!"){
                 var var_name = tree[1]
                 var var_value = Toy_JS(tree[2],module_name, output, count)
-                output.push( "Set "+var_name + " " + var_value )
+                output.push([Set, var_name, var_value])
                 count[0] = 0 // restore 0
                 return
             }
             // #ADD# dest value1 value2
             // save value1+value2 - > dest
-            else if (tree[0]=="#ADD#"){
+            else if (tree[0]=="__ADD__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
+            	count[0] = count[0] - 1
             	var value1 = Toy_JS(tree[1],module_name,output,count)
             	var value2 = Toy_JS(tree[2],module_name,output,count)
-            	output.push("#ADD# "+temp_name+" "+value1+" "+value2)
+            	output.push([__ADD__, temp_name, value1, value2])
             	return temp_name
             }
-            else if (tree[0]=="#SUB#"){
+            else if (tree[0]=="__SUB__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
+            	count[0] = count[0] - 1
             	var value1 = Toy_JS(tree[1],module_name,output,count)
             	var value2 = Toy_JS(tree[2],module_name,output,count)
-            	output.push("#SUB# "+temp_name+" "+value1+" "+value2)
-            	return temp_name
-            }
-
-            else if (tree[0]=="#MULT#"){
-            	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
-            	var value1 = Toy_JS(tree[1],module_name,output,count)
-            	var value2 = Toy_JS(tree[2],module_name,output,count)
-            	output.push("#MULT# "+temp_name+" "+value1+" "+value2)
+            	output.push([__SUB__, temp_name, value1, value2])
             	return temp_name
             }
 
-            else if (tree[0]=="#DIV#"){
+            else if (tree[0]=="__MULT__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
+            	count[0] = count[0] - 1
             	var value1 = Toy_JS(tree[1],module_name,output,count)
             	var value2 = Toy_JS(tree[2],module_name,output,count)
-            	output.push("#DIV# "+temp_name+" "+value1+" "+value2)
+            	output.push([__MULT__, temp_name, value1, value2])
+            	return temp_name
+            }
+
+            else if (tree[0]=="__DIV__"){
+            	var temp_name = tempName(count)
+            	count[0] = count[0] - 1
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	output.push([__DIV__, temp_name, value1, value2])
+            	return temp_name
+            }
+            // IF judge jmp
+            // if pass judge run next
+            // else jmp
+            else if (tree[0]=='if'){
+            	var judge = Toy_JS(tree[1],module_name,output,count)
+            	var if_start_index = output.length // save below IF index
+            	output.push([IF, judge]) // miss jump place
+            	var value1_start_index = output.length
+            	var value1 = Toy_JS(tree[2],module_name,output,count)
+            	output.push([JMP]) // if run value1, them jmp value2
+            	var value2_start_index = output.length
+            	var value2 = Toy_JS(tree[3],module_name,output,count)
+            	var value2_end_index = output.length
+
+            	output[value2_start_index-1].push(value2_end_index - value2_start_index + 1)
+            	output[if_start_index].push(value2_end_index - value2_start_index + 2)
+            	return
+            }
+            else if (tree[0]=='LT'){
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	var temp_name = tempName(count)
+            	output.push([LT, temp_name, value1, value2])
+            	return temp_name
+            }
+            else if (tree[0]=='EQ'){
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	var temp_name = tempName(count)
+            	output.push([EQ, temp_name, value1, value2])
+            	return temp_name
+            }
+            else if (tree[0]=='EQVALUE'){
+            	var value1 = Toy_JS(tree[1],module_name,output,count)
+            	var value2 = Toy_JS(tree[2],module_name,output,count)
+            	var temp_name = tempName(count)
+            	output.push([EQ, temp_name, value1, value2])
             	return temp_name
             }
 
@@ -2471,14 +2596,14 @@ var Toy_JS = function(tree, module_name, output, count){
             	var params = tree[1]
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
-            	output.push("MakeFunction "+temp_name) // begin to make function
+            	count[0] = count[0] - 1
+            	output.push([MakeFunction, temp_name]) // begin to make function
             	for(var i = 0; i<params.length; i++){
-            		output.push("AddParam "+params[i]) // add params
+            		output.push([AddParam, params[i]]) // add params
             	}
-            	output.push("EndParam")
+            	output.push([EndParam])
             	Toy_JS_iter(stms, module_name, output, count)
-            	output.push("EndFunction ")
+            	output.push(EndFunction)
             	return temp_name
             }
             // call function
@@ -2487,14 +2612,14 @@ var Toy_JS = function(tree, module_name, output, count){
             	var func_name = tree[0]
             	var params = tree.slice(1)
             	var temp_name = tempName(count)
-            	output.push("MakeArray "+temp_name)
+            	output.push([MakeArray, temp_name])
             	for(var i = 0; i < params.length; i++){
-            		count[0] = count[0] + 1
-            		var o_ = Toy_JS(params[i], module_name, output, count)
             		count[0] = count[0] - 1
-            		output.push("ArrayPush "+temp_name+" "+MakeString(o_)) // i have to make it string at first
+            		var o_ = Toy_JS(params[i], module_name, output, count)
+            		count[0] = count[0] + 1
+            		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
             	}
-            	output.push("Call "+MakeString(temp_name)+" "+func_name+" "+temp_name)
+            	output.push([Call, MakeString(temp_name), func_name, temp_name]) // Call dest func_name params_array
             	return temp_name
             }
         }
@@ -2502,37 +2627,77 @@ var Toy_JS = function(tree, module_name, output, count){
             // number
             if(tree[0]==0){
             	var temp_name = tempName(count)
-                output.push("MakeNumber "+temp_name+" "+tree[1]+" "+tree[2]+" "+MakeString(tree[3]))
-                // count[0] = count[0] + 1
+
+                var type = INT // categorize number type
+                if(tree[3]=='float')
+                	type = FLOAT
+                else if (tree[3]=='rational')
+                	type = RATIONAL
+
+                output.push([MakeNumber, temp_name, tree[1], tree[2], type])
+                count[0] = count[0] - 1
                 return temp_name
             }
             // array
-            if(tree[0]==1){
+            else if(tree[0]==1){
             	var temp_name = tempName(count)
-                output.push("MakeArray "+temp_name)
+                output.push( [MakeArray, temp_name] )
                 for(var i = 1; i<tree.length; i++){
-                	count[0] = count[0]+1 // update temp count
+                	count[0] = count[0] - 1 // update temp count
                     var value = Toy_JS(tree[i], module_name, output, count)
-                    output.push("ArrayPush " + temp_name + " "+ value )
-					count[0] = count[0]-1 // update temp count
+                    output.push([ArrayPush, temp_name, value])
+					count[0] = count[0] + 1 // update temp count
                 }
-                count[0] = count[0]+1 // update temp count
+                count[0] = count[0] - 1 // update temp count
                 return temp_name
             }
             // dictionary
-            if (tree[0]==2){
+            else if (tree[0]==2){
             	var temp_name = tempName(count)
-            	output.push("MakeDictionary "+temp_name)
+            	output.push([MakeDictionary, temp_name])
             	for(var i = 1; i<tree.length; i=i+2){
-                	count[0] = count[0]+1 // update temp count
+                	count[0] = count[0] - 1 // update temp count
                 	var key = tree[i]
                     var value = Toy_JS(tree[i+1], module_name, output, count)   // remove : ahead key
-                    output.push("DictionarySet " + temp_name + " " + MakeString(key.slice(1)) + " "+ value)
-					count[0] = count[0]-1 // update temp count
+                    output.push([DictionarySet, temp_name, MakeString(key.slice(1)), value])
+					count[0] = count[0] + 1 // update temp count
                 }
-                count[0] = count[0]+1 // update temp count
+                count[0] = count[0] - 1 // update temp count
                 return temp_name
             }
+        }
+        // function
+        else {
+        	if(tree[0][0]=='lambda'){
+        		// define function
+        		var params = tree[0][1]
+            	var stms = tree[0].slice(2)
+            	var temp_name = tempName(count)
+            	var CALL_func_name = temp_name
+            	count[0] = count[0] - 1
+            	output.push([MakeFunction, temp_name]) // begin to make function
+            	for(var i = 0; i<params.length; i++){
+            		output.push([AddParam, params[i]]) // add params
+            	}
+            	output.push([EndParam])
+            	Toy_JS_iter(stms, module_name, output, count)
+            	output.push([EndFunction])
+
+            	// call function
+            	var func_name = temp_name
+            	var params = tree.slice(1)
+            	var temp_name = tempName(count)
+            	output.push([MakeArray, temp_name])
+            	for(var i = 0; i < params.length; i++){
+            		count[0] = count[0] - 1
+            		var o_ = Toy_JS(params[i], module_name, output, count)
+            		count[0] = count[0] + 1
+            		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
+            	}
+            	output.push([Call, MakeString(temp_name), func_name, temp_name])
+            	return temp_name
+
+        	}
         }
     }
 }
@@ -2569,16 +2734,16 @@ var Toy_JS_Compile = function(instructions){
 	var Toy_JS_Compile_iter = function(instructions,output, aheadSpace){
 		if (instructions.length==0)
 			return output
-		instruction = instructions[0].split(" ")
+		instruction = instructions[0]
 		// define function
-		if(instruction[0]==='Define'){
+		if(instruction[0]===Define){
 			output.push( appendAheadSpace(
 				"var "+instruction[1]+" = "+instruction[2]+"\n",
 				aheadSpace
 				))
 		}
 		// define function
-		else if(instruction[0]==='Set'){
+		else if(instruction[0]===Set){
 			output.push( 
 				appendAheadSpace(
 					instruction[1]+" = "+instruction[2]+"\n",
@@ -2586,7 +2751,7 @@ var Toy_JS_Compile = function(instructions){
 					)
 				)
 		}
-		else if (instruction[0]==='MakeList'){
+		else if (instruction[0]===MakeList){
 			output.push( 
 				appendAheadSpace(
 					"var "+instruction[1]+" = " + "new MakeList()"+"\n",
@@ -2594,97 +2759,97 @@ var Toy_JS_Compile = function(instructions){
 					)
 				)
 		}
-		else if (instruction[0]==="ListPush"){
+		else if (instruction[0]===ListPush){
 			output.push(
 				appendAheadSpace(
 					"ListPush("+instruction[1]+","+instruction[2]+")"+"\n",
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==="MakeArray"){
+		else if (instruction[0]===MakeArray){
 			output.push( appendAheadSpace(
 				"var "+instruction[1]+" = " + "new Array()" + "\n",
 				aheadSpace
 				))
 		}
-		else if (instruction[0]==="ArrayPush"){
+		else if (instruction[0]===ArrayPush){
 			output.push( 
 				appendAheadSpace( 
 					"ArrayPush(" + instruction[1]+","+instruction[2]+")" + "\n" ,
 					aheadSpace
 					))
 		}
-		else if (instruction[0]==='MakeNumber'){
+		else if (instruction[0]===MakeNumber){
 			output.push( 
 				appendAheadSpace(
 					"var "+instruction[1]+" = new Number("+instruction[2]+","+instruction[3]+","+instruction[4]+")" + "\n" ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='MakeDictionary'){
+		else if (instruction[0]===MakeDictionary){
 			output.push( 
 				appendAheadSpace( 
 					"var "+instruction[1]+" = new Object()" + "\n",
 					aheadSpace
 					))
 		}
-		else if (instruction[0]==='DictionarySet'){
+		else if (instruction[0]===DictionarySet){
 			output.push( 
 				appendAheadSpace(
 					"DictionarySet("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
 					aheadSpace
 					))
 		}
-		else if (instruction[0]==='Call'){
+		else if (instruction[0]===Call){
 			output.push( 
 				appendAheadSpace( 
 					"Call("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
 					aheadSpace
 					 ))
 		}
-		else if (instruction[0]==='#ADD#'){
+		else if (instruction[0]===__ADD__){
 			output.push( 
 				appendAheadSpace( 
 					"var "+instruction[1]+" = _add_("+instruction[2]+","+instruction[3]+")" + "\n" ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='#SUB#'){
+		else if (instruction[0]===__SUB__){
 			output.push( 
 				appendAheadSpace(
 				 	"var "+instruction[1]+" = _sub_("+instruction[2]+","+instruction[3]+")" + "\n" ,
 				 	aheadSpace
 				))
 		}
-		else if (instruction[0]==='#MULT#'){
+		else if (instruction[0]===__MULT__){
 			output.push( 
 				appendAheadSpace( 
 					"var "+instruction[1]+" = _mul_("+instruction[2]+","+instruction[3]+")" + "\n" ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='#DIV#'){
+		else if (instruction[0]===__DIV__){
 			output.push( 
 				appendAheadSpace( 
 					"var "+instruction[1]+" = _div_("+instruction[2]+","+instruction[3]+")" + "\n" ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='MakeFunction'){
+		else if (instruction[0]===MakeFunction){
 			output.push( 
 				appendAheadSpace(
 					"var "+instruction[1]+" = function(" ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='AddParam'){
+		else if (instruction[0]===AddParam){
 			output.push( 
 				appendAheadSpace( 
 					instruction[1]+',' ,
 					aheadSpace
 				))
 		}
-		else if (instruction[0]==='EndParam'){
+		else if (instruction[0]===EndParam){
 			output[output.length - 1] = output[output.length-1].slice(0, output[output.length-1].length-1)
 			output.push(
 				appendAheadSpace(
@@ -2693,7 +2858,7 @@ var Toy_JS_Compile = function(instructions){
 				))
 			aheadSpace = aheadSpace + 4
 		}
-		else if (instruction[0]==='EndFunction'){
+		else if (instruction[0]===EndFunction){
 			aheadSpace = aheadSpace - 4
 			output.push(
 				appendAheadSpace(
@@ -2719,11 +2884,19 @@ var Toy_JS_Compile = function(instructions){
 	// 
 }
 
-
+var printInstructions = function(instructions){
+	for(var i = 0; i < instructions.length; i++){
+		var output = opcode( instructions[i][0] )
+		for(var j = 1; j < instructions[i].length; j++){
+			output=output+" "+instructions[i][j]
+		}
+		console.log(output)
+	}
+}
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x (lambda (a) a)) "
+var x = "(if (LT 3 4) 12 14) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -2731,17 +2904,18 @@ var output = []
 var count = [0]
 var last = Toy_JS_iter(z, "", output,count)
 
-printCompiledArray(output)
+printInstructions(output)
 console.log("\n\n======\n\n")
 
 
+/*
 var js = Toy_JS_Compile(output)
 console.log(js)
 console.log("\n\n======\n\n")
 
 
 eval(js)
-
+*/
 
 
 
