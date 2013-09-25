@@ -1,0 +1,17 @@
+
+    How to implement Symbol Table
+
+    x = 12   ;  x:0
+    y = x + 3;  y:1
+
+    add = lambda (a b)  a:2 b:3     
+     (+ a b) 
+     
+    MakeFunction -1   ; temp0
+    AddParam 2        ; a
+    AddParam 3       ; b
+    EndParams        ;
+    ADD -2 2 3       ;
+    EndFunc          ;
+    
+    minue = lambda (
