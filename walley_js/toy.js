@@ -2371,8 +2371,8 @@ var getValue = function(str_var){
 	LT
 	EQ
 */
-var Define = 0      // Define dest layer index_in_layer
-var Set = 1         // Set dest_layer dest_index_in_layer layer index_in_layer
+var Define = 0      // Define dest value
+var Set = 1         // Set dest value
 var MakeList = 2    // MakeList dest 
 var ListPush = 3    // ListPush dest value
 var MakeFunction = 4 // MakeFunction dest 
@@ -2396,7 +2396,7 @@ var LT = 21            // LT save_dest value1 value2
 var EQ = 22
 var EQVALUE = 23
 var JMP = 24           // JMP steps  
-var GET = 25           // GET save_dest layer_index var_index
+var Display = 25
 
 var INT = 0
 var FLOAT = 1
@@ -2453,28 +2453,45 @@ var opcode = function(num){
 		return "EQVALUE"
 	else if (num==24)
 		return "JMP"
+	else if (num==25)
+		return "Display"
 }
 
-var Toy_JS = function(tree, module_name, output, count, symbol_table){
+var Toy_JS = function(tree, 
+	module_name, 
+	output, 
+	count,   // offset
+	symbol_table      // symbol table for global and local , it is a array  []
+	){
 
 	var LENGTH = symbol_table.length
-
-	// set var_name to symbol_table
-	var setVar = function(var_name, symbol_table){
-		var length = Object.keys(symbol_table[symbol_table.length-1]).length // get length
-		if(var_name in symbol_table[symbol_table.length-1]){
-			console.log("Error...cannot redefine variable")
-		}
-		symbol_table[symbol_table.length-1][var_name] = length // save index
+	var setCount = function(){
+		count[0] = symbol_table[0].length
 	}
-	// return [symbol_table_index, index]
-	var getVar = function(var_name, symbol_table){
-		for(var i = symbol_table.length-1; i>=0; i--){
-			if(var_name in symbol_table[i]){
-				return [i, symbol_table[i][var_name]]
+	// set var_name to symbol_table
+	var setVar = function(var_name){
+		symbol_table[symbol_table.length - 1].push(var_name)
+		if (symbol_table.length == 1)        
+			count[0] = count[0] + 1  	      // update count cuz one global var is put to global scope
+		if (symbol_table.length == 2)         // Now symbol table has local variable
+			return -1*symbol_table[1].length  // return current index in local
+		return symbol_table[0].length - 1     // return current index in global
+	}
+	// return index
+	var getVar = function(var_name){
+		if (symbol_table.length == 2){
+			// check local at first
+			for(var i = 0; i < symbol_table[1].length; i++){
+				if (symbol_table[1][i]===var_name)
+					return -1*(i)-1
 			}
 		}
-		console.log("Error...cannot find var")
+		// check global
+		for(var i = 0; i < symbol_table[0].length; i++){
+			if (symbol_table[0][i]===var_name)
+				return i
+		}
+		console.log("Error...unbound variable "+var_name)
 	}
 	
 	var quoteFormatList = function(list, output, temp_name){
@@ -2488,23 +2505,27 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
 			}
 		}
 		output.push([ListPush, temp_name, null] )
-		return [LENGTH-1, temp_name]
+		return temp_name
 	}
 
     if (module_name === "undefined")
         module_name = ""
     if (typeof(tree) == "string"){
-    	var temp_name = tempName(count)
-    	var value = getVar(tree, symbol_table)
-    	output.push([Define, temp_name, value[0], value[1] ])
-    	count[0] = count[0] - 1
-        return temp_name
+    	// var temp_name = tempName(count)
+    	// var value = getVar(tree, symbol_table)
+    	// output.push([Define, temp_name, value[0], value[1] ])
+    	// count[0] = count[0] + 1
+        // return temp_name
+        return getVar(tree)
     }
+    // else if (typeof(tree) === 'number'){
+    // 	return [LENGTH-1, tree]
+    // }
     else{
         if(typeof(tree[0])=="string"){
             if(tree[0]==="quote"){
             	var temp_name = tempName(count)
-				count[0] = count[0] - 1
+				// count[0] = count[0] + 1
             	if (typeof(tree[1]) === 'string'){
 	                return MakeString(tree[1])
             	}
@@ -2520,14 +2541,12 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             */
             else if (tree[0]=="define"){
                 var var_name = tree[1]               // get var_name
-                setVar(var_name, symbol_table)
+                var var_name_index = setVar(var_name, symbol_table)
 
-                var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table) // value = [layer, index_in_layer] or string
-                if (typeof(var_value)==='string')
-                	output.push([Define, symbol_table[symbol_table.length-1][var_name], var_value])
-              	else
-                	output.push([Define, symbol_table[symbol_table.length-1][var_name], var_value[0], var_value[1]])
-                count[0] = -1 //Object.keys(symbol_table[symbol_table.length-1]).length // restore to length of keys
+                var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
+                output.push([Define, var_name_index, var_value])
+
+                setCount() // set count number
                 return
             }
              /*
@@ -2535,54 +2554,49 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
 				var_name must be string
             */
             else if (tree[0]=="set!"){
-                var var_name = getVar( tree[1], symbol_table)
+                var var_name_index = getVar( tree[1], symbol_table)
                 var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
 
-                if (typeof(var_value)==='string')
-                	output.push([Set, var_name[0], var_name[1], var_value])
-                else if (typeof(var_value)==='number')
-                	output.push([Set, var_name[0], var_name[1], var_value])
-              	else
-                	output.push([Set, var_name[0], var_name[1], var_value[0], var_value[1]])
+                output.push([Set, var_name_index, var_value])
 
-                count[0] = -1// Object.keys(symbol_table[symbol_table.length-1]).length // restore to length of keys
+                setCount() // set count number
                 return
             }
             // #ADD# dest value1 value2
             // save value1+value2 - > dest
             else if (tree[0]=="__ADD__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] - 1
+            	// count[0] = count[0] + 1
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	output.push([__ADD__, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
             else if (tree[0]=="__SUB__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] - 1
+            	// count[0] = count[0] + 1
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	output.push([__SUB__, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
 
             else if (tree[0]=="__MULT__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] - 1
+            	// count[0] = count[0] + 1
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	output.push([__MULT__, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
 
             else if (tree[0]=="__DIV__"){
             	var temp_name = tempName(count)
-            	count[0] = count[0] - 1
+            	// count[0] = count[0] + 1
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	output.push([__DIV__, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
             // IF judge jmp
             // if pass judge run next
@@ -2610,21 +2624,26 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             	count[0] = count_copy
             	var temp_name = tempName( count )
             	output.push([LT, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
             else if (tree[0]=='EQ'){
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	var temp_name = tempName(count)
             	output.push([EQ, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
             else if (tree[0]=='EQVALUE'){
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var value2 = Toy_JS(tree[2],module_name,output,count, symbol_table)
             	var temp_name = tempName(count)
             	output.push([EQ, temp_name, value1, value2])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
+            }
+            else if (tree[0]=='display'){
+            	var value = Toy_JS(tree[1],module_name,output, count, symbol_table)
+            	output.push([Display, value])
+            	return
             }
 
             // (lambda (a b) (+ a b) (- a b) )
@@ -2638,25 +2657,30 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
 				return temp_func_name
             */
             else if (tree[0]=='lambda'){
+            	console.log("LAMBDA =====")
             	var params = tree[1]
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
-            	count[0] = count[0] - 1
+            	count[0] = count[0] + 1
 
             	output.push([MakeFunction, temp_name]) // begin to make function
-            	symbol_table.push({})                // push local symbol_table
+            	if (symbol_table.length==1)			     // if now only has global variable
+            		symbol_table.push([])                // push local symbol_table to save local variable
 
             	for(var i = 0; i<params.length; i++){
             		setVar(params[i], symbol_table)	   // add param name to symbol_table
-            		output.push([AddParam, getVar(params[i], symbol_table)[1]]) // add params
+            		output.push([AddParam, getVar(params[i])]) // add params
             	}
+
             	output.push([EndParam])
             	Toy_JS_iter(stms, module_name, output, count, symbol_table)
 
             	output.push([EndFunction])	// End Function
-            	symbol_table.pop()			// remvoe local 
 
-            	return [LENGTH-1, temp_name]
+            	if(symbol_table.length == 2)    // if is local
+            		symbol_table.pop()			// remvoe local 
+
+            	return temp_name
             }
             // call function
             // (add a b)
@@ -2666,13 +2690,13 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             	var temp_name = tempName(count)
             	output.push([MakeArray, temp_name])
             	for(var i = 0; i < params.length; i++){
-            		count[0] = count[0] - 1
+            		// count[0] = count[0] + 1
             		var o_ = Toy_JS(params[i], module_name, output, count, symbol_table)
-            		count[0] = count[0] + 1
+            		// count[0] = count[0] - 1
             		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
             	}
             	output.push([Call, MakeString(temp_name), func_name, temp_name]) // Call dest func_name params_array
-            	return [LENGTH-1, temp_name]
+            	return temp_name
             }
         }
         else if(typeof(tree[0])=='number'){
@@ -2687,35 +2711,37 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
                 	type = RATIONAL
 
                 output.push([MakeNumber, temp_name, tree[1], tree[2], type])
-                count[0] = count[0] - 1
-                return [LENGTH-1, temp_name]
+                
+                count[0] = count[0] + 1
+                
+                return temp_name
             }
             // array
             else if(tree[0]==1){
             	var temp_name = tempName(count)  // make temp in current symbol_table_layer
                 output.push( [MakeArray, temp_name] )
                 for(var i = 1; i<tree.length; i++){
-                	count[0] = count[0] - 1 // update temp count
+                	// count[0] = count[0] + 1 // update temp count
                     var value = Toy_JS(tree[i], module_name, output, count, symbol_table)
                     output.push([ArrayPush, temp_name, value])
-					count[0] = count[0] + 1 // update temp count
+					// count[0] = count[0] - 1 // update temp count
                 }
-                count[0] = count[0] - 1 // update temp count
-                return [LENGTH-1, temp_name]
+                // count[0] = count[0] + 1 // update temp count
+                return temp_name
             }
             // dictionary
             else if (tree[0]==2){
             	var temp_name = tempName(count)  // make temp in current symbol_table_layer
             	output.push([MakeDictionary, temp_name])
             	for(var i = 1; i<tree.length; i=i+2){
-                	count[0] = count[0] - 1 // update temp count
+                	// count[0] = count[0] + 1 // update temp count
                 	var key = tree[i]
                     var value = Toy_JS(tree[i+1], module_name, output, count, symbol_table)   // remove : ahead key
                     output.push([DictionarySet, temp_name, MakeString(key.slice(1)), value])
-					count[0] = count[0] + 1 // update temp count
+					// count[0] = count[0] - 1 // update temp count
                 }
-                count[0] = count[0] - 1 // update temp count
-                return [LENGTH-1, temp_name]
+                // count[0] = count[0] + 1 // update temp count
+                return temp_name
             }
         }
         // function
@@ -2726,7 +2752,7 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             	var stms = tree[0].slice(2)
             	var temp_name = tempName(count)
             	var CALL_func_name = temp_name
-            	count[0] = count[0] - 1
+            	// count[0] = count[0] + 1
             	output.push([MakeFunction, temp_name]) // begin to make function
             	for(var i = 0; i<params.length; i++){
             		output.push([AddParam, params[i]]) // add params
@@ -2741,13 +2767,13 @@ var Toy_JS = function(tree, module_name, output, count, symbol_table){
             	var temp_name = tempName(count)
             	output.push([MakeArray, temp_name])
             	for(var i = 0; i < params.length; i++){
-            		count[0] = count[0] - 1
+            		// count[0] = count[0] + 1
             		var o_ = Toy_JS(params[i], module_name, output, count, symbol_table)
-            		count[0] = count[0] + 1
+            		// count[0] = count[0] - 1
             		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
             	}
             	output.push([Call, MakeString(temp_name), func_name, temp_name])
-            	return [LENGTH-1, temp_name]
+            	return temp_name
 
         	}
         }
@@ -2948,6 +2974,16 @@ var Toy_JS_Compile = function(instructions){
 }
 */
 
+var Toy_VM = function( instructions ){
+	var env = [{}]
+	for(var i = 0; i < instructions; i++){
+		// Define dest table_layer index_in_layer
+		if(instructions[0]===Define){
+
+		}
+	}
+}
+
 
 var printInstructions = function(instructions){
 	for(var i = 0; i < instructions.length; i++){
@@ -2963,21 +2999,45 @@ var printInstructions = function(instructions){
 	}
 }
 
+
+var Toy_VM = function(instructions){
+	var ENV = new Array(256)
+	for (var i = 0; i < instructions.length; i++){
+		var instruction = instructions[i]
+		if(instruction[0]===Define){  // Define function
+			var var_name_index = instruction[1]
+			var var_value_index = instruction[2]
+			ENV[ var_name_index ] = var_value_index
+		}
+		else if (instruction[0]===MakeNumber){  // Init new Number
+			var save_index = instruction[1]
+			var numer = instruction[2]
+			var denom = instruction[3]
+			var type = instruction[4]
+			ENV[ save_index ] = new Number(numer, denom, type)
+		}
+	}
+
+	return ENV
+}
+
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x 12)(define y (lambda (a) (set! x a)))"
+var x = "(define x 12)"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
 var output = []
-var count = [-1]
-var symbol_table = [{}]
+var count = [0]
+var symbol_table = [[]]
 var last = Toy_JS_iter(z, "", output,count, symbol_table)
 
 console.log(output)
 printInstructions(output)
 console.log("\n\n======\n\n")
 
+var env = Toy_VM(output)
+console.log(env)
 
 
 // Toy_VM(output, [{}])

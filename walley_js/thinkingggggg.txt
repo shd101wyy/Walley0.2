@@ -1,17 +1,78 @@
+* Toy Language
 
-    How to implement Symbol Table
+** GLobal Variable and Local Variable
+:  Global Variable Default Number
+   :  256
+:  Each Local Variable Default Number
+   :  64
 
-    x = 12   ;  x:0
-    y = x + 3;  y:1
+:: Global Variable starts from 0 => 256 => infinity
+:: Local Variable starts from -1 => infinity
 
-    add = lambda (a b)  a:2 b:3     
-     (+ a b) 
-     
-    MakeFunction -1   ; temp0
-    AddParam 2        ; a
-    AddParam 3       ; b
-    EndParams        ;
-    ADD -2 2 3       ;
-    EndFunc          ;
-    
-    minue = lambda (
+
+
+*  ======== CLOSURE ============                                                                                                                                                                           
+: Define x varible before define test function
+**  (define x 'a)
+  : (define 0 'a)
+
+** (define test (lambda ()
+               (display x)
+               ))
+
+  :   (define 1 (lambda ()
+  :                  (display 0) ;; Because x exist and it is 0
+  :                  ))
+
+*** =================================================
+: Define x variable after define test function
+** (define test (lambda () (display x)))
+        : (define 0 (lambda () (display 255)))   ; because we don't know what x is 
+                                                 ; , so we assume it
+                                                 ; is at index 255
+                                                 ; (Max Global)
+** (define x 'a)
+        : (define 255 'a)                        ; because 255 is already occupied by x
+*** =================================================
+** (define x 'a)
+   : (define 0 'a)
+
+** (define test (lambda (display x)))
+   : (define 1 (lambda (display 0)))
+
+** (define test2 (lambda (define x 'b) (test)))
+   : Call test2 (test) =>
+   : The function Above will still print "a" instead of "b"
+   : (define 2 (lambda (define -1 'b) (1)))
+
+*** =================================================
+* ======= IMPORTANT ===========                                                                                                                                                                          
+: IF test2- defined outside test2 and called inside test2 ---> cause error                                                                                                                                
+: IF test2- defined inside test2 and called inside test2 ----> no error                                                                                                                                   
+                                                                                                                                                                                                           
+**(define test2- (lambda ()                                                                                                                                                                                  
+                (display x)
+                ))                                                                                                                                                                                   
+  : (define 0 (lambda (display 255)))
+  
+**(define test (lambda () (define x 12)(test2-)))
+  : (define 1 (lambda () (define -1 12) (test2-)))  ; Error unbound variable
+                                                                                                                                                                              
+*** =============================                                                                                                                                                                           
+                                                                                                                                                                                                         
+**(define test2 (lambda ()                                                                                                                                                                                   
+                (define a 'a)                                                                                                                                                                              
+                (define test2- (lambda ()                                                                                                                                                                  
+                                 (display a)                                                                                                                                                               
+                                 ))                                                                                                                                                                        
+                (test2-) ;; Will not cause Error                                                                                                                                                           
+                ))                                                                                                                                                                                         
+                                                                                                                                                                                                           
+: (define 0 (lambda ()                                                                                                                                                                                       
+            (define -1 'a)                                                                                                                                                                                 
+            (define -2 (lambda ()                                                                                                                                                                                                    (display 60)                                                                                                                                                                     
+               (display -1)
+               ))                                                                                                                                                                                
+            (-2)  ;; Will not cause Error
+            ))  
+                       
