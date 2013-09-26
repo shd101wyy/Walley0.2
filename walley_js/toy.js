@@ -2376,7 +2376,7 @@ var Set = 1         // Set dest value
 var MakeList = 2    // MakeList dest 
 var ListPush = 3    // ListPush dest value
 var MakeFunction = 4 // MakeFunction dest 
-var AddParam = 5     // AddParam param
+var AddParam = 5     // AddParam param_num special_token_flag.   0:normal  1:. 2:&
 var EndParam = 6     // EndParam
 var EndFunction = 7  // EndFunction
 var Call = 8         // Call return_to_dest func param_array_addr
@@ -2533,6 +2533,20 @@ var Toy_JS = function(tree,
 		}
 		output.push([ListPush, temp_name, null] )
 		return temp_name
+	}
+
+	// Create Array
+	var makeArray = function(tree, count){
+		var temp_name = tempName(count)  // make temp in current symbol_table_layer
+        output.push( [MakeArray, temp_name] )
+        count[0] = count[0] + 1
+
+        for(var i = 0; i<tree.length; i++){
+            var value = Toy_JS(tree[i], module_name, output, count, symbol_table)
+            output.push([ArrayPush, temp_name, value])
+			count[0] = count[0] - 1 // update temp count
+        }
+        return temp_name
 	}
 
     if (module_name === "undefined")
@@ -2723,6 +2737,7 @@ var Toy_JS = function(tree,
 				Lambda is EveryThing
             */
             else if (tree[0]=='lambda'){
+            	/*
         		var compileLambdaList = function(list, output, temp_name){
 					for(var i = 0; i < list.length; i++){
 						if(typeof(list[i])==='string'){
@@ -2757,8 +2772,9 @@ var Toy_JS = function(tree,
 
             	var o_ = compileLambdaList(tree.slice(1),output,temp_name)
             	symbol_table.pop([])
-            	return o_ 
-            	/*
+            	return o_ */
+
+            	
             	var params = tree[1]
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
@@ -2768,12 +2784,29 @@ var Toy_JS = function(tree,
             	
             	symbol_table.push([])                // push local symbol_table to save local variable
 
-            	for(var i = 0; i<params.length; i++){
-            		symbol_table[symbol_table.length-1].push(params[i]) // push var_name to symbol table
-            		output.push([AddParam, i]) // add params
-            	}
 
-            	output.push([EndParam]) // finish defining parameters
+            	var params_num = 0
+            	var flag = 0
+            	for(var i = 0; i<params.length; i++){
+            		// variadic variables
+            		// calculate rest
+            		if(params[i]=='.'){
+            			symbol_table[symbol_table.length-1].push(params[i+1]) // push var_name to symbol table
+            			params_num++ // increase params_num
+            			flag = 1     // set flag to 1, denotes ' . '
+            			break
+            		}
+            		else if (params[i]=='&'){
+            			symbol_table[symbol_table.length-1].push(params[i+1]) // push var_name to symbol table
+            			param_num++ // increase params_num
+            			flag = 2    // set flag to 2, denotes ' & '
+            			break
+            		}
+
+            		symbol_table[symbol_table.length-1].push(params[i]) // push var_name to symbol table
+            		params_num++
+            	}
+            	output.push([AddParam, i, flag]) // add params
 
             	count[0] = 1
 
@@ -2783,22 +2816,15 @@ var Toy_JS = function(tree,
 
             	symbol_table.pop()			// remvoe local 
 
-            	return temp_name*/
+            	return temp_name
             }
             // call function
             // (add a b)
             else {
             	var func_name = tree[0]
             	var params = tree.slice(1)
-            	var temp_name = tempName(count)
-            	output.push([MakeArray, temp_name])
-            	for(var i = 0; i < params.length; i++){
-            		// count[0] = count[0] + 1
-            		var o_ = Toy_JS(params[i], module_name, output, count, symbol_table)
-            		// count[0] = count[0] - 1
-            		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
-            	}
-            	output.push([Call, MakeString(temp_name), func_name, temp_name]) // Call dest func_name params_array
+            	var temp_name = makeArray(params, count)  // make params array
+            	output.push([Call, temp_name, func_name, temp_name]) // Call dest func_name params_array
             	return temp_name
             }
         }
@@ -2821,17 +2847,7 @@ var Toy_JS = function(tree,
             }
             // array
             else if(tree[0]==1){
-            	var temp_name = tempName(count)  // make temp in current symbol_table_layer
-                output.push( [MakeArray, temp_name] )
-                count[0] = count[0] + 1
-                for(var i = 1; i<tree.length; i++){
-                	// count[0] = count[0] + 1 // update temp count
-                    var value = Toy_JS(tree[i], module_name, output, count, symbol_table)
-                    output.push([ArrayPush, temp_name, value])
-					// count[0] = count[0] - 1 // update temp count
-                }
-                // count[0] = count[0] + 1 // update temp count
-                return temp_name
+            	return makeArray(tree.slice(1), count)
             }
             // dictionary
             else if (tree[0]==2){
@@ -2919,6 +2935,9 @@ var printInstructions = function(instructions){
 	}
 }
 
+/*
+	TOY Language Virtual Machine
+*/
 var Toy_VM = function(instructions){
 	var ENV = []
 	ENV[0] = []
@@ -2933,6 +2952,12 @@ var Toy_VM = function(instructions){
 			var var_value_index = instruction[2]
 			var value = ENV[0][var_value_index]
 			ENV[0][var_name_index] = value
+		}
+		// GetGlobal global_var_index save_to_current_layer_index
+		else if (instruction[0]===GetGlobal){
+			var global_var_index = instruction[1]
+			var save_to_current_layer_index = instruction[2]
+			ENV[ENV.length - 1][save_to_current_layer_index] = ENV[0][global_var_index]
 		}
 		// MakeNumber save_index numer denom type
 		// Save at current layer
@@ -2959,6 +2984,16 @@ var Toy_VM = function(instructions){
 					count--
 				i++
 			}
+		}
+		// MakeArray save_to_dest
+		else if (instruction[0]===MakeArray){
+			ENV[ENV.length - 1][instruction[1]] = []
+		}
+		// ArrayPush save_to_dest push_value
+		else if (instruction[0]===ArrayPush){
+			var var_name_index = instruction[1]
+			var value = ENV[ENV.length - 1][instruction[2]]
+			ENV[ENV.length - 1][var_name_index].push(value)
 		}
 		// Display value_index
 		else if (instruction[0]===Display){
@@ -3003,7 +3038,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x (lambda (a) a))"
+var x = "(define x [1 2]) (display x) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -3020,8 +3055,8 @@ console.log("\n\n======\n\n")
 // console.log(env)
 
 
-//var env = Toy_VM(output)
-//console.log(env)
+var env = Toy_VM(output)
+console.log(env)
 // eval(js)
 
 
