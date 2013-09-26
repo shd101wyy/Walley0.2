@@ -2958,7 +2958,7 @@ var Toy_VM = function(instructions){
 			var global_var_index = instruction[1]
 			var save_to_current_layer_index = instruction[2]
 			ENV[ENV.length - 1][save_to_current_layer_index] = ENV[0][global_var_index]
-		}
+		} 
 		// MakeNumber save_index numer denom type
 		// Save at current layer
 		else if (instruction[0]===MakeNumber){  // Init new Number
@@ -3038,7 +3038,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x [1 2]) (display x) "
+var x = "(define x [1 2]) (display x) (x 0 12) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
