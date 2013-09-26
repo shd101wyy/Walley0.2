@@ -2548,6 +2548,20 @@ var Toy_JS = function(tree,
         }
         return temp_name
 	}
+	// Create Dictionary
+	var makeDictionary = function(tree, count){
+		var temp_name = tempName(count)  // make temp in current symbol_table_layer
+		output.push([MakeDictionary, temp_name])
+    	count[0] = count[0] + 1
+
+    	for(var i = 0; i<tree.length; i=i+2){
+        	var key = tree[i].slice(1) // get key name // remove : ahead key
+            var value = Toy_JS(tree[i+1], module_name, output, count, symbol_table)   
+            output.push([DictionarySet, temp_name, key, value])
+            count[0] = count[0] - 1
+        }
+        return temp_name
+	}
 
     if (module_name === "undefined")
         module_name = ""
@@ -2822,9 +2836,11 @@ var Toy_JS = function(tree,
             // (add a b)
             else {
             	var func_name = tree[0]
+            	var func_name_index = getVar(func_name)
+
             	var params = tree.slice(1)
             	var temp_name = makeArray(params, count)  // make params array
-            	output.push([Call, temp_name, func_name, temp_name]) // Call dest func_name params_array
+            	output.push([Call, temp_name, func_name_index, temp_name]) // Call dest func_name params_array
             	return temp_name
             }
         }
@@ -2851,18 +2867,7 @@ var Toy_JS = function(tree,
             }
             // dictionary
             else if (tree[0]==2){
-            	var temp_name = tempName(count)  // make temp in current symbol_table_layer
-            	count[0] = count[0] + 1
-            	output.push([MakeDictionary, temp_name])
-            	for(var i = 1; i<tree.length; i=i+2){
-                	// count[0] = count[0] + 1 // update temp count
-                	var key = tree[i]
-                    var value = Toy_JS(tree[i+1], module_name, output, count, symbol_table)   // remove : ahead key
-                    output.push([DictionarySet, temp_name, key.slice(1), value])
-					// count[0] = count[0] - 1 // update temp count
-                }
-                // count[0] = count[0] + 1 // update temp count
-                return temp_name
+            	return makeDictionary(tree.slice(1), count)
             }
         }
         // function
@@ -3029,6 +3034,53 @@ var Toy_VM = function(instructions){
 			var value1 = ENV[ENV.length - 1][instruction[2]]
 			var value2 = ENV[ENV.length - 1][instruction[3]]
 			ENV[ENV.length - 1][dest] = __add__(value1, value2)
+		}
+		/*
+			(fn params....)
+
+			(array index)  - > return array[index]
+			(array index value) - > array[index] = value
+
+			(dictionary key)  - > return dictionary[key]
+			(dictionary key value) - > dictionary[key] = value
+	
+			Call save_to_index func_index param_array_index
+		*/
+		else if (instruction[0]===Call){
+			var func_index = instruction[2]					// get func index
+			var func_value = ENV[ENV.length - 1][func_index]	// get value at that func index
+			var params_value_arr = ENV[ENV.length - 1][instruction[3]]	// get params array
+			var save_at_index = Call[1]
+			console.log(func_value)
+
+			// Array
+			if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
+				var array_value = func_value
+				// get value at index
+				if (params_value_arr.length == 1){
+					ENV[ENV.length - 1][save_at_index] = array_value[params_value_arr[0]]
+				}
+				else if (params_value_arr.length == 2){
+					// Check Index
+					if(params_value_arr[0].type !== INT){
+						console.log("Error...invalid index "+params_value_arr)
+						continue
+					}
+					var set_index = params_value_arr[0].numer
+					// check boundary
+					if(set_index>=array_value.length || set_index<0){
+						cnosole.log("Error...index out of boundary")
+						continue
+					}
+					array_value[set_index] = params_value_arr[1]
+					ENV[ENV.length - 1][save_at_index] = array_value
+				}
+				else{
+					console.log("Error... invalid params for array operation")
+					continue
+				}
+			}
+
 
 		}
 	}
@@ -3038,7 +3090,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x [1 2]) (display x) (x 0 12) "
+var x = "(define x {:a 1 :b 2})"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
