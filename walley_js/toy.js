@@ -2398,11 +2398,13 @@ var EQVALUE = 23
 var JMP = 24           // JMP steps  
 var Display = 25
 var SetGlobal = 26     // set Layer 0   
-var SetUP = 27         // set Layer (length-num)   SetUP layer index var_name value
+var SetUP = 27         // set Layer (lay_num)   SetUP layer index var_name value
 var SetLocal = 28      // set Layer set_index   
 var GetGlobal = 29	   // 						   GetGlobal index save_to_index
 var GetUP = 30		   // 						   GetUp  layer index save_to_index
 var GetLocal = 31	   //						   GetLocal index save_to_index
+var SetConst = 32      // set constant, like string, to current layer
+					   // SetConst save_index value
 
 var INT = 0
 var FLOAT = 1
@@ -2473,6 +2475,8 @@ var opcode = function(num){
 		return "GetUP"
 	else if (num==31)
 		return "GetLocal"
+	else if (num==32)
+		return "SetConst"
 
 	//else if (num==29)
 	//	return "Get"
@@ -2556,8 +2560,12 @@ var Toy_JS = function(tree,
 
     	for(var i = 0; i<tree.length; i=i+2){
         	var key = tree[i].slice(1) // get key name // remove : ahead key
+        	var key_index = tempName(count)
+        	count[0] = count[0] + 1
+        	output.push([SetConst, key_index, key])  // set key to local index
+
             var value = Toy_JS(tree[i+1], module_name, output, count, symbol_table)   
-            output.push([DictionarySet, temp_name, key, value])
+            output.push([DictionarySet, temp_name, key_index, value])
             count[0] = count[0] - 1
         }
         return temp_name
@@ -2964,6 +2972,19 @@ var Toy_VM = function(instructions){
 			var save_to_current_layer_index = instruction[2]
 			ENV[ENV.length - 1][save_to_current_layer_index] = ENV[0][global_var_index]
 		} 
+		// SetLocal local_save_index value_index
+		else if (instruction[0]===SetLocal){
+			var var_name_index = instruction[1]
+			var var_value_index = instruction[2]
+			var value = ENV[0][var_value_index]
+			ENV[ENV.length - 1][var_name_index] = value
+		}
+		// SetConst local_save_index value
+		else if (instruction[0]===SetConst){
+			var var_name_index = instruction[1]
+			var value = instruction[2]
+			ENV[ENV.length - 1][var_name_index] = value
+		}
 		// MakeNumber save_index numer denom type
 		// Save at current layer
 		else if (instruction[0]===MakeNumber){  // Init new Number
@@ -2999,6 +3020,18 @@ var Toy_VM = function(instructions){
 			var var_name_index = instruction[1]
 			var value = ENV[ENV.length - 1][instruction[2]]
 			ENV[ENV.length - 1][var_name_index].push(value)
+		}
+		// MakeDictionary save_to_dest
+		else if (instruction[0]===MakeDictionary){
+			ENV[ENV.length - 1][instruction[1]] = {}
+		}
+		// DictionarySet save_to_dict key value
+		else if (instruction[0]===DictionarySet){
+			var key_value = ENV[ENV.length - 1][instruction[2]]		// get key
+			var value_value = ENV[ENV.length - 1][instruction[3]]   //  get value
+			var var_value = ENV[ENV.length - 1][instruction[1]]     // get dictionary
+			var_value[key_value] = value_value						// set value to key of dictionary
+			continue
 		}
 		// Display value_index
 		else if (instruction[0]===Display){
@@ -3090,7 +3123,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x {:a 1 :b 2})"
+var x = "(define x {:a 1 :b 2}) (display x)"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
