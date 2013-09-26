@@ -2397,6 +2397,12 @@ var EQ = 22
 var EQVALUE = 23
 var JMP = 24           // JMP steps  
 var Display = 25
+var SetGlobal = 26     // set Layer 0
+var SetUP = 27         // set Layer (length-num)
+var SetLocal = 28      // set Layer (length-1)
+//var Get = 29           //  Get layer_num_ahead save_current_layer_position
+//var Set = 30		   //  Set ahead_layer_num index value
+
 
 var INT = 0
 var FLOAT = 1
@@ -2455,6 +2461,16 @@ var opcode = function(num){
 		return "JMP"
 	else if (num==25)
 		return "Display"
+	else if (num==26)
+		return "SetGlobal"
+	else if (num==27)
+		return "SetUP"
+	else if (num==28)
+		return "SetLocal"
+	//else if (num==29)
+	//	return "Get"
+	//else if (num==30)
+	//	return "Set"
 }
 
 var Toy_JS = function(tree, 
@@ -2466,32 +2482,34 @@ var Toy_JS = function(tree,
 
 	var LENGTH = symbol_table.length
 	var setCount = function(){
-		count[0] = symbol_table[0].length
+		count[0] = symbol_table[symbol_table.length - 1].length
 	}
 	// set var_name to symbol_table
 	var setVar = function(var_name){
 		symbol_table[symbol_table.length - 1].push(var_name)
 		if (symbol_table.length == 1)        
 			count[0] = count[0] + 1  	      // update count cuz one global var is put to global scope
-		if (symbol_table.length == 2)         // Now symbol table has local variable
-			return -1*symbol_table[1].length  // return current index in local
+		//if (symbol_table.length == 2)         // Now symbol table has local variable
+		//	return -1*symbol_table[1].length  // return current index in local
 		return symbol_table[0].length - 1     // return current index in global
 	}
-	// return index
+
 	var getVar = function(var_name){
-		if (symbol_table.length == 2){
-			// check local at first
-			for(var i = 0; i < symbol_table[1].length; i++){
-				if (symbol_table[1][i]===var_name)
-					return -1*(i)-1
+		var start = symbol_table.length - 1
+		for(var i = symbol_table.length - 1; i>=0; i--){
+			for(var j = 0; j < symbol_table.length; j++){  
+				if (var_name === symbol_table[i][j]){  // find var
+					if (start == i) // at current layer
+						return i
+					else{ // not at current layer
+						var temp_name = tempName(count)
+						count[0] = count[0] + 1
+						output.push([Get, start-i, temp_name])
+						return temp_name
+					}
+				}
 			}
 		}
-		// check global
-		for(var i = 0; i < symbol_table[0].length; i++){
-			if (symbol_table[0][i]===var_name)
-				return i
-		}
-		console.log("Error...unbound variable "+var_name)
 	}
 	
 	var quoteFormatList = function(list, output, temp_name){
@@ -2544,7 +2562,7 @@ var Toy_JS = function(tree,
                 var var_name_index = setVar(var_name, symbol_table)
 
                 var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
-                output.push([Define, var_name_index, var_value])
+                output.push([SetLocal, var_name_index, var_value])
 
                 setCount() // set count number
                 return
@@ -2554,10 +2572,40 @@ var Toy_JS = function(tree,
 				var_name must be string
             */
             else if (tree[0]=="set!"){
-                var var_name_index = getVar( tree[1], symbol_table)
-                var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
+        		// This function is for set!
+				// return [local/up/global, index]
+				// local: 0
+				// up : 1
+				// global : 2
+				var SET__ = function(var_name, var_value){
+					var length = symbol_table.length
+					var start = length - 1
+					for(var i = length - 1; i >= 0; i--){
+						for(var j = 0; j < symbol_table[i].length; j++){
+							if (symbol_table[i][j] === var_name){
+								if ( i === 0){ // Global
+									output.push(SetGlobal, j, var_value)
+									return 
+								}
+								else if (start === i ) {// local
+									output.push(SetLocal, j, var_value)
+									return
+								}
+								else {// Up
+									var diff = start - i
+									output.push(SetUP, diff, j, var_value)
+									return
+								}
+							}
 
-                output.push([Set, var_name_index, var_value])
+						}
+					}
+					
+					console.log("Error...unbound variable "+var_name)
+				}
+
+                var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
+                SET__( tree[1], var_value)
 
                 setCount() // set count number
                 return
@@ -2601,6 +2649,7 @@ var Toy_JS = function(tree,
             // IF judge jmp
             // if pass judge run next
             // else jmp
+            /*
             else if (tree[0]=='if'){
             	var judge = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var if_start_index = output.length // save below IF index
@@ -2615,7 +2664,7 @@ var Toy_JS = function(tree,
             	output[value2_start_index-1].push(value2_end_index - value2_start_index + 1)
             	output[if_start_index].push(value2_end_index - value2_start_index + 2)
             	return
-            }
+            }*/
             else if (tree[0]=='LT'){
             	var count_copy = count[0]
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
@@ -2657,15 +2706,14 @@ var Toy_JS = function(tree,
 				return temp_func_name
             */
             else if (tree[0]=='lambda'){
-            	console.log("LAMBDA =====")
             	var params = tree[1]
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
             	count[0] = count[0] + 1
 
             	output.push([MakeFunction, temp_name]) // begin to make function
-            	if (symbol_table.length==1)			     // if now only has global variable
-            		symbol_table.push([])                // push local symbol_table to save local variable
+            	
+            	symbol_table.push([])                // push local symbol_table to save local variable
 
             	for(var i = 0; i<params.length; i++){
             		setVar(params[i], symbol_table)	   // add param name to symbol_table
@@ -2677,8 +2725,7 @@ var Toy_JS = function(tree,
 
             	output.push([EndFunction])	// End Function
 
-            	if(symbol_table.length == 2)    // if is local
-            		symbol_table.pop()			// remvoe local 
+            	symbol_table.pop()			// remvoe local 
 
             	return temp_name
             }
@@ -2720,6 +2767,7 @@ var Toy_JS = function(tree,
             else if(tree[0]==1){
             	var temp_name = tempName(count)  // make temp in current symbol_table_layer
                 output.push( [MakeArray, temp_name] )
+                count[0] = count[0] + 1
                 for(var i = 1; i<tree.length; i++){
                 	// count[0] = count[0] + 1 // update temp count
                     var value = Toy_JS(tree[i], module_name, output, count, symbol_table)
@@ -2732,12 +2780,13 @@ var Toy_JS = function(tree,
             // dictionary
             else if (tree[0]==2){
             	var temp_name = tempName(count)  // make temp in current symbol_table_layer
+            	count[0] = count[0] + 1
             	output.push([MakeDictionary, temp_name])
             	for(var i = 1; i<tree.length; i=i+2){
                 	// count[0] = count[0] + 1 // update temp count
                 	var key = tree[i]
                     var value = Toy_JS(tree[i+1], module_name, output, count, symbol_table)   // remove : ahead key
-                    output.push([DictionarySet, temp_name, MakeString(key.slice(1)), value])
+                    output.push([DictionarySet, temp_name, key.slice(1), value])
 					// count[0] = count[0] - 1 // update temp count
                 }
                 // count[0] = count[0] + 1 // update temp count
@@ -3023,7 +3072,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x 12)"
+var x = "(define x 1)(define a (lambda () (set! x 12))) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -3036,8 +3085,8 @@ console.log(output)
 printInstructions(output)
 console.log("\n\n======\n\n")
 
-var env = Toy_VM(output)
-console.log(env)
+// var env = Toy_VM(output)
+// console.log(env)
 
 
 // Toy_VM(output, [{}])

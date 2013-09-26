@@ -1,9 +1,14 @@
-var x = 12
+var x = 6
 var test = function(){
+	var x = 1
+	var test2 = function(){
+		var test3 = function(){
+			x = 5
+		}
+		test3()
+	}
+	test2()
 	console.log(x)
 }
-var test2 = function(){
-	var x = 15
-	test()
-}
-test2()
+test()
+console.log(x)
