@@ -1,14 +1,9 @@
-var x = 6
+var x = 7
 var test = function(){
-	var x = 1
+	var x = 8
 	var test2 = function(){
-		var test3 = function(){
-			x = 5
-		}
-		test3()
+		console.log(x)
 	}
 	test2()
-	console.log(x)
 }
 test()
-console.log(x)

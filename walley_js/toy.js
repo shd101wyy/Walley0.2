@@ -2386,7 +2386,7 @@ var ArrayPop = 11    // ArrayPost save_dest pop_array
 var ArraySet = 12    // ArraySet dest index value
 var MakeDictionary = 13 // MakeDictionary dest
 var DictionarySet = 14  // Dictionary dest key value
-var MakeNumber = 15     // MakeNumber dest numer denom type
+var MakeNumber = 15     // MakeNumber dest numer denom type  在当前的 layer
 var __ADD__ = 16        // __ADD__ dest value1 value2
 var __SUB__ = 17
 var __MULT__ = 18
@@ -2397,12 +2397,12 @@ var EQ = 22
 var EQVALUE = 23
 var JMP = 24           // JMP steps  
 var Display = 25
-var SetGlobal = 26     // set Layer 0
-var SetUP = 27         // set Layer (length-num)
-var SetLocal = 28      // set Layer (length-1)
-//var Get = 29           //  Get layer_num_ahead save_current_layer_position
-//var Set = 30		   //  Set ahead_layer_num index value
-
+var SetGlobal = 26     // set Layer 0   
+var SetUP = 27         // set Layer (length-num)   SetUP layer index var_name value
+var SetLocal = 28      // set Layer set_index   
+var GetGlobal = 29	   // 						   GetGlobal index save_to_index
+var GetUP = 30		   // 						   GetUp  layer index save_to_index
+var GetLocal = 31	   //						   GetLocal index save_to_index
 
 var INT = 0
 var FLOAT = 1
@@ -2467,6 +2467,13 @@ var opcode = function(num){
 		return "SetUP"
 	else if (num==28)
 		return "SetLocal"
+	else if (num==29)
+		return "GetGlobal"
+	else if (num==30)
+		return "GetUP"
+	else if (num==31)
+		return "GetLocal"
+
 	//else if (num==29)
 	//	return "Get"
 	//else if (num==30)
@@ -2484,32 +2491,34 @@ var Toy_JS = function(tree,
 	var setCount = function(){
 		count[0] = symbol_table[symbol_table.length - 1].length
 	}
-	// set var_name to symbol_table
-	var setVar = function(var_name){
-		symbol_table[symbol_table.length - 1].push(var_name)
-		if (symbol_table.length == 1)        
-			count[0] = count[0] + 1  	      // update count cuz one global var is put to global scope
-		//if (symbol_table.length == 2)         // Now symbol table has local variable
-		//	return -1*symbol_table[1].length  // return current index in local
-		return symbol_table[0].length - 1     // return current index in global
-	}
 
 	var getVar = function(var_name){
-		var start = symbol_table.length - 1
 		for(var i = symbol_table.length - 1; i>=0; i--){
-			for(var j = 0; j < symbol_table.length; j++){  
+			for(var j = 0; j < symbol_table[i].length; j++){  
 				if (var_name === symbol_table[i][j]){  // find var
-					if (start == i) // at current layer
-						return i
-					else{ // not at current layer
-						var temp_name = tempName(count)
-						count[0] = count[0] + 1
-						output.push([Get, start-i, temp_name])
-						return temp_name
+					var temp_name = tempName(count)
+					count[0] = count[0] + 1
+					var flag = GetGlobal
+					if(i === 0){ // get global
+						flag = GetGlobal
+						output.push([flag, j, temp_name])
+						return temp_name;
+					}
+					else if (i === symbol_table.length - 1){  // get local
+						flag = GetLocal
+						output.push([flag, j, temp_name])
+						return temp_name;
+					}
+					else{  // get up
+						flag = GetUP
+						output.push([flag, i, j, temp_name])
+						return temp_name;
+						
 					}
 				}
 			}
 		}
+		console.log("Error...unbound var " + var_name)
 	}
 	
 	var quoteFormatList = function(list, output, temp_name){
@@ -2529,11 +2538,6 @@ var Toy_JS = function(tree,
     if (module_name === "undefined")
         module_name = ""
     if (typeof(tree) == "string"){
-    	// var temp_name = tempName(count)
-    	// var value = getVar(tree, symbol_table)
-    	// output.push([Define, temp_name, value[0], value[1] ])
-    	// count[0] = count[0] + 1
-        // return temp_name
         return getVar(tree)
     }
     // else if (typeof(tree) === 'number'){
@@ -2559,10 +2563,18 @@ var Toy_JS = function(tree,
             */
             else if (tree[0]=="define"){
                 var var_name = tree[1]               // get var_name
-                var var_name_index = setVar(var_name, symbol_table)
+
+                symbol_table[symbol_table.length - 1].push( var_name ) // push var_name to symbol table
+                var var_name_index = symbol_table[symbol_table.length - 1].length - 1 // get that var_name index
+
+                var flag = SetLocal
+                var length_of_symbol_table = symbol_table.length
+                if(length_of_symbol_table == 1)
+                	flag = SetGlobal
+
 
                 var var_value = Toy_JS(tree[2],module_name, output, count, symbol_table)
-                output.push([SetLocal, var_name_index, var_value])
+                output.push([flag, var_name_index, var_value])
 
                 setCount() // set count number
                 return
@@ -2584,16 +2596,15 @@ var Toy_JS = function(tree,
 						for(var j = 0; j < symbol_table[i].length; j++){
 							if (symbol_table[i][j] === var_name){
 								if ( i === 0){ // Global
-									output.push(SetGlobal, j, var_value)
+									output.push([SetGlobal, j, var_value])
 									return 
 								}
 								else if (start === i ) {// local
-									output.push(SetLocal, j, var_value)
+									output.push([SetLocal, j, var_value])
 									return
 								}
 								else {// Up
-									var diff = start - i
-									output.push(SetUP, diff, j, var_value)
+									output.push([SetUP, i, j, var_value]) // set var at index
 									return
 								}
 							}
@@ -2705,7 +2716,49 @@ var Toy_JS = function(tree,
 				
 				return temp_func_name
             */
+            /*
+				Lambda is data
+				Lambda is function
+				Lambda is structure
+				Lambda is EveryThing
+            */
             else if (tree[0]=='lambda'){
+        		var compileLambdaList = function(list, output, temp_name){
+					for(var i = 0; i < list.length; i++){
+						if(typeof(list[i])==='string'){
+							var value = Toy_JS(list[i], module_name, output, count, symbol_table)
+							output.push([ListPush, temp_name, value])
+						}
+						else { // list 
+							var temp_name = tempName(count)
+							count[0] = symbol_table[symbol_table.length - 1].length
+							output.push( [MakeList, temp_name] )          // create list and save to temp_name
+							output.push([ListPush, temp_name, compileLambdaList(list[i], output, temp_name)])
+						}
+					}
+					output.push([ListPush, temp_name, null] )
+					return temp_name
+				}
+
+            	
+            	symbol_table.push([]) // add local 
+            	// add params at first
+            	for(var i = 0; i < tree[1].length; i++){
+            		symbol_table[symbol_table.length - 1].push(tree[1][i])
+            	}
+
+            	setCount()
+
+            	var temp_name = tempName(count)
+            	count[0] = count[0] + 1
+
+            	output.push( [MakeList, temp_name] )          // create list and save to temp_name
+				output.push( [ListPush, temp_name, "lambda"]) // push lambda
+
+            	var o_ = compileLambdaList(tree.slice(1),output,temp_name)
+            	symbol_table.pop([])
+            	return o_ 
+            	/*
             	var params = tree[1]
             	var stms = tree.slice(2)
             	var temp_name = tempName(count)
@@ -2716,18 +2769,21 @@ var Toy_JS = function(tree,
             	symbol_table.push([])                // push local symbol_table to save local variable
 
             	for(var i = 0; i<params.length; i++){
-            		setVar(params[i], symbol_table)	   // add param name to symbol_table
-            		output.push([AddParam, getVar(params[i])]) // add params
+            		symbol_table[symbol_table.length-1].push(params[i]) // push var_name to symbol table
+            		output.push([AddParam, i]) // add params
             	}
 
-            	output.push([EndParam])
+            	output.push([EndParam]) // finish defining parameters
+
+            	count[0] = 1
+
             	Toy_JS_iter(stms, module_name, output, count, symbol_table)
 
             	output.push([EndFunction])	// End Function
 
             	symbol_table.pop()			// remvoe local 
 
-            	return temp_name
+            	return temp_name*/
             }
             // call function
             // (add a b)
@@ -2847,200 +2903,15 @@ var printCompiledArray = function(input_array){
 }
 
 
-/*
-	Define x "hello"
-
-*/
-/*
-var Toy_JS_Compile = function(instructions){
-	var appendAheadSpace = function(input_str, space_num){
-		for(var i = 0; i < space_num; i++){
-			input_str = " " + input_str
-		}
-		return input_str
-	}
-	var Toy_JS_Compile_iter = function(instructions,output, aheadSpace){
-		if (instructions.length==0)
-			return output
-		instruction = instructions[0]
-		// define function
-		if(instruction[0]===Define){
-			output.push( appendAheadSpace(
-				"var "+instruction[1]+" = "+instruction[2]+"\n",
-				aheadSpace
-				))
-		}
-		// define function
-		else if(instruction[0]===Set){
-			output.push( 
-				appendAheadSpace(
-					instruction[1]+" = "+instruction[2]+"\n",
-					aheadSpace
-					)
-				)
-		}
-		else if (instruction[0]===MakeList){
-			output.push( 
-				appendAheadSpace(
-					"var "+instruction[1]+" = " + "new MakeList()"+"\n",
-					aheadSpace
-					)
-				)
-		}
-		else if (instruction[0]===ListPush){
-			output.push(
-				appendAheadSpace(
-					"ListPush("+instruction[1]+","+instruction[2]+")"+"\n",
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===MakeArray){
-			output.push( appendAheadSpace(
-				"var "+instruction[1]+" = " + "new Array()" + "\n",
-				aheadSpace
-				))
-		}
-		else if (instruction[0]===ArrayPush){
-			output.push( 
-				appendAheadSpace( 
-					"ArrayPush(" + instruction[1]+","+instruction[2]+")" + "\n" ,
-					aheadSpace
-					))
-		}
-		else if (instruction[0]===MakeNumber){
-			output.push( 
-				appendAheadSpace(
-					"var "+instruction[1]+" = new Number("+instruction[2]+","+instruction[3]+","+instruction[4]+")" + "\n" ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===MakeDictionary){
-			output.push( 
-				appendAheadSpace( 
-					"var "+instruction[1]+" = new Object()" + "\n",
-					aheadSpace
-					))
-		}
-		else if (instruction[0]===DictionarySet){
-			output.push( 
-				appendAheadSpace(
-					"DictionarySet("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
-					aheadSpace
-					))
-		}
-		else if (instruction[0]===Call){
-			output.push( 
-				appendAheadSpace( 
-					"Call("+instruction[1]+","+instruction[2]+","+instruction[3]+")" + "\n",
-					aheadSpace
-					 ))
-		}
-		else if (instruction[0]===__ADD__){
-			output.push( 
-				appendAheadSpace( 
-					"var "+instruction[1]+" = _add_("+instruction[2]+","+instruction[3]+")" + "\n" ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===__SUB__){
-			output.push( 
-				appendAheadSpace(
-				 	"var "+instruction[1]+" = _sub_("+instruction[2]+","+instruction[3]+")" + "\n" ,
-				 	aheadSpace
-				))
-		}
-		else if (instruction[0]===__MULT__){
-			output.push( 
-				appendAheadSpace( 
-					"var "+instruction[1]+" = _mul_("+instruction[2]+","+instruction[3]+")" + "\n" ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===__DIV__){
-			output.push( 
-				appendAheadSpace( 
-					"var "+instruction[1]+" = _div_("+instruction[2]+","+instruction[3]+")" + "\n" ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===MakeFunction){
-			output.push( 
-				appendAheadSpace(
-					"var "+instruction[1]+" = function(" ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===AddParam){
-			output.push( 
-				appendAheadSpace( 
-					instruction[1]+',' ,
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===EndParam){
-			output[output.length - 1] = output[output.length-1].slice(0, output[output.length-1].length-1)
-			output.push(
-				appendAheadSpace(
-					"){" + "\n",
-					aheadSpace
-				))
-			aheadSpace = aheadSpace + 4
-		}
-		else if (instruction[0]===EndFunction){
-			aheadSpace = aheadSpace - 4
-			output.push(
-				appendAheadSpace(
-					"}" + "\n",
-					aheadSpace
-				))
-		}
-		else if (instruction[0]==LT){
-			output.push(
-				appendAheadSpace(
-					"_lt_two_values("+instruction[1]+ ',' + "\n",
-					aheadSpace
-				))
-		}
-		else if (instruction[0]===IF){
-			console.log(instruction[1])
-		}
-		else{
-			output.push( 
-				appendAheadSpace(
-					instruction[0] + "\n",
-					aheadSpace
-				))
-		}
-		return Toy_JS_Compile_iter(instructions.slice(1),output,aheadSpace)
-	}
-	var output_arr = Toy_JS_Compile_iter(instructions, [], 0)
-	var output = ""
-	for(var i = 0; i < output_arr.length; i++){
-		output = output + output_arr[i]
-	}
-	return output
-	// 
-}
-*/
-
-var Toy_VM = function( instructions ){
-	var env = [{}]
-	for(var i = 0; i < instructions; i++){
-		// Define dest table_layer index_in_layer
-		if(instructions[0]===Define){
-
-		}
-	}
-}
 
 
 var printInstructions = function(instructions){
 	for(var i = 0; i < instructions.length; i++){
 		if(typeof(instructions[i]) === 'string'){
-			console.log(instructions[i])
+			console.log(i+": "+instructions[i])
 			continue
 		}
-		var output = opcode( instructions[i][0] )
+		var output = i+": "+opcode( instructions[i][0] )
 		for(var j = 1; j < instructions[i].length; j++){
 			output=output+" "+instructions[i][j]
 		}
@@ -3048,22 +2919,82 @@ var printInstructions = function(instructions){
 	}
 }
 
-
 var Toy_VM = function(instructions){
-	var ENV = new Array(256)
+	var ENV = []
+	ENV[0] = []
 	for (var i = 0; i < instructions.length; i++){
 		var instruction = instructions[i]
-		if(instruction[0]===Define){  // Define function
+		//console.log(instruction)
+		//console.log(ENV)
+		// SetGlobal
+		// SetGlobal save_index value_index
+		if (instruction[0]===SetGlobal){
 			var var_name_index = instruction[1]
 			var var_value_index = instruction[2]
-			ENV[ var_name_index ] = var_value_index
+			var value = ENV[0][var_value_index]
+			ENV[0][var_name_index] = value
 		}
+		// MakeNumber save_index numer denom type
+		// Save at current layer
 		else if (instruction[0]===MakeNumber){  // Init new Number
 			var save_index = instruction[1]
 			var numer = instruction[2]
 			var denom = instruction[3]
 			var type = instruction[4]
-			ENV[ save_index ] = new Number(numer, denom, type)
+			ENV[ENV.length - 1][ save_index ] = new Number(numer, denom, type)
+		}
+		// Begin to make function
+		// Save current line number i
+		// When call function
+		// JMP to current line
+		else if (instruction[0]===MakeFunction){
+			ENV[ENV.length - 1][instruction[1]] = i
+			// jmp to EndFunction
+			var count = 1
+			i=i+1
+			while(count!=0){
+				if (instructions[i][0]==MakeFunction)
+					count++
+				if (instructions[i][0]==EndFunction)
+					count--
+				i++
+			}
+		}
+		// Display value_index
+		else if (instruction[0]===Display){
+			var value_index = instruction[1]
+			console.log(ENV[ENV.length - 1][value_index])
+		}
+		else if (instruction[0]===__ADD__){
+			// add function
+			var __add__ = function(num1,num2){    
+			    if (num2.constructor != Number){
+			        if (typeof(num2)!='string')
+			            num2 = num2.value
+			        if (num1.constructor != Number){
+			            if (typeof(num1)!='string')
+			                num1 = num1.value
+			            return num1+num2
+			        }
+			        else if (num1.type == RATIONAL)
+			            return (num1.numer + "/" + num1.denom)+num2
+			        else 
+			            return num1.numer + num2
+			    }
+				if (num1.type == FLOAT || num2.type == FLOAT)
+					return new Number(num1.numer/num1.denom + num2.numer/num2.denom, 1, FLOAT)
+			    // [numer, denom]
+				var rat = add_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+			    if (rat[1] == 1)
+			        return new Number(rat[0], 1, INT)
+			    else
+			        return new Number(rat[0], rat[1], RATIONAL)
+			}
+			var dest = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+			ENV[ENV.length - 1][dest] = __add__(value1, value2)
+
 		}
 	}
 
@@ -3072,7 +3003,7 @@ var Toy_VM = function(instructions){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x 1)(define a (lambda () (set! x 12))) "
+var x = "(define x (lambda (a) a))"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -3089,8 +3020,8 @@ console.log("\n\n======\n\n")
 // console.log(env)
 
 
-// Toy_VM(output, [{}])
-
+//var env = Toy_VM(output)
+//console.log(env)
 // eval(js)
 
 
