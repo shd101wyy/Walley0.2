@@ -1193,9 +1193,72 @@ var Toy_VM = function(instructions, ENV){
 				continue
 			}
 		}
+		// JMP steps
 		else if (instruction[0]===JMP){
 			i = i + instruction[1] - 1
 		}
+		else if (instruction[0]===LT){
+			var _lt_two_values = function(value1,value2){
+				if (typeof(value1)!=typeof(value2))
+					return false
+			    if (value1.constructor == Number && value2.constructor == Number){
+			        if (value1.numer/value1.denom < value2.numer/value2.denom)
+			            return true
+			        return false
+			    }
+				if (value1<value2)
+				    return true
+				else
+				    return false
+			}
+
+			var save_index = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+
+			if(_lt_two_values( value1, value2) ){  // true
+				ENV[ENV.length - 1][save_index] = "true" 
+			}
+			else{
+				ENV[ENV.length - 1][save_index] = new List()
+			}
+		}
+
+		else if (instruction[0]===EQ){
+			var eq = function(arg0, arg1){
+				// "" eq [] 
+				if (arg0.constructor == List && arg1.constructor == List && arg0.length==0 && arg1.length==0)
+					return true
+				var type0 = typeof(arg0)
+				var type1 = typeof(arg1)
+				if (type0!=type1)
+					return new List()
+			    if (type0=='string'){
+			        if (arg0==arg1)
+			            return true
+			        return false
+			    }
+				else if (arg0.constructor == Number && arg1.constructor == Number){
+			        if (arg0.numer/arg0.denom == arg1.numer/arg1.denom)
+			            return true
+			        return false
+			    }
+				else if (arg0 == arg1)
+			        return true
+			    else
+					return false
+			}
+			var save_index = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+			if(eq( value1, value2)){  // true
+				ENV[ENV.length - 1][save_index] = 'true'
+			}
+			else{
+				ENV[ENV.length - 1][save_index] = new List()
+			}
+		}
+
 		// Display value_index
 		else if (instruction[0]===Display){
 			console.log("Display Function ======")
@@ -1412,7 +1475,7 @@ var Toy_VM = function(instructions, ENV){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define test (lambda (x) (if x (display 1) (display 2)))) (test (quote ()))   "
+var x = "(if (LT 5 4) (display 3) (display 4))   "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
