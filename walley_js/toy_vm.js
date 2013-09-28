@@ -1227,7 +1227,7 @@ var Toy_VM = function(instructions, ENV){
 		else if (instruction[0]===EQ){
 			var eq = function(arg0, arg1){
 				// "" eq [] 
-				if (arg0.constructor == List && arg1.constructor == List && arg0.length==0 && arg1.length==0)
+				if (arg0.constructor == List && arg1.constructor == List && arg0.value==null && arg1.value==null)
 					return true
 				var type0 = typeof(arg0)
 				var type1 = typeof(arg1)
@@ -1396,27 +1396,6 @@ var Toy_VM = function(instructions, ENV){
 
 				// pop local ENV
 				ENV.pop()  // done
-
-				/*
-				console.log("Return Value: ")
-				console.log(return_value)
-
-				console.log(ENV)
-				console.log("Return Value: ")
-				console.log(return_value)
-
-				console.log("Params Number:")
-				console.log(param_nums)
-
-				console.log("Params:")
-				console.log(params_value_arr)
-
-				console.log("Env:")
-				console.log(ENV[ENV.length - 1])
-
-				console.log("Func_Value: ")
-				console.log(func_value)
-				*/
 			}
 			// Array
 			else if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
@@ -1475,7 +1454,7 @@ var Toy_VM = function(instructions, ENV){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(if (LT 5 4) (display 3) (display 4))   "
+var x = "(if (EQ 5 5) (display 3) (display 4))   "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
