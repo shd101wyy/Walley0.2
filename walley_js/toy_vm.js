@@ -21,6 +21,30 @@ var Function = function(value){
 	this.value = value // save function content
 }
 
+// construct list data type
+var List = function(){
+	this.value  = null;
+	this.next = null;
+	this.push = function(value){  // push value behind
+		if(this.value == null)
+			this.value = value
+		else{
+			var pointer = this
+			while(pointer.next!==null){
+				pointer = pointer.next
+			}
+			pointer.next = new List()
+			pointer.next.value = value
+		}
+	};
+	this.cdr = function(){  // get cdr
+		return this.next
+	};
+	this.car = function(){  // get car
+		return this.value
+	};
+}
+
 // ==================
 
 // check char is digit
@@ -583,13 +607,20 @@ var Toy_JS = function(tree,
                 output.push([ListPush, temp_name, count[0]])                                
 			}
 			else { // list 
+				if (list[i].length === 0){
+					output.push([SetConst, count[0], null])
+					output.push([ListPush,temp_name, count[0]])
+					count[0] = count[0] - 1
+					return temp_name
+				}
 				var t_name = count[0]
 				count[0] = count[0] + 1
 				quoteFormatList(list[i], output, t_name)
 				output.push([ListPush, temp_name, t_name])
 			}
 		}
-		output.push([ListPush, temp_name, null] )
+		output.push([SetConst, count[0], null])
+		output.push([ListPush,temp_name, count[0]])
 		count[0] = count[0] - 1
 		return temp_name
 	}
@@ -753,7 +784,7 @@ var Toy_JS = function(tree,
             // IF judge jmp
             // if pass judge run next
             // else jmp
-            /*
+ 
             else if (tree[0]=='if'){
             	var judge = Toy_JS(tree[1],module_name,output,count, symbol_table)
             	var if_start_index = output.length // save below IF index
@@ -768,7 +799,7 @@ var Toy_JS = function(tree,
             	output[value2_start_index-1].push(value2_end_index - value2_start_index + 1)
             	output[if_start_index].push(value2_end_index - value2_start_index + 2)
             	return
-            }*/
+            }
             else if (tree[0]=='LT'){
             	var count_copy = count[0]
             	var value1 = Toy_JS(tree[1],module_name,output,count, symbol_table)
@@ -1123,6 +1154,8 @@ var Toy_VM = function(instructions, ENV){
 		// MakeDictionary save_to_dest
 		else if (instruction[0]===MakeDictionary){
 			ENV[ENV.length - 1][instruction[1]] = {}
+
+			SAVE_INDEX = instruction[1]
 		}
 		// DictionarySet save_to_dict key value
 		else if (instruction[0]===DictionarySet){
@@ -1133,6 +1166,35 @@ var Toy_VM = function(instructions, ENV){
 
 			SAVE_INDEX = instruction[1]
 			continue
+		}
+		// MakeList save_index
+		else if (instruction[0]===MakeList){
+			ENV[ENV.length - 1][instruction[1]] = new List()
+
+			SAVE_INDEX = instruction[1]
+		}
+		// MakeList push_to_index push_value
+		else if (instruction[0]===ListPush){
+			var list_value = ENV[ENV.length - 1][instruction[1]]
+			var push_value = ENV[ENV.length - 1][instruction[2]]
+			list_value.push(push_value)
+		}
+		else if (instruction[0]===IF){
+			var judge_value = ENV[ENV.length - 1][instruction[1]]
+			var jmp_steps = instruction[2]
+
+			// it is list and false
+			if (judge_value.constructor === List && judge_value.value===null){
+				i = i + jmp_steps - 1
+				continue
+			}	
+			// true
+			else{
+				continue
+			}
+		}
+		else if (instruction[0]===JMP){
+			i = i + instruction[1] - 1
 		}
 		// Display value_index
 		else if (instruction[0]===Display){
@@ -1342,7 +1404,6 @@ var Toy_VM = function(instructions, ENV){
 					continue
 				}
 			}
-
 		}
 	}
 
@@ -1351,7 +1412,7 @@ var Toy_VM = function(instructions, ENV){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x  (quote 1 (+ 3 4) 3)) (display x)"
+var x = "(define test (lambda (x) (if x (display 1) (display 2)))) (test (quote ()))   "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -1364,14 +1425,34 @@ console.log(output)
 printInstructions(output)
 console.log("\n\n======\n\n")
 
-// var env = Toy_VM(output)
-// console.log(env)
 
-	var ENV = []
-	ENV[0] = []
+
+var ENV = []
+ENV[0] = []
 var env = Toy_VM(output, ENV)
 console.log(env)
-// eval(js)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
