@@ -566,14 +566,31 @@ var Toy_JS = function(tree,
 	var quoteFormatList = function(list, output, temp_name){
 		output.push( [MakeList, temp_name] )
 		for(var i = 0; i < list.length; i++){
-			if(typeof(list[i])==='string')
-				output.push([ListPush, temp_name, MakeString(list[i])])
+			if(typeof(list[i])==='string'){
+				output.push([SetConst, count[0], list[i]])
+				output.push([ListPush, temp_name, count[0]])
+			}
+			// Number
+			else if (list[i][0]===0){
+				console.log("It is number")
+                var type = INT // categorize number type
+                if(tree[3]=='float')
+                	type = FLOAT
+                else if (tree[3]=='rational')
+                	type = RATIONAL
+
+                output.push([MakeNumber, count[0], list[i][1], list[i][2], type])
+                output.push([ListPush, temp_name, count[0]])                                
+			}
 			else { // list 
-				quoteFormatList(list[i], output, tempName(count))
-				output.push([ListPush, temp_name, tempName(count)])
+				var t_name = count[0]
+				count[0] = count[0] + 1
+				quoteFormatList(list[i], output, t_name)
+				output.push([ListPush, temp_name, t_name])
 			}
 		}
 		output.push([ListPush, temp_name, null] )
+		count[0] = count[0] - 1
 		return temp_name
 	}
 
@@ -621,13 +638,15 @@ var Toy_JS = function(tree,
         if(typeof(tree[0])=="string"){
             if(tree[0]==="quote"){
             	var temp_name = tempName(count)
+            	count[0] = count[0] + 1
 				// count[0] = count[0] + 1
             	if (typeof(tree[1]) === 'string'){
-	                return MakeString(tree[1])
+            		output.push([SetConst, temp_name, tree[1]])  // set constant
+	                return temp_name 							 // return offset
             	}
             	// list
             	else{
-            		var o_ = quoteFormatList(tree[1],output,temp_name)
+            		var o_ = quoteFormatList(tree.slice(1),output,temp_name)
             		return o_
             	}
             }
@@ -1150,10 +1169,65 @@ var Toy_VM = function(instructions, ENV){
 			var dest = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
 			var value2 = ENV[ENV.length - 1][instruction[3]]
-			// console.log("value1: "+value1)
-			// console.log("value2: "+value2)
-			// console.log("Result: "+__add__(value1, value2))
 			ENV[ENV.length - 1][dest] = __add__(value1, value2)
+
+			SAVE_INDEX = dest
+		}
+
+		else if (instruction[0]===__SUB__){
+			//==== substruction ===
+			var __sub__ = function(num1,num2){    
+			    if (num1.type == FLOAT || num2.type == FLOAT)
+			        return new Number(num1.numer/num1.denom - num2.numer/num2.denom, 1, FLOAT)
+			    // [numer, denom]
+			    var rat = sub_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+			    if (rat[1] == 1)
+			        return new Number(rat[0], 1, INT)
+			    else
+			        return new Number(rat[0], rat[1], RATIONAL)
+			}
+			var dest = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+			ENV[ENV.length - 1][dest] = __sub__(value1, value2)
+
+			SAVE_INDEX = dest
+		}
+		else if (instruction[0]===__MULT__){
+			//==== Multplication ===
+			var __mul__ = function(num1,num2){    
+			    if (num1.type == FLOAT || num2.type == FLOAT)
+			        return new Number( (num1.numer/num1.denom) * (num2.numer/num2.denom), 1, FLOAT)
+			    // [numer, denom]
+			    var rat = mul_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+			    if (rat[1] == 1)
+			        return new Number(rat[0], 1, INT)
+			    else
+			        return new Number(rat[0], rat[1], RATIONAL)
+			}
+			var dest = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+			ENV[ENV.length - 1][dest] = __mul__(value1, value2)
+
+			SAVE_INDEX = dest
+		}
+		else if (instruction[0]===__DIV__){
+			//==== Division ====
+			var __div__ = function(num1,num2){    
+			    if (num1.type == FLOAT || num2.type == FLOAT)
+			        return new Number((num1.numer/num1.denom) / (num2.numer/num2.denom), 1, FLOAT)
+			    // [numer, denom]
+			    var rat = div_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
+			    if (rat[1] == 1)
+			        return new Number(rat[0], 1, INT)
+			    else
+			        return new Number(rat[0], rat[1], RATIONAL)
+			}
+			var dest = instruction[1]
+			var value1 = ENV[ENV.length - 1][instruction[2]]
+			var value2 = ENV[ENV.length - 1][instruction[3]]
+			ENV[ENV.length - 1][dest] = __div__(value1, value2)
 
 			SAVE_INDEX = dest
 		}
@@ -1277,7 +1351,7 @@ var Toy_VM = function(instructions, ENV){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define add (lambda (a b) (__ADD__ a b) )) (display (add 1 2))"
+var x = "(define x  (quote 1 (+ 3 4) 3)) (display x)"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
