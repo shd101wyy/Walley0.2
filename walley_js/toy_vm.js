@@ -1057,8 +1057,7 @@ var Toy_VM = function(instructions, ENV){
 				i++
 			}
 			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
-
-			ENV[ENV.length - 1][instruction[1]] = new Function(function_content)
+			ENV[ENV.length - 1][instruction[1]] = new Function(function_content)  // save function to that location
 		}
 		// MakeArray save_to_dest
 		else if (instruction[0]===MakeArray){
@@ -1117,6 +1116,8 @@ var Toy_VM = function(instructions, ENV){
 			var dest = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
 			var value2 = ENV[ENV.length - 1][instruction[3]]
+			console.log("value1: "+value1)
+			console.log("value2: "+value2)
 			ENV[ENV.length - 1][dest] = __add__(value1, value2)
 		}
 		/*
@@ -1149,8 +1150,10 @@ var Toy_VM = function(instructions, ENV){
 					ENV[ENV.length - 1].push(params_value_arr[a])   // push parameter value in local env
 				}
 
+				console.log("Func_Value: ")
+				printInstructions(func_value.value)
 				// Begin to run func_value
-				Toy_VM(func_value, ENV)
+				Toy_VM(func_value.value, ENV)
 
 				// after running function
 				// Pop Last value and save it to last layer save_at_index
@@ -1160,12 +1163,14 @@ var Toy_VM = function(instructions, ENV){
 				// pop local ENV
 				ENV.pop()  // done
 
+				console.log("Return Value: ")
+				console.log(return_value)
 				/*
 
 				console.log(ENV)
 				console.log("Return Value: ")
 				console.log(return_value)
-				
+
 				console.log("Params Number:")
 				console.log(param_nums)
 
@@ -1237,7 +1242,7 @@ var Toy_VM = function(instructions, ENV){
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x (lambda (a) a )) (display (x 1))"
+var x = "(define add (lambda (a b) (__ADD__ a b) )) (display (add 1 2))"
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
