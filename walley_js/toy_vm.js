@@ -7,11 +7,22 @@
     Toy Language JS compiler
 */
 
+/*
+
+	Implement Data Types
+*/
 var Number = function(numer, denom, type){
-    this.numer = numer
-    this.denom = denom
-    this.type = type
+    this.numer = numer   // numer of number
+    this.denom = denom   // denom of number 
+    this.type = type     // 0:INT 1:FLOAT 2:RATIONAL
 }
+
+var Function = function(line, value){
+	this.line = line // line is the instruction row, when call function, jmp to that row
+	this.value = value // save function content
+}
+
+// ==================
 
 // check char is digit
 var charIsDigit = function(input_char){
@@ -396,10 +407,10 @@ var Set = 1         // Set dest value
 var MakeList = 2    // MakeList dest 
 var ListPush = 3    // ListPush dest value
 var MakeFunction = 4 // MakeFunction dest 
-var AddParam = 5     // AddParam param_num special_token_flag.   0:normal  1:. 2:&
+var AddParam = 5     // AddParam num_of_param
 var EndParam = 6     // EndParam
 var EndFunction = 7  // EndFunction
-var Call = 8         // Call return_to_dest func param_array_addr
+var Call = 8         // Call func_index param_array_addr_and_after_call_save_to_that_place
 var MakeArray = 9    // MakeArray dest
 var ArrayPush = 10   // ArrayPush dest value
 var ArrayPop = 11    // ArrayPost save_dest pop_array
@@ -504,6 +515,14 @@ var opcode = function(num){
 	//	return "Set"
 }
 
+/*
+=====================================================================================================================================
+=====================================================================================================================================
+====================================== TOY OPCODE GENERATOR =========================================================================
+=====================================================================================================================================	
+=====================================================================================================================================
+
+*/
 var Toy_JS = function(tree, 
 	module_name, 
 	output, 
@@ -828,29 +847,12 @@ var Toy_JS = function(tree,
 
 
             	var params_num = 0
-            	var flag = 0
             	for(var i = 0; i<params.length; i++){
-            		// variadic variables
-            		// calculate rest
-            		if(params[i]=='.'){
-            			symbol_table[symbol_table.length-1].push(params[i+1]) // push var_name to symbol table
-            			params_num++ // increase params_num
-            			flag = 1     // set flag to 1, denotes ' . '
-            			break
-            		}
-            		else if (params[i]=='&'){
-            			symbol_table[symbol_table.length-1].push(params[i+1]) // push var_name to symbol table
-            			param_num++ // increase params_num
-            			flag = 2    // set flag to 2, denotes ' & '
-            			break
-            		}
-
             		symbol_table[symbol_table.length-1].push(params[i]) // push var_name to symbol table
             		params_num++
             	}
-            	output.push([AddParam, i, flag]) // add params
-
-            	count[0] = 1
+            	output.push([AddParam, i]) // add params 
+            	count[0] = params_num  // set count
 
             	Toy_JS_iter(stms, module_name, output, count, symbol_table)
 
@@ -863,12 +865,27 @@ var Toy_JS = function(tree,
             // call function
             // (add a b)
             else {
-            	var func_name = tree[0]
-            	var func_name_index = getVar(func_name)
+            	var func_name = tree[0]	        // get function name  (add a b) => add
+            	var func_name_index = getVar(func_name)   // get function index 
 
-            	var params = tree.slice(1)
+            	var params = tree.slice(1) // get params (add a b) => (a b)
+
+            	var current_count = count[0]    // save current count
+            	/*
+            	var temp_name = tempName(count) // get temp name for MakeList
+            	count[0] = count[0] + 1         // increase temp
+
+            	output.push([MakeList, temp_name])  // at temp_name position make list
+            	for(var i = 0; i < params.length; i++){
+            		var curr_count = count[0]
+            		var value = Toy_JS(params[i], module_name, output, count, symbol_table) // calculate each param
+            		output.push([ListPush, temp_name, value])	// add value to list 
+            		count[0] = curr_count // restore to last count
+            	}
+            	count[0] = current_count // restore count
+            	*/
             	var temp_name = makeArray(params, count)  // make params array
-            	output.push([Call, temp_name, func_name_index, temp_name]) // Call dest func_name params_array
+            	output.push([Call, func_name_index, temp_name]) // Call dest func_name params_array
             	return temp_name
             }
         }
@@ -876,6 +893,7 @@ var Toy_JS = function(tree,
             // number
             if(tree[0]==0){
             	var temp_name = tempName(count)  // make temp in current symbol_table_layer
+            	count[0] = count[0] + 1          // update count
 
                 var type = INT // categorize number type
                 if(tree[3]=='float')
@@ -884,9 +902,7 @@ var Toy_JS = function(tree,
                 	type = RATIONAL
 
                 output.push([MakeNumber, temp_name, tree[1], tree[2], type])
-                
-                count[0] = count[0] + 1
-                
+                                
                 return temp_name
             }
             // array
@@ -934,6 +950,9 @@ var Toy_JS = function(tree,
     }
 }
 
+
+
+
 var Toy_JS_iter = function(trees, module_name, output, count, symbol_table){
     var i = 0
     while(i!=trees.length){
@@ -944,6 +963,14 @@ var Toy_JS_iter = function(trees, module_name, output, count, symbol_table){
     }
     return output
 }
+
+
+/*==========================================
+==  =  ====
+===  = ===
+====  =================
+====== ==========
+==========================================*/
 
 var printCompiledArray = function(input_array){
     for(var i = 0; i <input_array.length; i++){
@@ -1019,17 +1046,22 @@ var Toy_VM = function(instructions){
 		// When call function
 		// JMP to current line
 		else if (instruction[0]===MakeFunction){
-			ENV[ENV.length - 1][instruction[1]] = i
 			// jmp to EndFunction
 			var count = 1
+			var function_content = [] // save function content
+									  // it is slice between and not including MakeFunction, EndFunction
 			i=i+1
 			while(count!=0){
-				if (instructions[i][0]==MakeFunction)
+				function_content.push(instructions[i])
+				if (instructions[i][0]==MakeFunction){
 					count++
-				if (instructions[i][0]==EndFunction)
+				}
+				if (instructions[i][0]==EndFunction){
 					count--
+				}
 				i++
 			}
+			ENV[ENV.length - 1][instruction[1]] = new Function(i, function_content)
 		}
 		// MakeArray save_to_dest
 		else if (instruction[0]===MakeArray){
@@ -1098,16 +1130,48 @@ var Toy_VM = function(instructions){
 			(dictionary key value) - > dictionary[key] = value
 	
 			Call save_to_index func_index param_array_index
+			Call func_index param_array_index_and_after_call_save_to_that_index
 		*/
 		else if (instruction[0]===Call){
-			var func_index = instruction[2]					// get func index
+			var func_index = instruction[1]					// get func index
 			var func_value = ENV[ENV.length - 1][func_index]	// get value at that func index
-			var params_value_arr = ENV[ENV.length - 1][instruction[3]]	// get params array
-			var save_at_index = Call[1]
+			var params_value_arr = ENV[ENV.length - 1][instruction[2]]	// get params array
+			var save_at_index = params_value_arr                      // after calling save to that index
 			console.log(func_value)
 
+			// Function
+			if (func_value.constructor === Function){
+				var start_line = func_value.line
+				console.log("IT IS FUNCTION")
+				console.log(instructions[start_line])
+				console.log(instructions[start_line+1])
+
+				var param_instruction = instructions[start_line+1]
+				var param_nums = param_instruction[1]
+
+				// push new local env
+				ENV.push([])
+				for(var a = 0; a < param_nums; a++){
+					ENV[ENV.length - 1].push(params_value_arr[a])   // push parameter value in local env
+				}
+
+				// Begin to run func_value
+
+
+				console.log("Params Number:")
+				console.log(param_nums)
+
+				console.log("Params:")
+				console.log(params_value_arr)
+
+				console.log("Env:")
+				console.log(ENV[ENV.length - 1])
+
+				console.log("Func_Value: ")
+				console.log(func_value)
+			}
 			// Array
-			if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
+			else if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
 				var array_value = func_value
 				// get value at index
 				if (params_value_arr.length == 1){
@@ -1155,17 +1219,6 @@ var Toy_VM = function(instructions){
 					continue
 				}
 			}
-			// Function
-			else if (typeof(func_value) === 'number'){
-				console.log("IT IS FUNCTION")
-				console.log(instructions[func_value])
-				console.log(instructions[func_value+1])
-				var param_instruction = instructions[func_value+1]
-				var param_nums = param_instruction[1]
-				var flag = param_instruction[2]  // 0:normal 1:. 2:&
-
-			}
-
 
 		}
 	}
