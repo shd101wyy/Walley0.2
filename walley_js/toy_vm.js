@@ -17,8 +17,7 @@ var Number = function(numer, denom, type){
     this.type = type     // 0:INT 1:FLOAT 2:RATIONAL
 }
 
-var Function = function(line, value){
-	this.line = line // line is the instruction row, when call function, jmp to that row
+var Function = function(value){
 	this.value = value // save function content
 }
 
@@ -998,9 +997,7 @@ var printInstructions = function(instructions){
 /*
 	TOY Language Virtual Machine
 */
-var Toy_VM = function(instructions){
-	var ENV = []
-	ENV[0] = []
+var Toy_VM = function(instructions, ENV){
 	for (var i = 0; i < instructions.length; i++){
 		var instruction = instructions[i]
 		//console.log(instruction)
@@ -1053,15 +1050,15 @@ var Toy_VM = function(instructions){
 			i=i+1
 			while(count!=0){
 				function_content.push(instructions[i])
-				if (instructions[i][0]==MakeFunction){
+				if (instructions[i][0]==MakeFunction)
 					count++
-				}
-				if (instructions[i][0]==EndFunction){
+				if (instructions[i][0]==EndFunction)
 					count--
-				}
 				i++
 			}
-			ENV[ENV.length - 1][instruction[1]] = new Function(i, function_content)
+			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
+
+			ENV[ENV.length - 1][instruction[1]] = new Function(function_content)
 		}
 		// MakeArray save_to_dest
 		else if (instruction[0]===MakeArray){
@@ -1087,8 +1084,10 @@ var Toy_VM = function(instructions){
 		}
 		// Display value_index
 		else if (instruction[0]===Display){
+			console.log("Display Function ======")
 			var value_index = instruction[1]
 			console.log(ENV[ENV.length - 1][value_index])
+			console.log("Finish ================")
 		}
 		else if (instruction[0]===__ADD__){
 			// add function
@@ -1137,17 +1136,12 @@ var Toy_VM = function(instructions){
 			var func_value = ENV[ENV.length - 1][func_index]	// get value at that func index
 			var params_value_arr = ENV[ENV.length - 1][instruction[2]]	// get params array
 			var save_at_index = params_value_arr                      // after calling save to that index
-			console.log(func_value)
+			// console.log(func_value)
 
 			// Function
 			if (func_value.constructor === Function){
-				var start_line = func_value.line
-				console.log("IT IS FUNCTION")
-				console.log(instructions[start_line])
-				console.log(instructions[start_line+1])
-
-				var param_instruction = instructions[start_line+1]
-				var param_nums = param_instruction[1]
+			
+				var param_nums = func_value.value[0][1]   // get parameters number
 
 				// push new local env
 				ENV.push([])
@@ -1156,8 +1150,22 @@ var Toy_VM = function(instructions){
 				}
 
 				// Begin to run func_value
+				Toy_VM(func_value, ENV)
 
+				// after running function
+				// Pop Last value and save it to last layer save_at_index
+				var return_value = ENV[ENV.length-1].pop()
+				ENV[ENV.length - 2][save_at_index] = return_value
 
+				// pop local ENV
+				ENV.pop()  // done
+
+				/*
+
+				console.log(ENV)
+				console.log("Return Value: ")
+				console.log(return_value)
+				
 				console.log("Params Number:")
 				console.log(param_nums)
 
@@ -1169,6 +1177,7 @@ var Toy_VM = function(instructions){
 
 				console.log("Func_Value: ")
 				console.log(func_value)
+				*/
 			}
 			// Array
 			else if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
@@ -1244,8 +1253,9 @@ console.log("\n\n======\n\n")
 // var env = Toy_VM(output)
 // console.log(env)
 
-
-var env = Toy_VM(output)
+	var ENV = []
+	ENV[0] = []
+var env = Toy_VM(output, ENV)
 console.log(env)
 // eval(js)
 
