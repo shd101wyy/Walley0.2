@@ -405,7 +405,7 @@ var Define = 0      // Define dest value
 var Set = 1         // Set dest value
 var MakeList = 2    // MakeList dest 
 var ListPush = 3    // ListPush dest value
-var MakeFunction = 4 // MakeFunction dest 
+var MakeFunction = 4 // MakeFunction dest param_num
 var AddParam = 5     // AddParam num_of_param
 var EndParam = 6     // EndParam
 var EndFunction = 7  // EndFunction
@@ -840,7 +840,7 @@ var Toy_JS = function(tree,
             	var temp_name = tempName(count)
             	count[0] = count[0] + 1
 
-            	output.push([MakeFunction, temp_name]) // begin to make function
+            	var makeFunction_array = [MakeFunction, temp_name]
             	
             	symbol_table.push([])                // push local symbol_table to save local variable
 
@@ -850,7 +850,10 @@ var Toy_JS = function(tree,
             		symbol_table[symbol_table.length-1].push(params[i]) // push var_name to symbol table
             		params_num++
             	}
-            	output.push([AddParam, i]) // add params 
+            	makeFunction_array.push(params_num)  // MakeFunction func_dest func_param_num
+            	output.push(makeFunction_array)   // push instruction to output
+
+            	// output.push([AddParam, i]) // add params 
             	count[0] = params_num  // set count
 
             	Toy_JS_iter(stms, module_name, output, count, symbol_table)
@@ -998,6 +1001,7 @@ var printInstructions = function(instructions){
 	TOY Language Virtual Machine
 */
 var Toy_VM = function(instructions, ENV){
+	var SAVE_INDEX = 0 // save value to current layer index
 	for (var i = 0; i < instructions.length; i++){
 		var instruction = instructions[i]
 		//console.log(instruction)
@@ -1009,12 +1013,16 @@ var Toy_VM = function(instructions, ENV){
 			var var_value_index = instruction[2]
 			var value = ENV[0][var_value_index]
 			ENV[0][var_name_index] = value
+
+			SAVE_INDEX = var_name_index
 		}
 		// GetGlobal global_var_index save_to_current_layer_index
 		else if (instruction[0]===GetGlobal){
 			var global_var_index = instruction[1]
 			var save_to_current_layer_index = instruction[2]
 			ENV[ENV.length - 1][save_to_current_layer_index] = ENV[0][global_var_index]
+
+			SAVE_INDEX = save_to_current_layer_index
 		} 
 		// SetLocal local_save_index value_index
 		else if (instruction[0]===SetLocal){
@@ -1022,12 +1030,25 @@ var Toy_VM = function(instructions, ENV){
 			var var_value_index = instruction[2]
 			var value = ENV[0][var_value_index]
 			ENV[ENV.length - 1][var_name_index] = value
+
+			SAVE_INDEX = var_name_index
+		}
+		// GetLocal local_index save_to_index
+		else if (instruction[0]===GetLocal){
+			var copy_index = instruction[1]
+			var save_index = instruction[2]
+			var value = ENV[ENV.length - 1][copy_index]
+			ENV[ENV.length - 1][save_index] = value
+
+			SAVE_INDEX = save_index
 		}
 		// SetConst local_save_index value
 		else if (instruction[0]===SetConst){
 			var var_name_index = instruction[1]
 			var value = instruction[2]
 			ENV[ENV.length - 1][var_name_index] = value
+
+			SAVE_INDEX = var_name_index
 		}
 		// MakeNumber save_index numer denom type
 		// Save at current layer
@@ -1037,6 +1058,8 @@ var Toy_VM = function(instructions, ENV){
 			var denom = instruction[3]
 			var type = instruction[4]
 			ENV[ENV.length - 1][ save_index ] = new Number(numer, denom, type)
+
+			SAVE_INDEX = save_index
 		}
 		// Begin to make function
 		// Save current line number i
@@ -1045,9 +1068,10 @@ var Toy_VM = function(instructions, ENV){
 		else if (instruction[0]===MakeFunction){
 			// jmp to EndFunction
 			var count = 1
-			var function_content = [] // save function content
-									  // it is slice between and not including MakeFunction, EndFunction
-			i=i+1
+			var function_content = [instructions[i]] // save function content
+									  // it is slice between MakeFunction, EndFunction, and not including ENdFunction
+
+			i = i + 1
 			while(count!=0){
 				function_content.push(instructions[i])
 				if (instructions[i][0]==MakeFunction)
@@ -1057,17 +1081,25 @@ var Toy_VM = function(instructions, ENV){
 				i++
 			}
 			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
+			// console.log("Func_Value ======")
+			// printInstructions(function_content)
 			ENV[ENV.length - 1][instruction[1]] = new Function(function_content)  // save function to that location
+
+			SAVE_INDEX = instruction[i]
 		}
 		// MakeArray save_to_dest
 		else if (instruction[0]===MakeArray){
 			ENV[ENV.length - 1][instruction[1]] = []
+
+			SAVE_INDEX = instruction[i]
 		}
 		// ArrayPush save_to_dest push_value
 		else if (instruction[0]===ArrayPush){
 			var var_name_index = instruction[1]
 			var value = ENV[ENV.length - 1][instruction[2]]
 			ENV[ENV.length - 1][var_name_index].push(value)
+
+			SAVE_INDEX = var_name_index
 		}
 		// MakeDictionary save_to_dest
 		else if (instruction[0]===MakeDictionary){
@@ -1079,6 +1111,8 @@ var Toy_VM = function(instructions, ENV){
 			var value_value = ENV[ENV.length - 1][instruction[3]]   //  get value
 			var var_value = ENV[ENV.length - 1][instruction[1]]     // get dictionary
 			var_value[key_value] = value_value						// set value to key of dictionary
+
+			SAVE_INDEX = instruction[1]
 			continue
 		}
 		// Display value_index
@@ -1116,9 +1150,12 @@ var Toy_VM = function(instructions, ENV){
 			var dest = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
 			var value2 = ENV[ENV.length - 1][instruction[3]]
-			console.log("value1: "+value1)
-			console.log("value2: "+value2)
+			// console.log("value1: "+value1)
+			// console.log("value2: "+value2)
+			// console.log("Result: "+__add__(value1, value2))
 			ENV[ENV.length - 1][dest] = __add__(value1, value2)
+
+			SAVE_INDEX = dest
 		}
 		/*
 			(fn params....)
@@ -1136,13 +1173,14 @@ var Toy_VM = function(instructions, ENV){
 			var func_index = instruction[1]					// get func index
 			var func_value = ENV[ENV.length - 1][func_index]	// get value at that func index
 			var params_value_arr = ENV[ENV.length - 1][instruction[2]]	// get params array
-			var save_at_index = params_value_arr                      // after calling save to that index
+			var save_at_index = instruction[2]                      // after calling save to that index
 			// console.log(func_value)
 
 			// Function
 			if (func_value.constructor === Function){
-			
-				var param_nums = func_value.value[0][1]   // get parameters number
+
+				var param_nums = func_value.value[0][2]   // get parameters number
+				var function_content = func_value.value.slice(1)	      // ignore first MakeFunction 
 
 				// push new local env
 				ENV.push([])
@@ -1150,22 +1188,19 @@ var Toy_VM = function(instructions, ENV){
 					ENV[ENV.length - 1].push(params_value_arr[a])   // push parameter value in local env
 				}
 
-				console.log("Func_Value: ")
-				printInstructions(func_value.value)
 				// Begin to run func_value
-				Toy_VM(func_value.value, ENV)
+				Toy_VM(function_content, ENV)
 
 				// after running function
-				// Pop Last value and save it to last layer save_at_index
-				var return_value = ENV[ENV.length-1].pop()
-				ENV[ENV.length - 2][save_at_index] = return_value
+				var return_value = ENV[ENV.length-1][SAVE_INDEX]  // get return value
+				ENV[ENV.length - 2][save_at_index] = return_value // occupy origninal parameter array position
 
 				// pop local ENV
 				ENV.pop()  // done
 
+				/*
 				console.log("Return Value: ")
 				console.log(return_value)
-				/*
 
 				console.log(ENV)
 				console.log("Return Value: ")
