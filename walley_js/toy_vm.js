@@ -1389,6 +1389,17 @@ var Toy_VM = function(instructions, ENV){
 			var numer = instruction[2]
 			var denom = instruction[3]
 			var type = instruction[4]
+
+			// change string to number
+			if (type==INT || type==RATIONAL){
+				numer = parseInt(numer)
+				denom = parseInt(denom)
+			}
+			else{
+				numer = parseFloat(numer)
+				denom = parseFloat(denom)
+			}
+
 			var newNumber = new Number(numer, denom, type)
 			var data = new DATA($NUMBER)
 			data.NUMBER = newNumber
