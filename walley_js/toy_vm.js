@@ -283,7 +283,8 @@ var Tokenize_String = function(input_str){
         else if (input_str[i]=='('||input_str[i]==')'||
             input_str[i]=='['||input_str[i]==']'||
             input_str[i]=='{'||input_str[i]=='}'||
-            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','){
+            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','||
+            input_str[i]==':'){
             output.push(input_str[i])
         }
         /*
@@ -334,26 +335,77 @@ var parseStringToArray = function(input_array){
     var output = []
     var i = 0
 
+    var formatSpecial = function(input_array, i, output){
+   		// quote
+   		if(input_array[i]=="'"){
+   			output.push('quote')
+   		} 
+   		// unquote
+   		else if (input_array[i]==","){
+   			output.push('unquote')
+   		}
+   		// quasiquote
+   		else if (input_array[i]=="@"){
+   			output.push('quasiquote')
+   		}
+   		// self->
+   		else if (input_array[i]==":"){
+   			output.push('quote')
+   			var next = input_array[i+1]
+   			if (next[0]=="("||next[0]=="{"||next[0]=="["){
+   				console.log("Error...: invalid.")
+   			}
+   			output.push(input_array[i]+input_array[i+1])
+   			return i+1
+   		}
+
+   		i++
+		if(input_array[i]=="("){
+            output.push([])
+            i = formatList(input_array, i+1, output[output.length - 1])
+            return i
+        }
+        else if (input_array[i]=="["){
+            output.push([1])
+            i = formatArray(input_array, i+1, output[output.length - 1])
+            return i
+        }
+        else if (input_array[i]=='{'){
+        	output.push([2])
+        	i = formatDictionary(input_array, i+1, output[output.length - 1])
+        	return i
+        }
+        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+        	output.push([])
+        	i = formatSpecial(input_array, i, output[output.length - 1])
+        	return i
+        }
+        else{
+            output.push( formatSymbol ( input_array[i] ))
+            return i
+        }
+    }
     // 12 -> [0,'12','1','int')
     // if its type is not Number
     // return itself
-    var formatNumber = function(input_str){
-    var type = stringIsNumber(input_str)
-    if (type!=false){
-        var append_obj
-        if(type == "Integer"){
-            append_obj = [0, input_str, '1', 'int']
-        }
-        else if (type == "Float"){
-            append_obj = [0, input_str, '1' ,'float']
-        }
-        else if (type == "Fraction"){
-            append_obj = [0, get_numerator(input_str), get_denominator(input_str), 'rational']
-        }
-        return append_obj
-    }
-    return input_str
-}
+    var formatSymbol = function(input_str){
+	    var type = stringIsNumber(input_str)
+	    if (type!=false){
+	        var append_obj
+	        if(type == "Integer"){
+	            append_obj = [0, input_str, '1', 'int']
+	        }
+	        else if (type == "Float"){
+	            append_obj = [0, input_str, '1' ,'float']
+	        }
+	        else if (type == "Fraction"){
+	            append_obj = [0, get_numerator(input_str), get_denominator(input_str), 'rational']
+	        }
+	        return append_obj
+	    }
+	  
+	  	return input_str
+	}
 
     var formatList = function(input_array, i, output){
         while(i<input_array.length){
@@ -372,8 +424,12 @@ var parseStringToArray = function(input_array){
 	        	output.push([2])
 	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 	        }
+	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+	        	output.push([])
+	        	i = formatSpecial(input_array, i, output[output.length - 1])
+	        }
             else{
-                output.push( formatNumber ( input_array[i] ))
+                output.push( formatSymbol ( input_array[i] ))
             }
             i++
         }
@@ -392,10 +448,14 @@ var parseStringToArray = function(input_array){
 	        	output.push([2])
 	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 	        }
+	       	else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+	        	output.push([])
+	        	i = formatSpecial(input_array, i, output[output.length - 1])
+	        }
             else if (input_array[i]=="]")
                 return i
             else
-                output.push(formatNumber( input_array[i] ))
+                output.push(formatSymbol( input_array[i] ))
             i++
         }
     }
@@ -411,15 +471,14 @@ var parseStringToArray = function(input_array){
     			}
     			return i
     		}
+    		/*
     		// key
     		if(count%2==0){
     			var key = input_array[i]
-    			if(key[0]!=':'){
-    				console.log("Error...invalid key.")
-    				return i
-    			}
+    			key = parseStringToArray(key)
     			output.push(key)
-    		}
+    		}*/ 
+    		// key can be anything now
     		// value
     		else{
     			if(input_array[i]=="("){
@@ -434,8 +493,12 @@ var parseStringToArray = function(input_array){
 		        	output.push([2])
 		        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 		        }
+    	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+		        	output.push([])
+		        	i = formatSpecial(input_array, i, output[output.length - 1])
+		        }
 		        else{
-		        	output.push(formatNumber( input_array[i] ))
+		        	output.push(formatSymbol( input_array[i] ))
 		        }
     		}
 
@@ -456,8 +519,12 @@ var parseStringToArray = function(input_array){
         	output.push([2])
         	i = formatDictionary(input_array, i+1, output[output.length - 1])
         }
+        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+        	output.push([])
+        	i = formatSpecial(input_array, i, output[output.length - 1])
+	    }
         else{
-            output.push( formatNumber( input_array[i] ))
+            output.push( formatSymbol( input_array[i] ))
         }
         i++
     }
@@ -829,7 +896,7 @@ var Toy_Compiler = function(tree,
     	offset[0] = offset[0] + 1
 
     	for(var i = 0; i<tree.length; i=i+2){
-        	var key = tree[i].slice(1) // get key name // remove : ahead key
+        	var key = Toy_Compiler(tree[i], module_name, output, offset, symbol_table) // calculate to get key
         	var key_index = tempName(offset)
         	offset[0] = offset[0] + 1
         	output.push([SetConst, key_index, key])  // set key to local index
@@ -1545,12 +1612,7 @@ var Toy_VM = function(instructions, ENV){
 					ENV[ENV.length - 1][save_at_index] = dict_value[params_value_arr[0]]
 				}
 				else if (params_value_arr.length == 2){
-					var key = params_value_arr[0]
-					if(key[0]!=":"){
-						console.log("Error...invalid key")
-						continue
-					}
-					key=key.slice(1)
+					var key = params_value_arr[0]					
 					dict_value[key] = params_value_arr[1]
 					ENV[ENV.length - 1][key] = dict_value
 					continue
@@ -1602,7 +1664,7 @@ var Embed_Function = {
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x [1 2 3]) (x 0 4) (display x) "
+var x = "(define x {:a 12})  "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
