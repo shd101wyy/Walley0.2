@@ -832,6 +832,12 @@ var Toy_Compiler = function(tree,
 	var setCount = function(){
 		offset[0] = symbol_table[symbol_table.length - 1].length
 	}
+    /*
+        Pop last from last frame of symbol table
+    */
+    var popTemp = function(){
+        symbol_table[symbol_table.length - 1].pop()
+    }
 
 	var getVar = function(var_name){
 		for(var i = symbol_table.length - 1; i>=0; i--){
@@ -1202,15 +1208,16 @@ var Toy_Compiler = function(tree,
             // call function
             // (add a b)
             else {
-            	var func_name = tree[0]	        // get function name  (add a b) => add
+            	var current_count = offset[0]   // save current offset
+
+                var func_name = tree[0]	        // get function name  (add a b) => add
             	var func_name_index = getVar(func_name)   // get function index 
 
             	var params = tree.slice(1) // get params (add a b) => (a b)
 
-            	var current_count = offset[0]    // save current offset
-            	
             	var temp_name = makeArray(params, offset)  // make params array
             	output.push([Call, func_name_index, temp_name]) // Call dest func_name params_array
+                offset[0] = current_count // restore offset
             	return temp_name
             }
         }
@@ -1781,9 +1788,10 @@ var generateOffset = function(Embed_Function){
 }
 
 /*
+
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = " (__display (__div 3 6)) "
+var x = " (__display 3) (__display 4) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -1804,9 +1812,9 @@ if(1){
 	console.log(env)
 }
 
-
-
 */
+
+
 
 // exports to Nodejs 
 if (typeof(module)!="undefined"){
