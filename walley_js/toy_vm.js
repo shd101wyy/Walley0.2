@@ -1347,8 +1347,12 @@ var Toy_VM = function(instructions, ENV){
 		// SetConst local_save_index value
 		else if (instruction[0]===SetConst){
 			var var_name_index = instruction[1]
-			var value = instruction[2]
-			ENV[ENV.length - 1][var_name_index] = value
+			
+			var data = new DATA($ATOM)
+			data.ATOM = instruction[2]
+			// var value = instruction[2]
+
+			ENV[ENV.length - 1][var_name_index] = data
 
 			SAVE_INDEX = var_name_index
 		}
@@ -1421,9 +1425,15 @@ var Toy_VM = function(instructions, ENV){
 		// DictionarySet save_to_dict key value
 		else if (instruction[0]===DictionarySet){
 			var key_value = ENV[ENV.length - 1][instruction[2]]		// get key
+			// check key type
+			if(key_value.data_type!=$ATOM){
+				console.log("Error...invalid key")
+				continue
+			}
+			var key = key_value.ATOM // get key
 			var value_value = ENV[ENV.length - 1][instruction[3]]   //  get value
 			var var_value = ENV[ENV.length - 1][instruction[1]]     // get dictionary
-			var_value.DICTIONARY[key_value] = value_value						// set value to key of dictionary
+			var_value.DICTIONARY[key] = value_value						// set value to key of dictionary
 
 			ENV[ENV.length - 1].pop() // pop value
 			ENV[ENV.length - 1].pop() // pop key
@@ -1513,15 +1523,31 @@ var Toy_VM = function(instructions, ENV){
 				var array_value = func_value.ARRAY
 				// get value at index
 				if (params_value_arr.length == 1){
-					ENV[ENV.length - 1][save_at_index] = array_value[params_value_arr[0]]
+					if (params_value_arr[0].data_type!=$NUMBER){
+						console.log("Error...index valid index type")
+					}
+					var num_index = params_value_arr[0].NUMBER
+					if(num_index.type!=INT){ // check index type. iF it is not int, then print error
+						console.log("Error...invalid index "+index)
+					}
+					var index = num_index.numer // get index
+					// check boundary
+					if(index>=array_value.length || index<0){
+						cnosole.log("Error...index out of boundary")
+						continue
+					}
+					ENV[ENV.length - 1][save_at_index] = array_value[index]
 				}
 				else if (params_value_arr.length == 2){
+					if (params_value_arr[0].data_type!=$NUMBER){
+						console.log("Error...index valid index type")
+					}
 					// Check Index
-					if(params_value_arr[0].type !== INT){
+					if(params_value_arr[0].NUMBER.type !== INT){
 						console.log("Error...invalid index "+params_value_arr)
 						continue
 					}
-					var set_index = params_value_arr[0].numer
+					var set_index = params_value_arr[0].NUMBER.numer
 					// check boundary
 					if(set_index>=array_value.length || set_index<0){
 						cnosole.log("Error...index out of boundary")
@@ -1539,11 +1565,22 @@ var Toy_VM = function(instructions, ENV){
 			else if (func_value.data_type == $DICTIONARY){
 				var dict_value = func_value.DICTIONARY
 				if(params_value_arr.length == 1){
-					ENV[ENV.length - 1][save_at_index] = dict_value[params_value_arr[0]]
+					var key_value = params_value_arr[0]
+					if(key_value.data_type!=$ATOM){
+						console.log("Error...invalid key type")
+						continue
+					}
+					key = key_value.ATOM
+					ENV[ENV.length - 1][save_at_index] = dict_value[key]
 					continue
 				}
 				else if (params_value_arr.length == 2){
-					var key = params_value_arr[0]					
+					var key_value = params_value_arr[0]		
+					if(key_value.data_type!=$ATOM){
+						console.log("Error...invalid key type")
+						continue
+					}
+					key = key_value.ATOM			
 					dict_value[key] = params_value_arr[1]
 					ENV[ENV.length - 1][save_at_index] = dict_value
 					continue
@@ -1691,7 +1728,7 @@ var generateOffset = function(Embed_Function){
 }
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = " (define x {:a 12}) (x :a 15) (__display (x :a)) "
+var x = " (define x {:a 12 :b 13}) (x :a 15) (__display (x :a)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
