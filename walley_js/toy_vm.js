@@ -657,9 +657,30 @@ var GetLocal = 31	   //						   GetLocal index save_to_index
 var SetConst = 32      // set constant, like string, to current layer
 					   // SetConst save_index value
 
+/*
+	Number Types
+*/
 var INT = 0
 var FLOAT = 1
 var RATIONAL = 2
+
+/*
+	Toy Language Data Type
+*/
+var $FUNCTION = 0
+var $ATOM = 1
+var $LIST = 2
+var $ARRAY = 3
+var $DICTIONARY = 4
+var $NUMBER = 5
+
+/*
+	Toy Language Data
+*/
+
+var DATA = function(data_type){
+	this.data_type = data_type
+}
 
 var opcode = function(num){
 	if(num===0)
@@ -1717,6 +1738,18 @@ var Embed_Function = {
 			console.log("Finish ================")
 		},
 		param_num:1
+	},
+	car:{
+		func: function(__arr__){
+			return __arr__[0].value
+		},
+		param_num:1
+	},
+	cdr:{
+		func: function(__arr__){
+			return __arr__[0].next
+		},
+		param_num:1
 	}
 }
 
@@ -1752,7 +1785,7 @@ var generateOffset = function(Embed_Function){
 }
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(__display (__eq 3 3))  "
+var x = "(define x '(a b)) (__display (cdr x))  "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
