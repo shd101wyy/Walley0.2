@@ -1371,6 +1371,8 @@ var Toy_VM = function(instructions, ENV){
 			var value = ENV[ENV.length - 1][instruction[2]]
 			ENV[ENV.length - 1][var_name_index].push(value)
 
+			ENV[ENV.length - 1].pop() // pop push_value
+
 			SAVE_INDEX = var_name_index
 		}
 		// MakeDictionary save_to_dest
@@ -1386,6 +1388,9 @@ var Toy_VM = function(instructions, ENV){
 			var var_value = ENV[ENV.length - 1][instruction[1]]     // get dictionary
 			var_value[key_value] = value_value						// set value to key of dictionary
 
+			ENV[ENV.length - 1].pop() // pop value
+			ENV[ENV.length - 1].pop() // pop key
+
 			SAVE_INDEX = instruction[1]
 			continue
 		}
@@ -1400,6 +1405,8 @@ var Toy_VM = function(instructions, ENV){
 			var list_value = ENV[ENV.length - 1][instruction[1]]
 			var push_value = ENV[ENV.length - 1][instruction[2]]
 			list_value.push(push_value)
+
+			ENV[ENV.length - 1].pop()    // pop pushed value
 		}
 		else if (instruction[0]===IF){
 			var judge_value = ENV[ENV.length - 1][instruction[1]]
@@ -1663,7 +1670,7 @@ var Embed_Function = {
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x {:a 12}) (x :a (__add 12 15)) (display x)  "
+var x = "(define x (lambda (a b) (__add a b))) (display (x 3 4))  "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
