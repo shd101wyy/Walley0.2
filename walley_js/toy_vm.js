@@ -259,9 +259,11 @@ var __div__ = function(num1,num2){
 
 
 var _lt_two_values = function(value1,value2){
-	if (typeof(value1)!=typeof(value2))
+	if (value1.data_type!=value2.data_type)
 		return false
-    if (value1.constructor == Number && value2.constructor == Number){
+    if (value1.data_type == $NUMBER && value2.data_type == $NUMBER){
+    	value1 = value1.NUMBER
+    	value2 = value2.NUMBER
         if (value1.numer/value1.denom < value2.numer/value2.denom)
             return true
         return false
@@ -1443,7 +1445,9 @@ var Toy_VM = function(instructions, ENV){
 		}
 		// MakeList save_index
 		else if (instruction[0]===MakeList){
-			ENV[ENV.length - 1][instruction[1]] = new List()
+			var data = new DATA($LIST)
+			data.LIST = new List()
+			ENV[ENV.length - 1][instruction[1]] = data
 
 			SAVE_INDEX = instruction[1]
 		}
@@ -1451,7 +1455,7 @@ var Toy_VM = function(instructions, ENV){
 		else if (instruction[0]===ListPush){
 			var list_value = ENV[ENV.length - 1][instruction[1]]
 			var push_value = ENV[ENV.length - 1][instruction[2]]
-			list_value.push(push_value)
+			list_value.LIST.push(push_value)
 
 			ENV[ENV.length - 1].pop()    // pop pushed value
 		}
@@ -1670,25 +1674,39 @@ var Embed_Function = {
 	},
 	car:{
 		func: function(__arr__){
-			return __arr__[0].value
+			var arg = __arr__[0]
+			if(arg.data_type!==$LIST){
+				console.log("Error...function car : wrong type param")
+			}
+			return arg.LIST.value
 		},
 		param_num:1
 	},
 	cdr:{
 		func: function(__arr__){
-			return __arr__[0].next
+			var arg = __arr__[0]
+			if(arg.data_type!==$LIST){
+				console.log("Error...function cdr : wrong type param")
+			}
+			return arg.LIST.next
 		},
 		param_num:1
 	},
 	'set-car!':{
 		func: function(__arr__){
-			__arr__[0].value = __arr__[1]
+			if(__arr__[0].data_type!==$LIST){
+				console.log("Error...function set-car! : wrong type param")
+			}
+			__arr__[0].LIST.value = __arr__[1]
 		},
 		param_num:2
 	},
 	'set-cdr!':{
 		func: function(__arr__){
-			__arr__[0].next = __arr__[1]
+			if(__arr__[0].data_type!==$LIST){
+				console.log("Error...function set-cdr! : wrong type param")
+			}
+			__arr__[0].LIST.next = __arr__[1]
 		},
 		param_num:2
 	}
@@ -1728,7 +1746,7 @@ var generateOffset = function(Embed_Function){
 }
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = " (define x {:a 12 :b 13}) (x :a 15) (__display (x :a)) "
+var x = " (define x '(1 2)) (__display (car x)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
