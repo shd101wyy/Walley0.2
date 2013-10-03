@@ -29,7 +29,7 @@ var Number = function(numer, denom, type){
 var Function = function(value, param_num, is_embed_function){
 	this.value = value // save function content
 	this.param_num = param_num // save required param num
-	is_embed_function = is_embed_function
+	this.is_embed_function = is_embed_function
 }
 /*
 	List Data Type:
@@ -230,6 +230,46 @@ var __div__ = function(num1,num2){
         return new Number(rat[0], 1, INT)
     else
         return new Number(rat[0], rat[1], RATIONAL)
+}
+
+
+var _lt_two_values = function(value1,value2){
+	if (typeof(value1)!=typeof(value2))
+		return false
+    if (value1.constructor == Number && value2.constructor == Number){
+        if (value1.numer/value1.denom < value2.numer/value2.denom)
+            return true
+        return false
+    }
+	if (value1<value2)
+	    return true
+	else
+	    return false
+}
+
+
+var eq = function(arg0, arg1){
+	// "" eq [] 
+	if (arg0.constructor == List && arg1.constructor == List && arg0.value==null && arg1.value==null)
+		return true
+	var type0 = typeof(arg0)
+	var type1 = typeof(arg1)
+	if (type0!=type1)
+		return new List()
+    if (type0=='string'){
+        if (arg0==arg1)
+            return true
+        return false
+    }
+	else if (arg0.constructor == Number && arg1.constructor == Number){
+        if (arg0.numer/arg0.denom == arg1.numer/arg1.denom)
+            return true
+        return false
+    }
+	else if (arg0 == arg1)
+        return true
+    else
+		return false
 }
 
 
@@ -632,10 +672,10 @@ var opcode = function(num){
 		return "ListPush"
 	else if (num==4)
 		return "MakeFunction"
-	else if (num==5)
-		return "AddParam"
-	else if (num==6)
-		return "EndParam"
+	//else if (num==5)
+	//	return "AddParam"
+	//else if (num==6)
+	//	return "EndParam"
 	else if (num==7)
 		return "EndFunction"
 	else if (num==8)
@@ -654,26 +694,26 @@ var opcode = function(num){
 		return "DictionarySet"
 	else if (num==15)
 		return "MakeNumber"
-	else if (num==16)
-		return "__ADD__"
-	else if (num==17)
-		return "__SUB__"
-	else if (num==18)
-		return "__MULT__"
-	else if (num==19)
-		return "__DIV__"
+	//else if (num==16)
+	//	return "__ADD__"
+	//else if (num==17)
+	//	return "__SUB__"
+	//else if (num==18)
+	//	return "__MULT__"
+	//else if (num==19)
+	//	return "__DIV__"
 	else if (num==20)
 		return "IF"
-	else if (num==21)
-		return "LT"
-	else if (num==22)
-		return "EQ"
-	else if (num==23)
-		return "EQVALUE"
+	//else if (num==21)
+	//	return "LT"
+	//else if (num==22)
+	//	return "EQ"
+	//else if (num==23)
+	//	return "EQVALUE"
 	else if (num==24)
 		return "JMP"
-	else if (num==25)
-		return "Display"
+	//else if (num==25)
+	//	return "Display"
 	else if (num==26)
 		return "SetGlobal"
 	else if (num==27)
@@ -1070,6 +1110,7 @@ var Toy_Compiler = function(tree,
             	output[if_start_index].push(value2_end_index - value2_start_index + 2)
             	return
             }
+            /*
             else if (tree[0]=='LT'){
             	var count_copy = offset[0]
             	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
@@ -1098,7 +1139,7 @@ var Toy_Compiler = function(tree,
             	var value = Toy_Compiler(tree[1],module_name,output, offset, symbol_table)
             	output.push([Display, value])
             	return
-            }
+            }*/
 
             // (lambda (a b) (+ a b) (- a b) )
             /*
@@ -1428,20 +1469,8 @@ var Toy_VM = function(instructions, ENV){
 		else if (instruction[0]===JMP){
 			i = i + instruction[1] - 1
 		}
+		/*
 		else if (instruction[0]===LT){
-			var _lt_two_values = function(value1,value2){
-				if (typeof(value1)!=typeof(value2))
-					return false
-			    if (value1.constructor == Number && value2.constructor == Number){
-			        if (value1.numer/value1.denom < value2.numer/value2.denom)
-			            return true
-			        return false
-			    }
-				if (value1<value2)
-				    return true
-				else
-				    return false
-			}
 
 			var save_index = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
@@ -1456,29 +1485,6 @@ var Toy_VM = function(instructions, ENV){
 		}
 
 		else if (instruction[0]===EQ){
-			var eq = function(arg0, arg1){
-				// "" eq [] 
-				if (arg0.constructor == List && arg1.constructor == List && arg0.value==null && arg1.value==null)
-					return true
-				var type0 = typeof(arg0)
-				var type1 = typeof(arg1)
-				if (type0!=type1)
-					return new List()
-			    if (type0=='string'){
-			        if (arg0==arg1)
-			            return true
-			        return false
-			    }
-				else if (arg0.constructor == Number && arg1.constructor == Number){
-			        if (arg0.numer/arg0.denom == arg1.numer/arg1.denom)
-			            return true
-			        return false
-			    }
-				else if (arg0 == arg1)
-			        return true
-			    else
-					return false
-			}
 			var save_index = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
 			var value2 = ENV[ENV.length - 1][instruction[3]]
@@ -1496,7 +1502,7 @@ var Toy_VM = function(instructions, ENV){
 			var value_index = instruction[1]
 			console.log(ENV[ENV.length - 1][value_index])
 			console.log("Finish ================")
-		}
+		}*/
 		/*
 			Remove __ADD__ __SUB__ __MULT__ __DIV__ opcode.
 			And  use embed function instead
@@ -1646,7 +1652,7 @@ var Toy_VM = function(instructions, ENV){
 var Embed_Function = {
 	/*
 		add function
-		used to add two number
+		used to add two numbers
 	*/
 	__add : {func:
 				function(__arr__){
@@ -1654,35 +1660,105 @@ var Embed_Function = {
 				},
 			 param_num:2
 			},
+	/*
+		sub function
+		used to substract two numbers
+	*/
 	__sub: {func:
 				function(__arr__){
 					return __sub__(__arr__[0], __arr__[1])
 				},
 			 param_num:2
 			},
+	/*
+		mul function
+		used to mul two numbers
+			*/
 	__mul: {func:
 				function(__arr__){
 					return __mul__(__arr__[0], __arr__[1])
 				},
 			 param_num:2
 			},
+	/* 
+		div function
+		used to divide two numbers
+		*/
 	__div: {func:
 				function(__arr__){
 					return __div__(__arr__[0], __arr__[1])
 				},
 			 param_num:2
-			}
+			},
+	/*
+		__lt function:
+		compare <
+		*/
+	__lt: {
+		func: function(__arr__){
+			if (_lt_two_values(__arr__[0], __arr__[1]))
+				return "true"
+			return new List()
+		},
+		param_num:2
+	},
+	__eq: {
+		func: function(__arr__){
+			if (eq(__arr__[0], __arr__[1]))
+				return "true"
+			return new List()
+		},
+		param_num:2
+	},
+	__display:{
+		func: function(__arr__){
+			console.log("Display Function ======")
+			console.log(__arr__[0])
+			console.log("Finish ================")
+		},
+		param_num:1
+	}
 }
 
+/*
+	Generate symbol table according to embed function
+	*/
+var generateSymbolTable = function(Embed_Function){
+	var symbol_table = [[]]
+	for(var i in Embed_Function){
+		symbol_table[0].push(i) // copy key to symbol table
+								// [["__add", "__sub", ...]]
+	}
+	return symbol_table
+}
+
+/*
+	Copy embed function to ENV
+	*/
+var generateEnv = function(Embed_Function){
+	var ENV = [[]]
+	for(var i in Embed_Function){
+		var func = Embed_Function[i]
+		var new_function = new Function(func["func"], func["param_num"], 1) 
+		ENV[ENV.length-1].push(new_function)
+	}
+	return ENV
+}
+
+var generateOffset = function(Embed_Function){
+	var offset = [0]
+	offset[0] = Object.keys(Embed_Function).length
+	return offset
+}
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x (lambda (a b) (__add a b))) (display (x 3 4))  "
+var x = "(__display (__eq 3 3))  "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
 var output = []
-var offset = [0]; offset[0] = Object.keys(Embed_Function).length
-var symbol_table = [["__add","__minus","__mul","__div"]]
+var offset = generateOffset(Embed_Function)
+var symbol_table = generateSymbolTable(Embed_Function)
 var last = Toy_JS_iter(z, "", output,offset, symbol_table)
 
 console.log(output)
@@ -1690,19 +1766,9 @@ printInstructions(output)
 console.log("\n\n======\n\n")
 
 
-var addEmbedFunctionToEnv = function(Embed_Function, ENV){
-	for(var i in Embed_Function){
-		var func = Embed_Function[i]
-		var new_function = new Function(func["func"], func["param_num"], 1) 
-		ENV[ENV.length-1].push(new_function)
-	}
-}
-
-
 
 if(1){
-	var ENV = [[]]
-	addEmbedFunctionToEnv(Embed_Function, ENV)
+	var ENV = generateEnv(Embed_Function)
 	var env = Toy_VM(output, ENV)
 	console.log(env)
 }
