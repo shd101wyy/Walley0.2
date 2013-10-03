@@ -172,7 +172,14 @@ var make_rat_string = function(rat){
 }
 
 // add function
-var __add__ = function(num1,num2){    
+var __add__ = function(num1,num2){   
+	if (num1.data_type!=$NUMBER || num2.data_type!=$NUMBER){
+		console.log("Error...invalid data type")
+		return
+	} 
+	num1 = num1.NUMBER
+	num2 = num2.NUMBER
+
     if (num2.constructor != Number){
         if (typeof(num2)!='string')
             num2 = num2.value
@@ -198,6 +205,12 @@ var __add__ = function(num1,num2){
 
 //==== substruction ===
 var __sub__ = function(num1,num2){    
+	if (num1.data_type!=$NUMBER || num2.data_type!=$NUMBER){
+		console.log("Error...invalid data type")
+		return
+	} 
+	num1 = num1.NUMBER
+	num2 = num2.NUMBER
     if (num1.type == FLOAT || num2.type == FLOAT)
         return new Number(num1.numer/num1.denom - num2.numer/num2.denom, 1, FLOAT)
     // [numer, denom]
@@ -210,6 +223,12 @@ var __sub__ = function(num1,num2){
 
 //==== Multplication ===
 var __mul__ = function(num1,num2){    
+	if (num1.data_type!=$NUMBER || num2.data_type!=$NUMBER){
+		console.log("Error...invalid data type")
+		return
+	} 
+	num1 = num1.NUMBER
+	num2 = num2.NUMBER
     if (num1.type == FLOAT || num2.type == FLOAT)
         return new Number( (num1.numer/num1.denom) * (num2.numer/num2.denom), 1, FLOAT)
     // [numer, denom]
@@ -222,6 +241,12 @@ var __mul__ = function(num1,num2){
 
 //==== Division ====
 var __div__ = function(num1,num2){    
+	if (num1.data_type!=$NUMBER || num2.data_type!=$NUMBER){
+		console.log("Error...invalid data type")
+		return
+	} 
+	num1 = num1.NUMBER
+	num2 = num2.NUMBER
     if (num1.type == FLOAT || num2.type == FLOAT)
         return new Number((num1.numer/num1.denom) / (num2.numer/num2.denom), 1, FLOAT)
     // [numer, denom]
@@ -680,6 +705,12 @@ var $NUMBER = 5
 
 var DATA = function(data_type){
 	this.data_type = data_type
+	this.FUNCTION = null
+	this.ATOM = null
+	this.LIST = null
+	this.ARRAY = null
+	this.DICTIONARY = null
+	this.NUMBER = null
 }
 
 var opcode = function(num){
@@ -1075,43 +1106,7 @@ var Toy_Compiler = function(tree,
                 setCount() // set offset number
                 return
             }
-            /*
-            // #ADD# dest value1 value2
-            // save value1+value2 - > dest
-            else if (tree[0]=="__ADD__"){
-            	var temp_name = tempName(offset)
-            	// offset[0] = offset[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	output.push([__ADD__, temp_name, value1, value2])
-            	return temp_name
-            }
-            else if (tree[0]=="__SUB__"){
-            	var temp_name = tempName(offset)
-            	// offset[0] = offset[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	output.push([__SUB__, temp_name, value1, value2])
-            	return temp_name
-            }
-
-            else if (tree[0]=="__MULT__"){
-            	var temp_name = tempName(offset)
-            	// offset[0] = offset[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	output.push([__MULT__, temp_name, value1, value2])
-            	return temp_name
-            }
-
-            else if (tree[0]=="__DIV__"){
-            	var temp_name = tempName(offset)
-            	// offset[0] = offset[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	output.push([__DIV__, temp_name, value1, value2])
-            	return temp_name
-            }*/
+            
             // IF judge jmp
             // if pass judge run next
             // else jmp
@@ -1131,44 +1126,13 @@ var Toy_Compiler = function(tree,
             	output[if_start_index].push(value2_end_index - value2_start_index + 2)
             	return
             }
-            /*
-            else if (tree[0]=='LT'){
-            	var count_copy = offset[0]
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-
-            	offset[0] = count_copy
-            	var temp_name = tempName( offset )
-            	output.push([LT, temp_name, value1, value2])
-            	return temp_name
-            }
-            else if (tree[0]=='EQ'){
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	var temp_name = tempName(offset)
-            	output.push([EQ, temp_name, value1, value2])
-            	return temp_name
-            }
-            else if (tree[0]=='EQVALUE'){
-            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
-            	var temp_name = tempName(offset)
-            	output.push([EQ, temp_name, value1, value2])
-            	return temp_name
-            }
-            else if (tree[0]=='display'){
-            	var value = Toy_Compiler(tree[1],module_name,output, offset, symbol_table)
-            	output.push([Display, value])
-            	return
-            }*/
 
             // (lambda (a b) (+ a b) (- a b) )
             /*
-				MakeFunction( temp_func_name )
-				AddParam(param_num)
+				MakeFunction func_name param_num
 				...
 				procedure...
-				EndFunction()
+				EndFunction
 				
 				return temp_func_name
             */
@@ -1395,7 +1359,10 @@ var Toy_VM = function(instructions, ENV){
 			var numer = instruction[2]
 			var denom = instruction[3]
 			var type = instruction[4]
-			ENV[ENV.length - 1][ save_index ] = new Number(numer, denom, type)
+			var newNumber = new Number(numer, denom, type)
+			var data = new DATA($NUMBER)
+			data.NUMBER = newNumber
+			ENV[ENV.length - 1][ save_index ] = data
 
 			SAVE_INDEX = save_index
 		}
@@ -1419,21 +1386,25 @@ var Toy_VM = function(instructions, ENV){
 				i++
 			}
 			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
-			ENV[ENV.length - 1][instruction[1]] = new Function(function_content, func_param_num, 0)  // save function to that location
+			
+			var data = new DATA($FUNCTION) // create functino data type data
+			data.FUNCTION = new Function(function_content, func_param_num, 0)
+			ENV[ENV.length - 1][instruction[1]] = data  // save function to that location
 
 			SAVE_INDEX = instruction[i]
 		}
 		// MakeArray save_to_dest
 		else if (instruction[0]===MakeArray){
-			ENV[ENV.length - 1][instruction[1]] = []
-
+			var data = new DATA($ARRAY)
+			data.ARRAY = []
+			ENV[ENV.length - 1][instruction[1]] = data
 			SAVE_INDEX = instruction[i]
 		}
 		// ArrayPush save_to_dest push_value
 		else if (instruction[0]===ArrayPush){
 			var var_name_index = instruction[1]
 			var value = ENV[ENV.length - 1][instruction[2]]
-			ENV[ENV.length - 1][var_name_index].push(value)
+			ENV[ENV.length - 1][var_name_index].ARRAY.push(value)
 
 			ENV[ENV.length - 1].pop() // pop push_value
 
@@ -1441,8 +1412,10 @@ var Toy_VM = function(instructions, ENV){
 		}
 		// MakeDictionary save_to_dest
 		else if (instruction[0]===MakeDictionary){
-			ENV[ENV.length - 1][instruction[1]] = {}
+			var data = new DATA($DICTIONARY)
+			data.DICTIONARY = {}
 
+			ENV[ENV.length - 1][instruction[1]] = data
 			SAVE_INDEX = instruction[1]
 		}
 		// DictionarySet save_to_dict key value
@@ -1450,7 +1423,7 @@ var Toy_VM = function(instructions, ENV){
 			var key_value = ENV[ENV.length - 1][instruction[2]]		// get key
 			var value_value = ENV[ENV.length - 1][instruction[3]]   //  get value
 			var var_value = ENV[ENV.length - 1][instruction[1]]     // get dictionary
-			var_value[key_value] = value_value						// set value to key of dictionary
+			var_value.DICTIONARY[key_value] = value_value						// set value to key of dictionary
 
 			ENV[ENV.length - 1].pop() // pop value
 			ENV[ENV.length - 1].pop() // pop key
@@ -1490,101 +1463,20 @@ var Toy_VM = function(instructions, ENV){
 		else if (instruction[0]===JMP){
 			i = i + instruction[1] - 1
 		}
-		/*
-		else if (instruction[0]===LT){
-
-			var save_index = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-
-			if(_lt_two_values( value1, value2) ){  // true
-				ENV[ENV.length - 1][save_index] = "true" 
-			}
-			else{
-				ENV[ENV.length - 1][save_index] = new List()
-			}
-		}
-
-		else if (instruction[0]===EQ){
-			var save_index = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-			if(eq( value1, value2)){  // true
-				ENV[ENV.length - 1][save_index] = 'true'
-			}
-			else{
-				ENV[ENV.length - 1][save_index] = new List()
-			}
-		}
-
-		// Display value_index
-		else if (instruction[0]===Display){
-			console.log("Display Function ======")
-			var value_index = instruction[1]
-			console.log(ENV[ENV.length - 1][value_index])
-			console.log("Finish ================")
-		}*/
-		/*
-			Remove __ADD__ __SUB__ __MULT__ __DIV__ opcode.
-			And  use embed function instead
-
-		else if (instruction[0]===__ADD__){
-			var dest = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-			ENV[ENV.length - 1][dest] = __add__(value1, value2)
-
-			SAVE_INDEX = dest
-		}
-
-		else if (instruction[0]===__SUB__){
-			var dest = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-			ENV[ENV.length - 1][dest] = __sub__(value1, value2)
-
-			SAVE_INDEX = dest
-		}
-		else if (instruction[0]===__MULT__){
-			var dest = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-			ENV[ENV.length - 1][dest] = __mul__(value1, value2)
-
-			SAVE_INDEX = dest
-		}
-		else if (instruction[0]===__DIV__){
-			var dest = instruction[1]
-			var value1 = ENV[ENV.length - 1][instruction[2]]
-			var value2 = ENV[ENV.length - 1][instruction[3]]
-			ENV[ENV.length - 1][dest] = __div__(value1, value2)
-
-			SAVE_INDEX = dest
-		}*/
-		/*
-			(fn params....)
-
-			(array index)  - > return array[index]
-			(array index value) - > array[index] = value
-
-			(dictionary key)  - > return dictionary[key]
-			(dictionary key value) - > dictionary[key] = value
-	
-			Call save_to_index func_index param_array_index
-			Call func_index param_array_index_and_after_call_save_to_that_index
-		*/
+		// Call function
 		else if (instruction[0]===Call){
 			var func_index = instruction[1]					// get func index
 			var func_value = ENV[ENV.length - 1][func_index]	// get value at that func index
-			var params_value_arr = ENV[ENV.length - 1][instruction[2]]	// get params array
+			var params_value_arr = ENV[ENV.length - 1][instruction[2]].ARRAY	// get params array
 			var save_at_index = instruction[2]                      // after calling save to that index
 			// console.log(func_value)
 
 			// Function
-			if (func_value.constructor === Function){
+			if (func_value.data_type === $FUNCTION){
 				/*
 					Embed Function
 				*/
+				func_value = func_value.FUNCTION
 				if (func_value.is_embed_function){
 					// embed function
 					var embed_func = func_value.value
@@ -1617,8 +1509,8 @@ var Toy_VM = function(instructions, ENV){
 				ENV.pop()  // done
 			}
 			// Array
-			else if( Object.prototype.toString.call( func_value ) === '[object Array]' ) { 
-				var array_value = func_value
+			else if( func_value.data_type == $ARRAY) { 
+				var array_value = func_value.ARRAY
 				// get value at index
 				if (params_value_arr.length == 1){
 					ENV[ENV.length - 1][save_at_index] = array_value[params_value_arr[0]]
@@ -1644,8 +1536,8 @@ var Toy_VM = function(instructions, ENV){
 				}
 			}
 			// Dictionary(obj)
-			else if (typeof(func_value) === 'object'){
-				var dict_value = func_value
+			else if (func_value.data_type == $DICTIONARY){
+				var dict_value = func_value.DICTIONARY
 				if(params_value_arr.length == 1){
 					ENV[ENV.length - 1][save_at_index] = dict_value[params_value_arr[0]]
 					continue
@@ -1784,7 +1676,9 @@ var generateEnv = function(Embed_Function){
 	var ENV = [[]]
 	for(var i in Embed_Function){
 		var func = Embed_Function[i]
-		var new_function = new Function(func["func"], func["param_num"], 1) 
+		var data = new DATA($FUNCTION)
+		data.FUNCTION = new Function(func["func"], func["param_num"], 1) 
+		var new_function = data
 		ENV[ENV.length-1].push(new_function)
 	}
 	return ENV
@@ -1797,7 +1691,7 @@ var generateOffset = function(Embed_Function){
 }
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x '(a b)) (__display (cdr x))  "
+var x = " (define x {:a 12}) (x :a 15) (__display (x :a)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
