@@ -26,9 +26,10 @@ var Number = function(numer, denom, type){
 
 		value is an Array of Instructions
 */
-var Function = function(value, param_num){
+var Function = function(value, param_num, is_embed_function){
 	this.value = value // save function content
 	this.param_num = param_num // save required param num
+	is_embed_function = is_embed_function
 }
 /*
 	List Data Type:
@@ -1013,6 +1014,7 @@ var Toy_Compiler = function(tree,
                 setCount() // set offset number
                 return
             }
+            /*
             // #ADD# dest value1 value2
             // save value1+value2 - > dest
             else if (tree[0]=="__ADD__"){
@@ -1048,7 +1050,7 @@ var Toy_Compiler = function(tree,
             	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([__DIV__, temp_name, value1, value2])
             	return temp_name
-            }
+            }*/
             // IF judge jmp
             // if pass judge run next
             // else jmp
@@ -1355,7 +1357,7 @@ var Toy_VM = function(instructions, ENV){
 				i++
 			}
 			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
-			ENV[ENV.length - 1][instruction[1]] = new Function(function_content, func_param_num)  // save function to that location
+			ENV[ENV.length - 1][instruction[1]] = new Function(function_content, func_param_num, 0)  // save function to that location
 
 			SAVE_INDEX = instruction[i]
 		}
@@ -1495,6 +1497,10 @@ var Toy_VM = function(instructions, ENV){
 			console.log(ENV[ENV.length - 1][value_index])
 			console.log("Finish ================")
 		}
+		/*
+			Remove __ADD__ __SUB__ __MULT__ __DIV__ opcode.
+			And  use embed function instead
+
 		else if (instruction[0]===__ADD__){
 			var dest = instruction[1]
 			var value1 = ENV[ENV.length - 1][instruction[2]]
@@ -1527,7 +1533,7 @@ var Toy_VM = function(instructions, ENV){
 			ENV[ENV.length - 1][dest] = __div__(value1, value2)
 
 			SAVE_INDEX = dest
-		}
+		}*/
 		/*
 			(fn params....)
 
@@ -1552,7 +1558,7 @@ var Toy_VM = function(instructions, ENV){
 				/*
 					Embed Function
 				*/
-				if (typeof(func_value.value) == "function"){
+				if (func_value.is_embed_function){
 					// embed function
 					var embed_func = func_value.value
 					ENV.push([]) // create local
@@ -1687,7 +1693,7 @@ console.log("\n\n======\n\n")
 var addEmbedFunctionToEnv = function(Embed_Function, ENV){
 	for(var i in Embed_Function){
 		var func = Embed_Function[i]
-		var new_function = new Function(func["func"], func["param_num"])
+		var new_function = new Function(func["func"], func["param_num"], 1) 
 		ENV[ENV.length-1].push(new_function)
 	}
 }
