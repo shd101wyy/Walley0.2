@@ -472,9 +472,9 @@ var Set = function(var_name, var_value){
 }
 var MakeString = function(x){return "\""+x+"\""}
 
-var tempName = function(count){ // make temp name
-	return count[0]
-	// return "temp_"+count[0]+"___"
+var tempName = function(offset){ // make temp name
+	return offset[0]
+	// return "temp_"+offset[0]+"___"
 }
 // get value of var where var is string
 var getValue = function(str_var){
@@ -638,21 +638,21 @@ var opcode = function(num){
 var Toy_Compiler = function(tree, 
 	module_name, 
 	output, 
-	count,   // offset
+	offset,   // offset
 	symbol_table      // symbol table for global and local , it is a array  []
 	){
 
 	var LENGTH = symbol_table.length
 	var setCount = function(){
-		count[0] = symbol_table[symbol_table.length - 1].length
+		offset[0] = symbol_table[symbol_table.length - 1].length
 	}
 
 	var getVar = function(var_name){
 		for(var i = symbol_table.length - 1; i>=0; i--){
 			for(var j = 0; j < symbol_table[i].length; j++){  
 				if (var_name === symbol_table[i][j]){  // find var
-					var temp_name = tempName(count)
-					count[0] = count[0] + 1
+					var temp_name = tempName(offset)
+					offset[0] = offset[0] + 1
 					var flag = GetGlobal
 					if(i === 0){ // get global
 						flag = GetGlobal
@@ -679,15 +679,15 @@ var Toy_Compiler = function(tree,
 	var quoteFormatArray = function(arr, output){
 		console.log("ARR===========")
 		console.log(arr)
-		var curr_count = count[0]
-		var temp_name = count[0]
-		count[0] = count[0] + 1
+		var curr_count = offset[0]
+		var temp_name = offset[0]
+		offset[0] = offset[0] + 1
 		output.push([MakeArray, temp_name])
 		for(var i = 0; i < arr.length; i++){
 			// atom
 			if(typeof(arr[i])==='string'){
-				output.push([SetConst, count[0], arr[i]])
-				output.push([ArrayPush, temp_name, count[0]])
+				output.push([SetConst, offset[0], arr[i]])
+				output.push([ArrayPush, temp_name, offset[0]])
 			}
 			// Number
 			else if (arr[i][0]===0){
@@ -698,8 +698,8 @@ var Toy_Compiler = function(tree,
 		        else if (num[3]=='rational')
 		        	type = RATIONAL
 
-		        output.push([MakeNumber, count[0], num[1], num[2], type])
-		        output.push([ArrayPush, temp_name, count[0]])                                
+		        output.push([MakeNumber, offset[0], num[1], num[2], type])
+		        output.push([ArrayPush, temp_name, offset[0]])                                
 			}
 			// array
 			else if (arr[i][0]===1){
@@ -713,22 +713,22 @@ var Toy_Compiler = function(tree,
 				output.push([ArrayPush, temp_name, quoteFormatList(arr[i], output)])
 			}
 		}	
-		count[0] = curr_count
+		offset[0] = curr_count
 		return temp_name
 	}
 	var quoteFormatDictionary = function(dict, output){		
-		var curr_count = count[0]
-		var temp_name = count[0]
-		count[0] = count[0] + 1
+		var curr_count = offset[0]
+		var temp_name = offset[0]
+		offset[0] = offset[0] + 1
 		output.push([MakeDictionary, temp_name])
 		for(var i = 0; i < dict.length; i++){
 			var key = dict[i]
 			var value = dict[i+1]
 			// atom
 			if(typeof(value)==='string'){
-				output.push([SetConst, count[0], key])
-				output.push([SetConst, count[0]+1, value])
-				output.push([DictionarySet, temp_name, count[0], count[0]+1])
+				output.push([SetConst, offset[0], key])
+				output.push([SetConst, offset[0]+1, value])
+				output.push([DictionarySet, temp_name, offset[0], offset[0]+1])
 			}
 			// Number
 			else if (value[0]===0){
@@ -739,39 +739,39 @@ var Toy_Compiler = function(tree,
 		        else if (num[3]=='rational')
 		        	type = RATIONAL
 
-		        output.push([SetConst, count[0], key])
-		        output.push([MakeNumber, count[0]+1, num[1], num[2], type])
-		        output.push([DictionarySet, temp_name, count[0] , count[0]+1])                                
+		        output.push([SetConst, offset[0], key])
+		        output.push([MakeNumber, offset[0]+1, num[1], num[2], type])
+		        output.push([DictionarySet, temp_name, offset[0] , offset[0]+1])                                
 			}
 			// array
 			else if (value[0]===1){
-				output.push([SetConst, count[0], key])
-			    output.push([DictionarySet, temp_name, count[0], quoteFormatArray(value.slice(1), output)])
+				output.push([SetConst, offset[0], key])
+			    output.push([DictionarySet, temp_name, offset[0], quoteFormatArray(value.slice(1), output)])
 			}
 			// dictionary
 			else if (value[0]===2){
-				output.push([SetConst, count[0], key])
-			    output.push([DictionarySet, temp_name, count[0], quoteFormatDictionary(value.slice(1), output)])
+				output.push([SetConst, offset[0], key])
+			    output.push([DictionarySet, temp_name, offset[0], quoteFormatDictionary(value.slice(1), output)])
 			}
 			else { // list 
-				output.push([SetConst, count[0], key])
-				output.push([ArrayPush, temp_name, count[0], quoteFormatList(value, output)])
+				output.push([SetConst, offset[0], key])
+				output.push([ArrayPush, temp_name, offset[0], quoteFormatList(value, output)])
 			}
 		}
-		count[0] = curr_count
+		offset[0] = curr_count
 		return temp_name
 	}
 
 	var quoteFormatList = function(list, output){
-		var curr_count = count[0]
-		var temp_name = tempName(count)
-		count[0] = count[0] + 1
+		var curr_count = offset[0]
+		var temp_name = tempName(offset)
+		offset[0] = offset[0] + 1
 		output.push( [MakeList, temp_name] )
 		for(var i = 0; i < list.length; i++){
 			// atom
 			if(typeof(list[i])==='string'){
-				output.push([SetConst, count[0], list[i]])
-				output.push([ListPush, temp_name, count[0]])
+				output.push([SetConst, offset[0], list[i]])
+				output.push([ListPush, temp_name, offset[0]])
 			}
 			// Number
 			else if (list[i][0]===0){
@@ -782,8 +782,8 @@ var Toy_Compiler = function(tree,
 		        else if (num[3]=='rational')
 		        	type = RATIONAL
 
-		        output.push([MakeNumber, count[0], num[1], num[2], type])
-		        output.push([ListPush, temp_name, count[0]])                                
+		        output.push([MakeNumber, offset[0], num[1], num[2], type])
+		        output.push([ListPush, temp_name, offset[0]])                                
 			}
 			// array
 			else if (list[i][0]===1){
@@ -795,48 +795,48 @@ var Toy_Compiler = function(tree,
 			}
 			else { // list 
 				if (list[i].length === 0){
-					output.push([SetConst, count[0], null])
-					output.push([ListPush,temp_name, count[0]])
-					count[0] = count[0] - 1
+					output.push([SetConst, offset[0], null])
+					output.push([ListPush,temp_name, offset[0]])
+					offset[0] = offset[0] - 1
 					return temp_name
 				}
 				output.push([ListPush, temp_name, quoteFormatList(list[i], output)])
 			}
 		}
-		output.push([SetConst, count[0], null])
-		output.push([ListPush,temp_name, count[0]])
-		count[0] = curr_count
+		output.push([SetConst, offset[0], null])
+		output.push([ListPush,temp_name, offset[0]])
+		offset[0] = curr_count
 		return temp_name
 	}
 
 	// Create Array
-	var makeArray = function(tree, count){
-		var temp_name = tempName(count)  // make temp in current symbol_table_layer
+	var makeArray = function(tree, offset){
+		var temp_name = tempName(offset)  // make temp in current symbol_table_layer
         output.push( [MakeArray, temp_name] )
-        count[0] = count[0] + 1
+        offset[0] = offset[0] + 1
 
         for(var i = 0; i<tree.length; i++){
-            var value = Toy_Compiler(tree[i], module_name, output, count, symbol_table)
+            var value = Toy_Compiler(tree[i], module_name, output, offset, symbol_table)
             output.push([ArrayPush, temp_name, value])
-			count[0] = count[0] - 1 // update temp count
+			offset[0] = offset[0] - 1 // update temp offset
         }
         return temp_name
 	}
 	// Create Dictionary
-	var makeDictionary = function(tree, count){
-		var temp_name = tempName(count)  // make temp in current symbol_table_layer
+	var makeDictionary = function(tree, offset){
+		var temp_name = tempName(offset)  // make temp in current symbol_table_layer
 		output.push([MakeDictionary, temp_name])
-    	count[0] = count[0] + 1
+    	offset[0] = offset[0] + 1
 
     	for(var i = 0; i<tree.length; i=i+2){
         	var key = tree[i].slice(1) // get key name // remove : ahead key
-        	var key_index = tempName(count)
-        	count[0] = count[0] + 1
+        	var key_index = tempName(offset)
+        	offset[0] = offset[0] + 1
         	output.push([SetConst, key_index, key])  // set key to local index
 
-            var value = Toy_Compiler(tree[i+1], module_name, output, count, symbol_table)   
+            var value = Toy_Compiler(tree[i+1], module_name, output, offset, symbol_table)   
             output.push([DictionarySet, temp_name, key_index, value])
-            count[0] = count[0] - 1
+            offset[0] = offset[0] - 1
         }
         return temp_name
 	}
@@ -852,9 +852,9 @@ var Toy_Compiler = function(tree,
     else{
         if(typeof(tree[0])=="string"){
             if(tree[0]==="quote"){
-				// count[0] = count[0] + 1
+				// offset[0] = offset[0] + 1
             	if (typeof(tree[1]) === 'string'){
-            		var temp_name = tempName(count)
+            		var temp_name = tempName(offset)
             		output.push([SetConst, temp_name, tree[1]])  // set constant
 	                return temp_name 							 // return offset
             	}
@@ -867,8 +867,8 @@ var Toy_Compiler = function(tree,
 			        else if (num[3]=='rational')
 			        	type = RATIONAL
 
-			        output.push([MakeNumber, count[0], num[1], num[2], type])
-			        output.push([ListPush, temp_name, count[0]])     
+			        output.push([MakeNumber, offset[0], num[1], num[2], type])
+			        output.push([ListPush, temp_name, offset[0]])     
     			}
     			// array
     			else if (tree[1][0] === 1){
@@ -900,10 +900,10 @@ var Toy_Compiler = function(tree,
                 	flag = SetGlobal
 
 
-                var var_value = Toy_Compiler(tree[2],module_name, output, count, symbol_table)
+                var var_value = Toy_Compiler(tree[2],module_name, output, offset, symbol_table)
                 output.push([flag, var_name_index, var_value])
 
-                setCount() // set count number
+                setCount() // set offset number
                 return
             }
              /*
@@ -942,45 +942,45 @@ var Toy_Compiler = function(tree,
 					console.log("Error...unbound variable "+var_name)
 				}
 
-                var var_value = Toy_Compiler(tree[2],module_name, output, count, symbol_table)
+                var var_value = Toy_Compiler(tree[2],module_name, output, offset, symbol_table)
                 SET__( tree[1], var_value)
 
-                setCount() // set count number
+                setCount() // set offset number
                 return
             }
             // #ADD# dest value1 value2
             // save value1+value2 - > dest
             else if (tree[0]=="__ADD__"){
-            	var temp_name = tempName(count)
-            	// count[0] = count[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var temp_name = tempName(offset)
+            	// offset[0] = offset[0] + 1
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([__ADD__, temp_name, value1, value2])
             	return temp_name
             }
             else if (tree[0]=="__SUB__"){
-            	var temp_name = tempName(count)
-            	// count[0] = count[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var temp_name = tempName(offset)
+            	// offset[0] = offset[0] + 1
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([__SUB__, temp_name, value1, value2])
             	return temp_name
             }
 
             else if (tree[0]=="__MULT__"){
-            	var temp_name = tempName(count)
-            	// count[0] = count[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var temp_name = tempName(offset)
+            	// offset[0] = offset[0] + 1
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([__MULT__, temp_name, value1, value2])
             	return temp_name
             }
 
             else if (tree[0]=="__DIV__"){
-            	var temp_name = tempName(count)
-            	// count[0] = count[0] + 1
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var temp_name = tempName(offset)
+            	// offset[0] = offset[0] + 1
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([__DIV__, temp_name, value1, value2])
             	return temp_name
             }
@@ -989,14 +989,14 @@ var Toy_Compiler = function(tree,
             // else jmp
  
             else if (tree[0]=='if'){
-            	var judge = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
+            	var judge = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
             	var if_start_index = output.length // save below IF index
             	output.push([IF, judge]) // miss jump place
             	var value1_start_index = output.length
-            	var value1 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var value1 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
             	output.push([JMP]) // if run value1, them jmp value2
             	var value2_start_index = output.length
-            	var value2 = Toy_Compiler(tree[3],module_name,output,count, symbol_table)
+            	var value2 = Toy_Compiler(tree[3],module_name,output,offset, symbol_table)
             	var value2_end_index = output.length
 
             	output[value2_start_index-1].push(value2_end_index - value2_start_index + 1)
@@ -1004,31 +1004,31 @@ var Toy_Compiler = function(tree,
             	return
             }
             else if (tree[0]=='LT'){
-            	var count_copy = count[0]
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
+            	var count_copy = offset[0]
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
 
-            	count[0] = count_copy
-            	var temp_name = tempName( count )
+            	offset[0] = count_copy
+            	var temp_name = tempName( offset )
             	output.push([LT, temp_name, value1, value2])
             	return temp_name
             }
             else if (tree[0]=='EQ'){
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
-            	var temp_name = tempName(count)
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
+            	var temp_name = tempName(offset)
             	output.push([EQ, temp_name, value1, value2])
             	return temp_name
             }
             else if (tree[0]=='EQVALUE'){
-            	var value1 = Toy_Compiler(tree[1],module_name,output,count, symbol_table)
-            	var value2 = Toy_Compiler(tree[2],module_name,output,count, symbol_table)
-            	var temp_name = tempName(count)
+            	var value1 = Toy_Compiler(tree[1],module_name,output,offset, symbol_table)
+            	var value2 = Toy_Compiler(tree[2],module_name,output,offset, symbol_table)
+            	var temp_name = tempName(offset)
             	output.push([EQ, temp_name, value1, value2])
             	return temp_name
             }
             else if (tree[0]=='display'){
-            	var value = Toy_Compiler(tree[1],module_name,output, count, symbol_table)
+            	var value = Toy_Compiler(tree[1],module_name,output, offset, symbol_table)
             	output.push([Display, value])
             	return
             }
@@ -1053,8 +1053,8 @@ var Toy_Compiler = function(tree,
             	
             	var params = tree[1]
             	var stms = tree.slice(2)
-            	var temp_name = tempName(count)
-            	count[0] = count[0] + 1
+            	var temp_name = tempName(offset)
+            	offset[0] = offset[0] + 1
 
             	var makeFunction_array = [MakeFunction, temp_name]
             	
@@ -1070,9 +1070,9 @@ var Toy_Compiler = function(tree,
             	output.push(makeFunction_array)   // push instruction to output
 
             	// output.push([AddParam, i]) // add params 
-            	count[0] = params_num  // set count
+            	offset[0] = params_num  // set offset
 
-            	Toy_JS_iter(stms, module_name, output, count, symbol_table)
+            	Toy_JS_iter(stms, module_name, output, offset, symbol_table)
 
             	output.push([EndFunction])	// End Function
 
@@ -1088,9 +1088,9 @@ var Toy_Compiler = function(tree,
 
             	var params = tree.slice(1) // get params (add a b) => (a b)
 
-            	var current_count = count[0]    // save current count
+            	var current_count = offset[0]    // save current offset
             	
-            	var temp_name = makeArray(params, count)  // make params array
+            	var temp_name = makeArray(params, offset)  // make params array
             	output.push([Call, func_name_index, temp_name]) // Call dest func_name params_array
             	return temp_name
             }
@@ -1098,8 +1098,8 @@ var Toy_Compiler = function(tree,
         else if(typeof(tree[0])=='number'){
             // number
             if(tree[0]==0){
-            	var temp_name = tempName(count)  // make temp in current symbol_table_layer
-            	count[0] = count[0] + 1          // update count
+            	var temp_name = tempName(offset)  // make temp in current symbol_table_layer
+            	offset[0] = offset[0] + 1          // update offset
 
                 var type = INT // categorize number type
                 if(tree[3]=='float')
@@ -1113,11 +1113,11 @@ var Toy_Compiler = function(tree,
             }
             // array
             else if(tree[0]==1){
-            	return makeArray(tree.slice(1), count)
+            	return makeArray(tree.slice(1), offset)
             }
             // dictionary
             else if (tree[0]==2){
-            	return makeDictionary(tree.slice(1), count)
+            	return makeDictionary(tree.slice(1), offset)
             }
         }
         // function
@@ -1126,26 +1126,26 @@ var Toy_Compiler = function(tree,
         		// define function
         		var params = tree[0][1]
             	var stms = tree[0].slice(2)
-            	var temp_name = tempName(count)
+            	var temp_name = tempName(offset)
             	var CALL_func_name = temp_name
-            	// count[0] = count[0] + 1
+            	// offset[0] = offset[0] + 1
             	output.push([MakeFunction, temp_name]) // begin to make function
             	for(var i = 0; i<params.length; i++){
             		output.push([AddParam, params[i]]) // add params
             	}
             	output.push([EndParam])
-            	Toy_JS_iter(stms, module_name, output, count, symbol_table)
+            	Toy_JS_iter(stms, module_name, output, offset, symbol_table)
             	output.push([EndFunction])
 
             	// call function
             	var func_name = temp_name
             	var params = tree.slice(1)
-            	var temp_name = tempName(count)
+            	var temp_name = tempName(offset)
             	output.push([MakeArray, temp_name])
             	for(var i = 0; i < params.length; i++){
-            		// count[0] = count[0] + 1
-            		var o_ = Toy_Compiler(params[i], module_name, output, count, symbol_table)
-            		// count[0] = count[0] - 1
+            		// offset[0] = offset[0] + 1
+            		var o_ = Toy_Compiler(params[i], module_name, output, offset, symbol_table)
+            		// offset[0] = offset[0] - 1
             		output.push([ArrayPush, temp_name, MakeString(o_)]) // i have to make it string at first
             	}
             	output.push([Call, MakeString(temp_name), func_name, temp_name])
@@ -1159,10 +1159,10 @@ var Toy_Compiler = function(tree,
 
 
 
-var Toy_JS_iter = function(trees, module_name, output, count, symbol_table){
+var Toy_JS_iter = function(trees, module_name, output, offset, symbol_table){
     var i = 0
     while(i!=trees.length){
-        var str_output = Toy_Compiler(trees[i], module_name, output, count, symbol_table)
+        var str_output = Toy_Compiler(trees[i], module_name, output, offset, symbol_table)
         // if(str_output!=null)
         // 	output.push(str_output)
         i++
@@ -1276,17 +1276,17 @@ var Toy_VM = function(instructions, ENV){
 		// JMP to current line
 		else if (instruction[0]===MakeFunction){
 			// jmp to EndFunction
-			var count = 1
+			var offset = 1
 			var function_content = [] // save function content
 									  // it is slice between MakeFunction, EndFunction, and not including ENdFunction
 			var func_param_num = instructions[i][2] // get param number
 			i = i + 1
-			while(count!=0){
+			while(offset!=0){
 				function_content.push(instructions[i])
 				if (instructions[i][0]==MakeFunction)
-					count++
+					offset++
 				if (instructions[i][0]==EndFunction)
-					count--
+					offset--
 				i++
 			}
 			function_content = function_content.slice(0, function_content.length - 1) // remove EndFunction identifier
@@ -1602,14 +1602,14 @@ var Embed_Function = {
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define add (lambda (a b) (__add a b))) (display (add 3 4)) "
+var x = "(define x [1 2 3]) (x 0 4) (display x) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
 var output = []
-var count = [0]; count[0] = Object.keys(Embed_Function).length
+var offset = [0]; offset[0] = Object.keys(Embed_Function).length
 var symbol_table = [["__add","__minus","__mul","__div"]]
-var last = Toy_JS_iter(z, "", output,count, symbol_table)
+var last = Toy_JS_iter(z, "", output,offset, symbol_table)
 
 console.log(output)
 printInstructions(output)
