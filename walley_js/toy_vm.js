@@ -897,12 +897,9 @@ var Toy_Compiler = function(tree,
 
     	for(var i = 0; i<tree.length; i=i+2){
         	var key = Toy_Compiler(tree[i], module_name, output, offset, symbol_table) // calculate to get key
-        	var key_index = tempName(offset)
-        	offset[0] = offset[0] + 1
-        	output.push([SetConst, key_index, key])  // set key to local index
+            var value = Toy_Compiler(tree[i+1], module_name, output, offset, symbol_table)    // calculate value
 
-            var value = Toy_Compiler(tree[i+1], module_name, output, offset, symbol_table)   
-            output.push([DictionarySet, temp_name, key_index, value])
+            output.push([DictionarySet, temp_name, key, value])
             offset[0] = offset[0] - 1
         }
         return temp_name
@@ -923,6 +920,7 @@ var Toy_Compiler = function(tree,
             	if (typeof(tree[1]) === 'string'){
             		var temp_name = tempName(offset)
             		output.push([SetConst, temp_name, tree[1]])  // set constant
+            		offset[0] = offset[0] + 1 // update offset
 	                return temp_name 							 // return offset
             	}
             	// number 
@@ -1610,11 +1608,12 @@ var Toy_VM = function(instructions, ENV){
 				var dict_value = func_value
 				if(params_value_arr.length == 1){
 					ENV[ENV.length - 1][save_at_index] = dict_value[params_value_arr[0]]
+					continue
 				}
 				else if (params_value_arr.length == 2){
 					var key = params_value_arr[0]					
 					dict_value[key] = params_value_arr[1]
-					ENV[ENV.length - 1][key] = dict_value
+					ENV[ENV.length - 1][save_at_index] = dict_value
 					continue
 				}
 				else{
@@ -1664,7 +1663,7 @@ var Embed_Function = {
 
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = "(define x {:a 12})  "
+var x = "(define x {:a 12}) (x :a (__add 12 15)) (display x)  "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
