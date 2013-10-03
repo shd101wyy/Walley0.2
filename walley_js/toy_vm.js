@@ -257,7 +257,9 @@ var __div__ = function(num1,num2){
         return new Number(rat[0], rat[1], RATIONAL)
 }
 
-
+/*
+	this function can only be used to compare number
+*/
 var _lt_two_values = function(value1,value2){
 	if (value1.data_type!=value2.data_type)
 		return false
@@ -268,6 +270,8 @@ var _lt_two_values = function(value1,value2){
             return true
         return false
     }
+    return false
+
 	if (value1<value2)
 	    return true
 	else
@@ -277,18 +281,20 @@ var _lt_two_values = function(value1,value2){
 
 var eq = function(arg0, arg1){
 	// "" eq [] 
-	if (arg0.constructor == List && arg1.constructor == List && arg0.value==null && arg1.value==null)
+	if (arg0.data_type == $LIST && arg1.data_type == $LIST && arg0.LIST.value==null && arg1.LIST.value==null)
 		return true
-	var type0 = typeof(arg0)
-	var type1 = typeof(arg1)
+	var type0 = arg0.data_type
+	var type1 = arg1.data_type
 	if (type0!=type1)
-		return new List()
-    if (type0=='string'){
+		return false
+    if (type0==$ATOM){
         if (arg0==arg1)
             return true
         return false
     }
-	else if (arg0.constructor == Number && arg1.constructor == Number){
+	else if (type0 == $NUMBER && type1 == $NUMBER){
+		arg0 = arg0.NUMBER
+		arg1 = arg1.NUMBER
         if (arg0.numer/arg0.denom == arg1.numer/arg1.denom)
             return true
         return false
@@ -715,6 +721,24 @@ var DATA = function(data_type){
 	this.NUMBER = null
 }
 
+/*
+	Make atom object
+*/
+var makeAtom = function(input_data){
+	var data = new DATA($ATOM)
+	data.ATOM = input_data
+	return data
+}
+
+/*
+	Make Empty List data
+*/
+var makeEmptyList = function(){
+	var data = new DATA($LIST)
+	data.LIST = new List()
+	return data
+}
+
 var opcode = function(num){
 	if(num===0)
 		return "Define"
@@ -965,8 +989,8 @@ var Toy_Compiler = function(tree,
 				output.push([ListPush, temp_name, quoteFormatList(list[i], output)])
 			}
 		}
-		output.push([SetConst, offset[0], null])
-		output.push([ListPush,temp_name, offset[0]])
+		// output.push([SetConst, offset[0], null])
+		// output.push([ListPush,temp_name, offset[0]])
 		offset[0] = curr_count
 		return temp_name
 	}
@@ -1464,7 +1488,7 @@ var Toy_VM = function(instructions, ENV){
 			var jmp_steps = instruction[2]
 
 			// it is list and false
-			if (judge_value.constructor === List && judge_value.value===null){
+			if (judge_value.data_type === $LIST && judge_value.LIST.value===null){
 				i = i + jmp_steps - 1
 				continue
 			}	
@@ -1651,16 +1675,16 @@ var Embed_Function = {
 	__lt: {
 		func: function(__arr__){
 			if (_lt_two_values(__arr__[0], __arr__[1]))
-				return "true"
-			return new List()
+				return makeAtom('true')
+			return makeEmptyList()
 		},
 		param_num:2
 	},
 	__eq: {
 		func: function(__arr__){
 			if (eq(__arr__[0], __arr__[1]))
-				return "true"
-			return new List()
+				return makeAtom('true')
+			return makeEmptyList()
 		},
 		param_num:2
 	},
@@ -1709,7 +1733,7 @@ var Embed_Function = {
 			__arr__[0].LIST.next = __arr__[1]
 		},
 		param_num:2
-	}
+	},
 }
 
 /*
@@ -1746,7 +1770,7 @@ var generateOffset = function(Embed_Function){
 }
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = " (define x '(1 2)) (__display (car x)) "
+var x = " (if 'abc (__display 2) (__display 3)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
