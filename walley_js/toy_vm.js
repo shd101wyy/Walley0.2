@@ -1779,9 +1779,11 @@ var generateOffset = function(Embed_Function){
 	offset[0] = Object.keys(Embed_Function).length
 	return offset
 }
+
+/*
 // var x = "(define x [2 a b]) (define b (quote (a b))) (add a (quote b c))"
 //var x = "(add a (quote (b c)))"
-var x = " (if 'abc (__display 2) (__display 3)) "
+var x = " (__display (__div 3 6)) "
 var y = Tokenize_String(x)
 var z = parseStringToArray(y)
 console.log(z)
@@ -1804,9 +1806,20 @@ if(1){
 
 
 
+*/
 
-
-
+// exports to Nodejs 
+if (typeof(module)!="undefined"){
+    module.exports.Tokenize_String = Tokenize_String
+    module.exports.parseStringToArray = parseStringToArray
+    module.exports.printInstructions = printInstructions
+    module.exports.generateOffset = generateOffset
+    module.exports.generateSymbolTable = generateSymbolTable
+    module.exports.Embed_Function = Embed_Function
+    module.exports.generateEnv = generateEnv
+    module.exports.Toy_Compiler = Toy_Compiler
+    module.exports.Toy_VM = Toy_VM
+    }
 
 
 

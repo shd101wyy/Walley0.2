@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var fs=require("fs")
 var toy=require("./toy.js")
+var toy_vm = require("./toy_vm.js")
 var vm=require("vm")
 var util=require("util")
 var readline = require('readline')
@@ -77,6 +78,43 @@ else if (argv.length==3 && argv[2]==='test'){
 
 		var end = new Date().getTime()
 		console.log("Time collapse: "+(end-start) + " ms")
+
+		rl.setPrompt('toy> ')
+		rl.prompt()
+	})
+
+	rl.on('close', function() {
+	  console.log('Quit walley')
+	  process.exit(0)
+	});
+}
+else if (argv.length == 3 && argv[2] === 'vm'){
+	
+	var rl = readline.createInterface({
+	  input: process.stdin,
+	  output: process.stdout
+	})
+
+	rl.setPrompt('toy> ')
+	rl.prompt()
+
+	var Embed_Function = toy_vm.Embed_Function
+	var offset = toy_vm.generateOffset(Embed_Function)
+	var symbol_table = toy_vm.generateSymbolTable(Embed_Function)
+	var ENV = toy_vm.generateEnv(Embed_Function)
+
+	rl.on('line', function(line) {
+		var token_list = toy_vm.Tokenize_String(line)
+		var parsedObj = toy_vm.parseStringToArray(token_list)
+		
+		// console.log(parsedObj)
+
+		var Instructions = []
+		toy_vm.Toy_Compiler(parsedObj[0], "", Instructions, offset, symbol_table)
+
+		toy_vm.printInstructions(Instructions)
+
+		toy_vm.Toy_VM(Instructions, ENV)
 
 		rl.setPrompt('toy> ')
 		rl.prompt()
