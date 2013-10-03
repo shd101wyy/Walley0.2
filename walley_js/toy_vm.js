@@ -1750,6 +1750,18 @@ var Embed_Function = {
 			return __arr__[0].next
 		},
 		param_num:1
+	},
+	'set-car!':{
+		func: function(__arr__){
+			__arr__[0].value = __arr__[1]
+		},
+		param_num:2
+	},
+	'set-cdr!':{
+		func: function(__arr__){
+			__arr__[0].next = __arr__[1]
+		},
+		param_num:2
 	}
 }
 
