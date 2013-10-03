@@ -1551,7 +1551,7 @@ var Toy_VM = function(instructions, ENV){
 					ENV.push([]) // create local
 					var return_value = embed_func(params_value_arr)
 					ENV.pop()
-					ENV[ENV.length - 1].push(return_value) // occupy origninal parameter array position
+					ENV[ENV.length - 1][save_at_index] = (return_value) // occupy origninal parameter array position
 					continue
 				}
 
