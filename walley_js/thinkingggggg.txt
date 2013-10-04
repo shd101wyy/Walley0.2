@@ -1,5 +1,14 @@
 * Toy Language
 
+New Idea:
+
+(+ 3 4) -> function
+(x :a)  -> dictionary
+(x 0)   -> array
+
+list ahead type decides its behavior
+
+
 ** GLobal Variable and Local Variable
 :  Global Variable Default Number
    :  256

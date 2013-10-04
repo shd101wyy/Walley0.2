@@ -440,12 +440,12 @@ var parseStringToArray = function(input_array){
             return i
         }
         else if (input_array[i]=="["){
-            output.push([1])
+            output.push(['array'])
             i = formatArray(input_array, i+1, output[output.length - 1])
             return i
         }
         else if (input_array[i]=='{'){
-        	output.push([2])
+        	output.push(['dictionary'])
         	i = formatDictionary(input_array, i+1, output[output.length - 1])
         	return i
         }
@@ -491,11 +491,11 @@ var parseStringToArray = function(input_array){
                 return i
             }
             else if (input_array[i]=="["){
-                output.push([1])
+                output.push(['array'])
                 i = formatArray(input_array, i+1, output[output.length - 1])
             }
             else if (input_array[i]=='{'){
-	        	output.push([2])
+	        	output.push(['dictionary'])
 	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 	        }
 	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
@@ -515,11 +515,11 @@ var parseStringToArray = function(input_array){
                 i = formatList(input_array, i+1, output[output.length - 1])
             }
             else if (input_array[i]=="["){
-                output.push([1])
+                output.push(['array'])
                 i = formatArray(input_array, i+1, output[output.length - 1])
             }
             else if (input_array[i]=='{'){
-	        	output.push([2])
+	        	output.push(['dictionary'])
 	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 	        }
 	       	else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
@@ -545,26 +545,17 @@ var parseStringToArray = function(input_array){
     			}
     			return i
     		}
-    		/*
-    		// key
-    		if(count%2==0){
-    			var key = input_array[i]
-    			key = parseStringToArray(key)
-    			output.push(key)
-    		}*/ 
-    		// key can be anything now
-    		// value
     		else{
     			if(input_array[i]=="("){
 	                output.push([])
 	                i = formatList(input_array, i+1, output[output.length - 1])
 	            }
 	            else if (input_array[i]=="["){
-	                output.push([1])
+	                output.push(['array'])
 	                i = formatArray(input_array, i+1, output[output.length - 1])
 	            }
 	            else if (input_array[i]=='{'){
-		        	output.push([2])
+		        	output.push(['dictionary'])
 		        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 		        }
     	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
@@ -586,11 +577,11 @@ var parseStringToArray = function(input_array){
             i = formatList(input_array, i+1, output[output.length - 1])
         }
         else if (input_array[i]=="["){
-            output.push([1])
+            output.push(['array'])
             i = formatArray(input_array, i+1, output[output.length - 1])
         }
         else if (input_array[i]=='{'){
-        	output.push([2])
+        	output.push(['dictionary'])
         	i = formatDictionary(input_array, i+1, output[output.length - 1])
         }
         else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
@@ -762,14 +753,14 @@ var opcode = function(num){
 		return "MakeArray"
 	else if (num==10)
 		return "ArrayPush"
-	else if (num==11)
-		return "ArrayPop"
+	//else if (num==11)
+	//	return "ArrayPop"
 	else if (num==12)
 		return "ArraySet"
-	else if (num==13)
-		return "MakeDictionary"
-	else if (num==14)
-		return "DictionarySet"
+	//else if (num==13)
+	//	return "MakeDictionary"
+	//else if (num==14)
+	//	return "DictionarySet"
 	else if (num==15)
 		return "MakeNumber"
 	//else if (num==16)
@@ -867,7 +858,7 @@ var Toy_Compiler = function(tree,
 		}
 		console.log("Error...unbound var " + var_name)
 	}
-	
+	/*
 	var quoteFormatArray = function(arr, output){
 		console.log("ARR===========")
 		console.log(arr)
@@ -953,7 +944,7 @@ var Toy_Compiler = function(tree,
 		offset[0] = curr_count
 		return temp_name
 	}
-
+    */
 	var quoteFormatList = function(list, output){
 		var curr_count = offset[0]
 		var temp_name = tempName(offset)
@@ -977,6 +968,7 @@ var Toy_Compiler = function(tree,
 		        output.push([MakeNumber, offset[0], num[1], num[2], type])
 		        output.push([ListPush, temp_name, offset[0]])                                
 			}
+            /*
 			// array
 			else if (list[i][0]===1){
 				output.push([ListPush, temp_name, quoteFormatArray(list[i].slice(1), output)])
@@ -984,7 +976,7 @@ var Toy_Compiler = function(tree,
 			// dictionary
 			else if (list[i][0]===2){
 				output.push([ListPush, temp_name, quoteFormatDictionary(list[i].slice(1), output)])
-			}
+			}*/
 			else { // list 
 				if (list[i].length === 0){
 					output.push([SetConst, offset[0], null])
@@ -1001,6 +993,7 @@ var Toy_Compiler = function(tree,
 		return temp_name
 	}
 
+    
 	// Create Array
 	var makeArray = function(tree, offset){
 		var temp_name = tempName(offset)  // make temp in current symbol_table_layer
@@ -1014,6 +1007,7 @@ var Toy_Compiler = function(tree,
         }
         return temp_name
 	}
+    /*
 	// Create Dictionary
 	var makeDictionary = function(tree, offset){
 		var temp_name = tempName(offset)  // make temp in current symbol_table_layer
@@ -1028,7 +1022,7 @@ var Toy_Compiler = function(tree,
             offset[0] = offset[0] - 1
         }
         return temp_name
-	}
+	}*/
 
     if (module_name === "undefined")
         module_name = ""
@@ -1060,6 +1054,7 @@ var Toy_Compiler = function(tree,
 			        output.push([MakeNumber, offset[0], num[1], num[2], type])
 			        output.push([ListPush, temp_name, offset[0]])     
     			}
+                /*
     			// array
     			else if (tree[1][0] === 1){
     				return quoteFormatArray(tree[1].slice(1), output)
@@ -1067,7 +1062,7 @@ var Toy_Compiler = function(tree,
     			// dictionary
     			else if (tree[1][0] === 2){
     				return quoteFormatDictionary(tree[1].slice(1), output)
-    			}
+    			}*/
             	// list
             	else{
             		var o_ = quoteFormatList(tree[1], output)
@@ -1237,6 +1232,7 @@ var Toy_Compiler = function(tree,
                                 
                 return temp_name
             }
+            /*
             // array
             else if(tree[0]==1){
             	return makeArray(tree.slice(1), offset)
@@ -1244,7 +1240,7 @@ var Toy_Compiler = function(tree,
             // dictionary
             else if (tree[0]==2){
             	return makeDictionary(tree.slice(1), offset)
-            }
+            }*/
         }
         // function
         else {
@@ -1752,6 +1748,35 @@ var Embed_Function = {
 		},
 		param_num:2
 	},
+    /*
+        Make Array
+        [1 2 3] => (array 1 2 3)
+    */
+    'array':{
+        func: function(__arr__){
+            var data = new DATA($ARRAY)
+            data.ARRAY = __arr__
+            return data
+        },
+        param_num:-1 // -1 means param num does not limit
+    },
+    /*
+        Make Dictionary
+        {:a 12} => (dictionary :a 12)
+    */
+    'dictionary':{
+        func: function(__arr__){
+            var data = new DATA($DICTIONARY)
+            data.DICTIONARY = {}
+            for(var i = 0; i < __arr__.length; i = i + 2){
+                var key = __arr__[i]
+                var value = __arr__[i+1]
+                data.DICTIONARY[key] = value
+            }
+            return data
+        },
+        param_num:-1
+    }
 }
 
 /*

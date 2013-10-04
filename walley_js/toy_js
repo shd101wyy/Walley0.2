@@ -112,7 +112,7 @@ else if (argv.length == 3 && argv[2] === 'vm'){
 		var Instructions = []
 		toy_vm.Toy_Compiler(parsedObj[0], "", Instructions, offset, symbol_table)
 
-		toy_vm.printInstructions(Instructions)
+		// toy_vm.printInstructions(Instructions)
 
 		toy_vm.Toy_VM(Instructions, ENV)
 
