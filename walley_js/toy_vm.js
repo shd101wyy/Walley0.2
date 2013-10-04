@@ -1769,7 +1769,12 @@ var Embed_Function = {
             var data = new DATA($DICTIONARY)
             data.DICTIONARY = {}
             for(var i = 0; i < __arr__.length; i = i + 2){
-                var key = __arr__[i]
+                var key = __arr__[i]         // get key
+                if(key.data_type!==$ATOM){   // check key data type... if it is not atom, then print error
+                    console.log("Error...invalid key type")
+                    return makeAtom('undefined')  // return undefined
+                }
+                key = key.ATOM                 // get key
                 var value = __arr__[i+1]
                 data.DICTIONARY[key] = value
             }
