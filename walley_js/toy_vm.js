@@ -351,6 +351,18 @@ var Tokenize_String = function(input_str){
         if (input_str[i]==' '||input_str[i]=='\t'||input_str[i]=='\n'){
             continue
         }
+        // meet array
+        else if (input_str[i] == '['){
+        	output.push('(')
+        	output.push(1)
+        }
+        else if (input_str[i] == '{'){
+        	output.push('(')
+        	output.push(2)
+        }
+        else if (input_str[i] == '}' || input_str[i] == ']'){
+        	output.push(')')
+        }
         /*
 			special token
         */
@@ -508,6 +520,7 @@ var parseStringToArray = function(input_array){
             i++
         }
     }
+    /*
     var formatArray = function(input_array, i, output){
         while(i<input_array.length){
             if(input_array[i]=="("){
@@ -570,7 +583,7 @@ var parseStringToArray = function(input_array){
     		i++
     		count++
     	}
-    }
+    }*/
     while(i<input_array.length){
         if(input_array[i]=="("){
             output.push([])
