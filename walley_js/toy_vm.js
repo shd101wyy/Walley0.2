@@ -320,26 +320,6 @@ var DictionarySet = function(dict, key, value){
 	dict[key] = value
 }
 
-var Call = function(temp_name, func, params_str){
-	// array
-	if( Object.prototype.toString.call( func ) === '[object Array]' ) {
-    	var index = eval(params_str[0])
-    	return func[index]
-	}
-	// dictionary
-	if(typeof(func)==='object'){
-		var key = params_str[0]
-		if(key[0]!=':')
-			key = eval(key)
-		key = key.slice(1)
-		eval(temp_name+" = "+JSON.stringify(func[key]))
-	}
-	// func
-	else{
-
-	}
-}
-
 
 // tokenize input string
 var Tokenize_String = function(input_str){
@@ -369,8 +349,8 @@ var Tokenize_String = function(input_str){
         else if (input_str[i]=='('||input_str[i]==')'||
             input_str[i]=='['||input_str[i]==']'||
             input_str[i]=='{'||input_str[i]=='}'||
-            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','||
-            input_str[i]==':'){
+            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','){//||
+            //input_str[i]==':'){
             output.push(input_str[i])
         }
         /*
@@ -434,16 +414,6 @@ var parseStringToArray = function(input_array){
    		else if (input_array[i]=="@"){
    			output.push('quasiquote')
    		}
-   		// self->
-   		else if (input_array[i]==":"){
-   			output.push('quote')
-   			var next = input_array[i+1]
-   			if (next[0]=="("||next[0]=="{"||next[0]=="["){
-   				console.log("Error...: invalid.")
-   			}
-   			output.push(input_array[i]+input_array[i+1])
-   			return i+1
-   		}
 
    		i++
 		if(input_array[i]=="("){
@@ -461,7 +431,7 @@ var parseStringToArray = function(input_array){
         	i = formatDictionary(input_array, i+1, output[output.length - 1])
         	return i
         }
-        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" ){
         	output.push([])
         	i = formatSpecial(input_array, i, output[output.length - 1])
         	return i
@@ -490,6 +460,13 @@ var parseStringToArray = function(input_array){
 	        return append_obj
 	    }
 	  
+        // self->
+        if (input_str[0]==":"){
+            var output = []
+            output.push('quote')
+            output.push(input_str)
+            return output
+        }
 	  	return input_str
 	}
 
@@ -510,7 +487,7 @@ var parseStringToArray = function(input_array){
 	        	output.push(['dictionary'])
 	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
 	        }
-	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@"){
 	        	output.push([])
 	        	i = formatSpecial(input_array, i, output[output.length - 1])
 	        }
@@ -597,7 +574,7 @@ var parseStringToArray = function(input_array){
         	output.push(['dictionary'])
         	i = formatDictionary(input_array, i+1, output[output.length - 1])
         }
-        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
+        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@"){
         	output.push([])
         	i = formatSpecial(input_array, i, output[output.length - 1])
 	    }
