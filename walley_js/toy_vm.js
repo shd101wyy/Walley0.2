@@ -75,13 +75,13 @@ var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_dig
             return "Unknown_or_Invalid"
         else if (num_of_slash==1){
         	if (num_of_e==0 && num_of_dot==0)
-            	return "Fraction"
+            	return RATIONAL
             return "Unknown_or_Invalid"
         }
         else if (num_of_slash==0 && num_of_e==0 && num_of_dot==0)
-            return "Integer"
+            return INT
         else if (num_of_dot==1 || num_of_e==1)
-            return "Float"
+            return FLOAT
         return "Unknown_or_Invalid"
     }
     else if (input_str[0]=="e")
@@ -478,13 +478,13 @@ var parseStringToArray = function(input_array){
 	    var type = stringIsNumber(input_str)
 	    if (type!=false){
 	        var append_obj
-	        if(type == "Integer"){
+	        if(type == INT){
 	            append_obj = [0, input_str, '1', 'int']
 	        }
-	        else if (type == "Float"){
+	        else if (type == FLOAT){
 	            append_obj = [0, input_str, '1' ,'float']
 	        }
-	        else if (type == "Fraction"){
+	        else if (type == FRACTION){
 	            append_obj = [0, get_numerator(input_str), get_denominator(input_str), 'rational']
 	        }
 	        return append_obj
