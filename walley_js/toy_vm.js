@@ -497,70 +497,6 @@ var parseStringToArray = function(input_array){
             i++
         }
     }
-    /*
-    var formatArray = function(input_array, i, output){
-        while(i<input_array.length){
-            if(input_array[i]=="("){
-                output.push([])
-                i = formatList(input_array, i+1, output[output.length - 1])
-            }
-            else if (input_array[i]=="["){
-                output.push(['array'])
-                i = formatArray(input_array, i+1, output[output.length - 1])
-            }
-            else if (input_array[i]=='{'){
-	        	output.push(['dictionary'])
-	        	i = formatDictionary(input_array, i+1, output[output.length - 1])
-	        }
-	       	else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
-	        	output.push([])
-	        	i = formatSpecial(input_array, i, output[output.length - 1])
-	        }
-            else if (input_array[i]=="]")
-                return i
-            else
-                output.push(formatSymbol( input_array[i] ))
-            i++
-        }
-    }
-    var formatDictionary = function(input_array, i, output){
-    	var count = 0
-    	while(i<input_array.length){
-    		// key : count%2 == 0
-    		// value : count%2 == 1
-    		if(input_array[i]=='}'){
-    			if(count%2 == 1){
-    				console.log("Error...invalid dictionary")
-    				return i
-    			}
-    			return i
-    		}
-    		else{
-    			if(input_array[i]=="("){
-	                output.push([])
-	                i = formatList(input_array, i+1, output[output.length - 1])
-	            }
-	            else if (input_array[i]=="["){
-	                output.push(['array'])
-	                i = formatArray(input_array, i+1, output[output.length - 1])
-	            }
-	            else if (input_array[i]=='{'){
-		        	output.push(['dictionary'])
-		        	i = formatDictionary(input_array, i+1, output[output.length - 1])
-		        }
-    	        else if (input_array[i]=="'" || input_array[i]=="," || input_array[i]=="@" || input_array[i]==":"){
-		        	output.push([])
-		        	i = formatSpecial(input_array, i, output[output.length - 1])
-		        }
-		        else{
-		        	output.push(formatSymbol( input_array[i] ))
-		        }
-    		}
-
-    		i++
-    		count++
-    	}
-    }*/
     while(i<input_array.length){
         if(input_array[i]=="("){
             output.push([])
@@ -663,11 +599,11 @@ var EQVALUE = 23
 var JMP = 24           // JMP steps  
 var Display = 25
 var SetGlobal = 26     // set Layer 0   
-var SetUP = 27         // set Layer (lay_num)   SetUP layer index var_name value
+var SetUP = 27         // set Layer (lay_num)   SetUP layer ahead_index_nums var_name value
 var SetLocal = 28      // set Layer set_index   
 var GetGlobal = 29	   // 						   GetGlobal index save_to_index
 var GetUP = 30		   // 						   GetUp  layer index save_to_index
-var GetLocal = 31	   //						   GetLocal index save_to_index
+var GetLocal = 31	   //						   GetLocal ahead_index_nums save_to_index
 var SetConst = 32      // set constant, like string, to current layer
 					   // SetConst save_index value
 
@@ -839,7 +775,7 @@ var Toy_Compiler = function(tree,
 					}
 					else{  // get up
 						flag = GetUP
-						output.push([flag, i, j, temp_name])
+						output.push([flag, symbol_tabl.length - 1 - i, j, temp_name])
 						return temp_name;
 						
 					}
@@ -848,93 +784,7 @@ var Toy_Compiler = function(tree,
 		}
 		console.log("Error...unbound var " + var_name)
 	}
-	/*
-	var quoteFormatArray = function(arr, output){
-		console.log("ARR===========")
-		console.log(arr)
-		var curr_count = offset[0]
-		var temp_name = offset[0]
-		offset[0] = offset[0] + 1
-		output.push([MakeArray, temp_name])
-		for(var i = 0; i < arr.length; i++){
-			// atom
-			if(typeof(arr[i])==='string'){
-				output.push([SetConst, offset[0], arr[i]])
-				output.push([ArrayPush, temp_name, offset[0]])
-			}
-			// Number
-			else if (arr[i][0]===0){
-				var num = arr[i]
-                var type = INT // categorize number type
-		        if(num[3]=='float')
-		        	type = FLOAT
-		        else if (num[3]=='rational')
-		        	type = RATIONAL
 
-		        output.push([MakeNumber, offset[0], num[1], num[2], type])
-		        output.push([ArrayPush, temp_name, offset[0]])                                
-			}
-			// array
-			else if (arr[i][0]===1){
-				output.push([ArrayPush, temp_name, quoteFormatArray(arr[i].slice(1), output)])
-			}
-			// dictionary
-			else if (arr[i][0]===2){
-				output.push([ArrayPush, temp_name, quoteFormatDictionary(arr[i].slice(1), output)])
-			}
-			else { // list 
-				output.push([ArrayPush, temp_name, quoteFormatList(arr[i], output)])
-			}
-		}	
-		offset[0] = curr_count
-		return temp_name
-	}
-	var quoteFormatDictionary = function(dict, output){		
-		var curr_count = offset[0]
-		var temp_name = offset[0]
-		offset[0] = offset[0] + 1
-		output.push([MakeDictionary, temp_name])
-		for(var i = 0; i < dict.length; i++){
-			var key = dict[i]
-			var value = dict[i+1]
-			// atom
-			if(typeof(value)==='string'){
-				output.push([SetConst, offset[0], key])
-				output.push([SetConst, offset[0]+1, value])
-				output.push([DictionarySet, temp_name, offset[0], offset[0]+1])
-			}
-			// Number
-			else if (value[0]===0){
-				var num = value
-                var type = INT // categorize number type
-		        if(num[3]=='float')
-		        	type = FLOAT
-		        else if (num[3]=='rational')
-		        	type = RATIONAL
-
-		        output.push([SetConst, offset[0], key])
-		        output.push([MakeNumber, offset[0]+1, num[1], num[2], type])
-		        output.push([DictionarySet, temp_name, offset[0] , offset[0]+1])                                
-			}
-			// array
-			else if (value[0]===1){
-				output.push([SetConst, offset[0], key])
-			    output.push([DictionarySet, temp_name, offset[0], quoteFormatArray(value.slice(1), output)])
-			}
-			// dictionary
-			else if (value[0]===2){
-				output.push([SetConst, offset[0], key])
-			    output.push([DictionarySet, temp_name, offset[0], quoteFormatDictionary(value.slice(1), output)])
-			}
-			else { // list 
-				output.push([SetConst, offset[0], key])
-				output.push([ArrayPush, temp_name, offset[0], quoteFormatList(value, output)])
-			}
-		}
-		offset[0] = curr_count
-		return temp_name
-	}
-    */
 	var quoteFormatList = function(list, output){
 		var curr_count = offset[0]
 		var temp_name = tempName(offset)
@@ -958,15 +808,7 @@ var Toy_Compiler = function(tree,
 		        output.push([MakeNumber, offset[0], num[1], num[2], type])
 		        output.push([ListPush, temp_name, offset[0]])                                
 			}
-            /*
-			// array
-			else if (list[i][0]===1){
-				output.push([ListPush, temp_name, quoteFormatArray(list[i].slice(1), output)])
-			}
-			// dictionary
-			else if (list[i][0]===2){
-				output.push([ListPush, temp_name, quoteFormatDictionary(list[i].slice(1), output)])
-			}*/
+          
 			else { // list 
 				if (list[i].length === 0){
 					output.push([SetConst, offset[0], null])
@@ -997,31 +839,12 @@ var Toy_Compiler = function(tree,
         }
         return temp_name
 	}
-    /*
-	// Create Dictionary
-	var makeDictionary = function(tree, offset){
-		var temp_name = tempName(offset)  // make temp in current symbol_table_layer
-		output.push([MakeDictionary, temp_name])
-    	offset[0] = offset[0] + 1
-
-    	for(var i = 0; i<tree.length; i=i+2){
-        	var key = Toy_Compiler(tree[i], module_name, output, offset, symbol_table) // calculate to get key
-            var value = Toy_Compiler(tree[i+1], module_name, output, offset, symbol_table)    // calculate value
-
-            output.push([DictionarySet, temp_name, key, value])
-            offset[0] = offset[0] - 1
-        }
-        return temp_name
-	}*/
 
     if (module_name === "undefined")
         module_name = ""
     if (typeof(tree) == "string"){
         return getVar(tree)
     }
-    // else if (typeof(tree) === 'number'){
-    // 	return [LENGTH-1, tree]
-    // }
     else{
         if(typeof(tree[0])=="string"){
             if(tree[0]==="quote"){
@@ -1044,15 +867,6 @@ var Toy_Compiler = function(tree,
 			        output.push([MakeNumber, offset[0], num[1], num[2], type])
 			        output.push([ListPush, temp_name, offset[0]])     
     			}
-                /*
-    			// array
-    			else if (tree[1][0] === 1){
-    				return quoteFormatArray(tree[1].slice(1), output)
-    			}
-    			// dictionary
-    			else if (tree[1][0] === 2){
-    				return quoteFormatDictionary(tree[1].slice(1), output)
-    			}*/
             	// list
             	else{
             		var o_ = quoteFormatList(tree[1], output)
@@ -1106,7 +920,7 @@ var Toy_Compiler = function(tree,
 									return
 								}
 								else {// Up
-									output.push([SetUP, i, j, var_value]) // set var at index
+									output.push([SetUP, start - i, j, var_value]) // set var at index
 									return
 								}
 							}
