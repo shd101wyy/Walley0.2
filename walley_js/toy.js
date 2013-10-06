@@ -442,8 +442,8 @@ var ENV_LIST = [{
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'atom-slice':'atom-slice','atom-ref':'atom-ref',
     'vector':'vector','vector?':'vector?','#vector':'#vector',
-    'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
-    'dictionary':'dictionary', 'dict-keys':'dict-keys', 'dict-set!':'dict-set!', 'dict-get':'dict-get', 
+    'vector-len':'vector-len','vector-slice':'vector-slice','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
+    'dictionary':'dictionary', 'dict-keys':'dict-keys', 
     'len':'len',
     '^':'^', 'sin':'sin', 'cos':'cos', 'tan':'tan', 'exp':'exp', 'log':'log', 'floor':'floor', 'ceil':'ceil', 
     'number?':'number?', 'int?':'int?', 'float?':'float?', 'rational?':'rational?',
@@ -765,11 +765,6 @@ var toy = function(tree,env,module_name){
                     return "true"
                 return []
             }
-            // (vector-ref [1,2,3] 0) -> 1
-            else if (tree[0]=="vector-ref"){
-                tree[1][0] = toy(tree[1][0], env, module_name)
-                return toy(tree[1],env,module_name)
-            }
             // (len '(a b c)) ->3
             // get length of value
             else if (tree[0]=="vector-len"){
@@ -806,24 +801,6 @@ var toy = function(tree,env,module_name){
                     return 'undefined'
                 }
                 return new Vector(value.value.slice(left.numer,right.numer))
-            }
-
-            // (set-ref! '(1 2 3) 0 12) -> (12 2 3)
-            else if (tree[0]=="vector-set!"){
-                // i can not do it now...
-                var var_value = toy(tree[1][0],env,module_name)
-                var index0 = toy(tree[1][1][0],env,module_name)
-                var set_value = toy(tree[1][1][1][0],env,module_name)
-                if (var_value.constructor != Vector){
-                    console.log("Error...function vector-set! wrong type var")
-                    return 'undefined'
-                }
-                if (index0.constructor!=Number || index0.type!=INT){
-                    console.log("Error...function vector-set! wrong index")
-                    return 'undefined'
-                }
-                var_value.value[index0.numer] = set_value
-                return var_value
             }
             else if (tree[0] == 'vector-push'){
                 var value = toy(tree[1][0],env,module_name)
@@ -870,28 +847,6 @@ var toy = function(tree,env,module_name){
                 return new Vector(output)
             }
             
-            // set dict according to key
-            // (dict-set! {:a 12} :a 15)
-            else if (tree[0] == 'dict-set!'){
-                var value = toy(tree[1][0], env, module_name)
-                if (value.constructor!=Dict){
-                    console.log("Error...dict-set! type error")
-                    return 'undefined'
-                }
-                value = value.value
-                var key = tree[1][1][0]
-                if (key[0]!=':')
-                    key = toy(key, env, module_name)
-                var new_value = toy(tree[1][1][1][0], env, module_name)
-                value[key] = new_value
-                return new Dict(value)
-            }
-            // get value from dict according to key
-            // (dict-get {:a 12} :a) -> 12
-            else if (tree[0] == 'dict-get'){
-                tree[1][0] = toy(tree[1][0],env,module_name)
-                return toy(tree[1], env, module_name)
-            }
 
             /*
                 Universal function for dict array list atom
@@ -1777,16 +1732,7 @@ var formatList = function (list){
         // atom
         if (typeof(list[0]) === 'string')
             output = output + ' ' + list[0]
-        // array
-        else if (typeof(list)=='number' && list[0] == 0){
-            output = output + ' ' + formatArrayString(list[1])
-            break
-        }
-        // dict
-        else if (typeof(list)=='number' && list[0] == 1){
-            output = output + ' ' + formatDictString(list[1])
-            break
-        }
+
         // number
         else if (list[0].constructor == Number){
             if (list[0].constructor === RATIONAL)
@@ -1806,13 +1752,6 @@ var formatList = function (list){
             // list
             if (list[0].length == 0)
                 output = output + ' ' + '()'
-            // array
-            else if (typeof(list[0][0])=='number' && list[0][0] === 0)
-                output = output + ' ' + formatArrayString(list[0][1])
-            // dict
-            else if (typeof(list[0][0])=='number' && list[0][0] === 1){
-                output = output + ' ' + formatDictString(list[0][1])
-            }
             else
                 output = output + ' ' + formatList(list[0])
         }
@@ -1839,14 +1778,8 @@ var formatDictString = function(value){
                 output = output + ' ' + v.numer + ','
         }
         // vector
-        else if (v[0]===0)
-            output = output + ' ' + formatArrayString(v[1]) + ','
-        // vector
         else if (v.constructor == Vector)
             output = output + ' ' + formatArrayString(v.value) + ','
-        // vector
-        else if (v[0]===1)
-            output = output + ' ' + formatDictString(v[1]) + ','
         // dict
         else if (v.constructor == Dict)
             output = output + ' ' + formatDictString(v.value) + ','
