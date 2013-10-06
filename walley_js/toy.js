@@ -609,10 +609,7 @@ var toy = function(tree,env,module_name){
             */
             else if (tree[0]=="lambda"){ 
                 var content = tree;
-                var closure_env = {};
-                if(env.length!=1){
-                    closure_env = env[env.length - 1]
-                }
+                var closure_env = env.slice(1);
                 return new Func(content, closure_env)
                 // return tree
             }
@@ -1243,14 +1240,22 @@ var toy = function(tree,env,module_name){
                     return pair_params(cdr(names) , cdr(params) , env , module_name, output)
                 }
             }
+            var current_env_length = env.length
+            // compute local env
+            var output = pair_params(car(cdr(content)), cdr(tree), env, module_name, {})
+            // add closure env
+            for(var i = 0; i < closure_env.length; i++){
+                env.push(closure_env[i])
+            }
             // add local env
-            var output = pair_params(car(cdr(content)), cdr(tree), env, module_name, closure_env)
             env.push(output)
             
             var stms = cons('begin', cdr(cdr(content)))
             var return_value = toy(stms, env , module_name)
             // delete 新加入的 env
-            env.pop()
+            for(var i = current_env_length-1; i < env.length; i++){
+                env.pop()
+            }
             return return_value
         }
         else{
