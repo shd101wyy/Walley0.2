@@ -518,6 +518,11 @@ var toy = function(tree,env,module_name){
             // (define var_name var_value)
             else if (tree[0]=="define"){
                 var var_name = car(cdr(tree))
+                if (typeof(var_name) != 'string'){ // (define (add a b) (+ a b))
+                    var lambda_stm = cons(cons('lambda', cons(cdr(var_name), cdr(cdr(tree))) ), [])
+                    var stm = cons('define',cons(car(var_name), lambda_stm))
+                    return toy(stm, env, module_name)
+                } 
                 if (module_name!="")
                     var_name = module_name + "." + var_name
                 var var_value = toy(car(cdr(cdr(tree))),env,module_name)
