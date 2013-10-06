@@ -446,7 +446,7 @@ var ENV_LIST = [{
     'set-car!':'set-car!','set-cdr!':'set-cdr!',
     'defmacro':'defmacro','macroexpand':'macroexpand','macro':'macro',
     'atom-slice':'atom-slice','atom-ref':'atom-ref',
-    'vector':'vector','vector?':'vector?','#vector':'#vector',
+    'vector':'vector','vector?':'vector?',
     'vector-len':'vector-len','vector-slice':'vector-slice','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
     'dictionary':'dictionary', 'dict-keys':'dict-keys', 
     'len':'len',
@@ -726,18 +726,6 @@ var toy = function(tree,env,module_name){
                 var value = toy(tree[1][0],env,module_name)
                 value[1] = toy(tree[1][1][0],env,module_name)
                 return value
-            }
-            /*
-                embed data type
-            */
-            else if (tree[0]=='#vector'){
-                var value_tree = tree[1]
-                var i = 0
-                while (i < value_tree.length){
-                    value_tree[i] = toy(value_tree[i],env,module_name)
-                    i = i + 1
-                }
-                return new Vector(tree[1])
             }
 
             // vector
@@ -1220,6 +1208,13 @@ var toy = function(tree,env,module_name){
                 return 'undefined'
             return value
         }
+        /*
+                (
+                    (lambda (a b) (+ a b))
+                    3 4
+                    )
+
+            */
         // call function
         else if (tree[0].constructor == Func){
             var content = tree[0].content
@@ -1259,58 +1254,6 @@ var toy = function(tree,env,module_name){
             return return_value
         }
         else{
-            /*
-                (
-                    (lambda (a b) (+ a b))
-                    3 4
-                    )
-
-            */
-            /*
-            if (tree[0][0]=="lambda"){
-                // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
-                var pair_params = function(names,params,env,module_name,output){
-                    if (names.length==0)
-                        return output
-                    // calculate params
-                    else if (names[0]=="."){
-                        output[names[1][0]] =  evlis(params,env,module_name)
-                        return output
-                    }
-                    // lazy and does not calculate params
-                    else if (names[0]=="&"){
-                        output[names[1][0]] = params
-                        return output
-                    }
-                    else{               
-                        // add undefined support when there are not enough inputs
-                        if (params.length == 0){
-                            output[names[0]] = 'undefined'
-                            return pair_params(cdr(names),[],env,module_name,output)
-                        }
-                        output[names[0]] = toy(params[0],env,module_name)
-                        return pair_params(cdr(names) , cdr(params) , env , module_name ,output)
-                    }
-                }
-                // add local env
-                var output = pair_params(car(cdr(car(tree))),cdr(tree),env,module_name,{})
-                env.push(output)
-                
-                var stms = cons('begin', cdr(cdr(car(tree))))
-                var return_value = toy(stms, env , module_name)
-                // delete 新加入的 env
-                env.pop()
-                return return_value
-            } */
-            /* macro
-            
-((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
-                expand
-                -> (* 3 3)
-                run
-                -> 9
-
-            */
             if (tree[0][0]=="macro"){
                 var to_run = macroexpand(tree,env,module_name)
                 return toy(to_run,env,module_name)
@@ -1657,64 +1600,6 @@ var VirtualFileSystem = {}
 VirtualFileSystem["toy"] = [ [ 'define', 'toy-author', [ 'quote', 'Yiyi-Wang' ] ], [ 'define', 'true', '1' ], [ 'define', 'false', [ 'quote', [  ] ] ], [ 'define', 'nil', [ 'quote', [  ] ] ], [ 'define', [ '#vector', 't' ], '1' ], [ 'define', [ '#vector', 'f' ], [ 'quote', [  ] ] ], [ 'define', '**', '^' ], [ 'define', 'cot', [ 'lambda', [ 'a' ], [ '/', '1', [ 'tan', 'a' ] ] ] ], [ 'define', 'sec', [ 'lambda', [ 'a' ], [ '/', '1', [ 'cos', 'a' ] ] ] ], [ 'define', 'csc', [ 'lambda', [ 'a' ], [ '/', '1', [ 'sin', 'a' ] ] ] ], [ 'define', 'list?', [ 'lambda', [ 'var' ], [ 'cond', [ [ 'atom?', 'var' ], 'false' ], [ [ 'vector?', 'var' ], 'false' ], [ '1', 'true' ] ] ] ], [ 'define', 'ref', [ 'lambda', [ 'arg', 'index' ], [ 'define', 'ref-iter', [ 'lambda', [ 'arg', 'index' ], [ 'cond', [ [ 'eq', '0', 'index' ], [ 'car', 'arg' ] ], [ [ 'null?', 'arg' ], [ 'quote', 'undefined' ] ], [ '1', [ 'ref-iter', [ 'cdr', 'arg' ], [ '-', 'index', '1' ] ] ] ] ] ], [ 'cond', [ [ 'list?', 'arg' ], [ 'ref-iter', 'arg', 'index' ] ], [ '1', [ 'quote', 'undefined' ] ] ] ] ], [ 'define', 'push*', [ 'lambda', [ 'arg', 'push_value' ], [ 'define', 'push-iter', [ 'lambda', [ 'arg', 'push_value' ], [ 'cond', [ [ 'null?', 'arg' ], [ 'cons', 'push_value', [ 'quote', [  ] ] ] ], [ '1', [ 'cons', [ 'car', 'arg' ], [ 'push-iter', [ 'cdr', 'arg' ], 'push_value' ] ] ] ] ] ], [ 'cond', [ [ 'list?', 'arg' ], [ 'push-iter', 'arg', 'push_value' ] ], [ '1', [ 'quote', 'undefined' ] ] ] ] ], [ 'define', 'push', [ 'macro', [ 'var_name', 'push_value' ], [ 'quasiquote', [ 'set!', [ 'unquote', 'var_name' ], [ 'push*', [ 'unquote', 'var_name' ], [ 'unquote', 'push_value' ] ] ] ] ] ], [ 'define', 'len', [ 'lambda', [ 'arg' ], [ 'define', 'len-iter', [ 'lambda', [ 'arg', 'count' ], [ 'cond', [ [ 'null?', 'arg' ], 'count' ], [ '1', [ 'len-iter', [ 'cdr', 'arg' ], [ '+', 'count', '1' ] ] ] ] ] ], [ 'len-iter', 'arg', '0' ] ] ], [ 'define', 'setq', [ 'macro', [ 'var_name', 'var_value' ], [ 'quasiquote', [ 'set', [ 'quote', [ 'unquote', 'var_name' ] ], [ 'unquote', 'var_value' ] ] ] ] ], [ 'define', 'test-hash', [ 'quote', [ ':a', '12', ':b', '13', ':c', [ 'lambda', [ 'x', 'y' ], [ '+', 'x', 'y' ] ] ] ] ], [ 'define', 'hash-keys', [ 'lambda', [ 'hash' ], [ 'cond', [ [ 'eq', 'hash', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ '1', [ 'cons', [ 'car', 'hash' ], [ 'hash-keys', [ 'cdr', [ 'cdr', 'hash' ] ] ] ] ] ] ] ], [ 'define', 'hash-get', [ 'lambda', [ 'x', 'key' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'quote', 'undefined' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'ref', 'x', '1' ] ], [ '1', [ 'hash-get', [ 'cdr', [ 'cdr', 'x' ] ], 'key' ] ] ] ] ], [ 'define', 'hash-set', [ 'lambda', [ 'x', 'key', 'value' ], [ 'define', 'hash-set-iter', [ 'lambda', [ 'x', 'x_copy', 'key', 'value', 'count' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], [ 'begin', [ 'push', 'x_copy', 'key' ], [ 'push', 'x_copy', 'value' ], 'x_copy' ] ], [ [ 'eq', [ 'car', 'x' ], 'key' ], [ 'set-ref!', 'x', '1', 'value' ] ], [ '1', [ 'hash-set-iter', [ 'cdr', [ 'cdr', 'x' ] ], 'x_copy', 'key', 'value', [ '+', 'count', '1' ] ] ] ] ] ], [ 'hash-set-iter', 'x', 'x', 'key', 'value', '0' ] ] ], [ 'define', 'check-in', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'eq', 'y', [ 'quote', [  ] ] ], [ 'quote', [  ] ] ], [ [ 'eq', 'x', [ 'car', 'y' ] ], '1' ], [ '1', [ 'check-in', 'x', [ 'cdr', 'y' ] ] ] ] ] ], [ 'define', 'defun', [ 'macro', [ 'func-name', '&', 'rest' ], [ 'define', 'params', [ 'car', 'rest' ] ], [ 'define', 'body', [ 'cdr', 'rest' ] ], [ 'quasiquote', [ 'define', [ 'unquote', 'func-name' ], [ 'lambda', [ 'unquote', 'params' ], [ 'unquote', 'body' ] ] ] ] ] ], [ 'define', 'if', [ 'lambda', [ '&', 'params' ], [ 'define', 'judge', [ 'eval', [ 'ref', 'params', '0' ] ] ], [ 'cond', [ 'judge', [ 'eval', [ 'ref', 'params', '1' ] ] ], [ '1', [ 'eval', [ 'ref', 'params', '2' ] ] ] ] ] ], [ 'define', 'range-1', [ 'lambda', [ 'x' ], [ 'define', 'i', '0' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'x' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-2', [ 'lambda', [ 'x', 'y' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', '1' ] ] ], 'output' ] ], [ 'define', 'range-3', [ 'lambda', [ 'x', 'y', 'interval' ], [ 'define', 'i', 'x' ], [ 'define', 'output', [ 'quote', [  ] ] ], [ 'cond', [ [ '<=', 'interval', '0' ], [ 'while', [ '>', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ], [ '1', [ 'while', [ '<', 'i', 'y' ], [ 'push', 'output', 'i' ], [ 'set!', 'i', [ '+', 'i', 'interval' ] ] ] ] ], 'output' ] ], [ 'define', 'range', [ 'lambda', [ '&', 'params' ], [ 'cond', [ [ 'eq', [ 'len', 'params' ], '1' ], [ 'apply', 'range-1', 'params' ] ], [ [ 'eq', [ 'len', 'params' ], '2' ], [ 'apply', 'range-2', 'params' ] ], [ '1', [ 'apply', 'range-3', 'params' ] ] ] ] ], [ 'define', 'null?', [ 'lambda', [ 'x' ], [ 'cond', [ [ 'eq', 'x', [ 'quote', [  ] ] ], '1' ], [ '1', [ 'quote', [  ] ] ] ] ] ], [ 'define', 'empty?', 'null?' ], [ 'define', 'append', [ 'lambda', [ 'x', 'y' ], [ 'cond', [ [ 'null?', 'x' ], 'y' ], [ '1', [ 'cons', [ 'car', 'x' ], [ 'append', [ 'cdr', 'x' ], 'y' ] ] ] ] ] ], [ 'define', 'dolist', [ 'macro', [ '&', 'params' ], [ 'define', 'var-name', [ 'car', 'params' ] ], [ 'define', 'iter-list', [ 'ref', 'params', '1' ] ], [ 'define', 'body', [ 'cdr', [ 'cdr', 'params' ] ] ], [ 'append', [ 'quasiquote', [ 'for', [ 'unquote', 'var-name' ], 'in', [ 'unquote', 'iter-list' ] ] ], 'body' ] ] ], [ 'define', 'list', [ 'lambda', [ '.', 'args' ], 'args' ] ], [ 'define', 'list-add', [ 'lambda', [ 'x', 'y' ], [ 'define', 'list-add-iter', [ 'lambda', [ 'x', 'y', 'result' ], [ 'cond', [ [ 'or', [ 'null?', 'x' ], [ 'null?', 'y' ] ], 'result' ], [ '1', [ 'list-add-iter', [ 'cdr', 'x' ], [ 'cdr', 'y' ], [ 'push', 'result', [ 'apply', '+', [ 'list', [ 'car', 'x' ], [ 'car', 'y' ] ] ] ] ] ] ] ] ], [ 'list-add-iter', 'x', 'y', [ 'quote', [  ] ] ] ] ], [ 'define', 'factorial', [ 'lambda', [ 'n' ], [ 'define', 'factorial-iter', [ 'lambda', [ 'n', 'result' ], [ 'cond', [ [ 'eq', 'n', '1' ], 'result' ], [ '1', [ 'factorial-iter', [ '-', 'n', '1' ], [ '*', 'result', 'n' ] ] ] ] ] ], [ 'factorial-iter', 'n', '1' ] ] ], [ 'display', [ 'len', [ 'quote', [ '1', '2', '3', '4' ] ] ] ], [ 'display', [ 'range', '2', '10' ] ] ]
 
 
-
-var indexOfLastBracket = function (input_str,start,check_str){
-    var count = 0
-    for(var i = start; i < input_str.length; i = i + 1){
-        if (input_str[i]=="["){
-            count+=1
-            continue
-        }
-        else if (input_str[i]=="]"){
-            count-=1
-            if (count==0){
-                return i
-            }
-            continue
-        }
-    }
-    return -1
-}
-
-// get ) index,
-// start is index of first (
-var indexOfLastParenthesis = function (input_str,start){
-    var count = 0
-    for(var i = start; i < input_str.length; i = i + 1){
-        if (input_str[i]=="("){
-            count+=1
-            continue
-        }
-        else if (input_str[i]==")"){
-            count-=1
-            if (count==0){
-                return i
-            }
-            continue
-        }
-    }
-    return -1
-}
-// get } index,
-// start is index of first {}
-var indexOfLastBigParenthesis = function (input_str,start){
-    var count = 0
-    for(var i = start; i < input_str.length; i = i + 1){
-        if (input_str[i]=="{"){
-            count+=1
-            continue
-        }
-        else if (input_str[i]=="}"){
-            count-=1
-            if (count==0){
-                return i
-            }
-            continue
-        }
-    }
-    return -1
-}
-
 var dealWith_string = function(input_str,result){
  if (input_str==""){
      console.log("Invalid String")
@@ -1879,9 +1764,15 @@ var display = function(arg){
         else 
             console.log(arg.numer)
     }
+    // Dict
     else if (arg.constructor == Dict){
         console.log(formatDictString(arg.value))
     }
+    // Func
+    else if (arg.constructor == Func){
+        display(arg.content)
+    }
+    // List
     else 
         console.log(formatList(arg))
     return 'undefined'
