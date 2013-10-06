@@ -354,11 +354,11 @@ var Tokenize_String = function(input_str){
         // meet array
         else if (input_str[i] == '['){
         	output.push('(')
-        	output.push(1)
+        	output.push('array')
         }
         else if (input_str[i] == '{'){
         	output.push('(')
-        	output.push(2)
+        	output.push('dictionary')
         }
         else if (input_str[i] == '}' || input_str[i] == ']'){
         	output.push(')')
@@ -697,19 +697,19 @@ var SetConst = 32      // set constant, like string, to current layer
 /*
 	Number Types
 */
-var INT = 0
-var FLOAT = 1
-var RATIONAL = 2
+var INT = 1
+var FLOAT = 2
+var RATIONAL = 3
 
 /*
 	Toy Language Data Type
 */
-var $FUNCTION = 0
-var $ATOM = 1
-var $LIST = 2
-var $ARRAY = 3
-var $DICTIONARY = 4
-var $NUMBER = 5
+var $FUNCTION = 1
+var $ATOM = 2
+var $LIST = 3
+var $ARRAY = 4
+var $DICTIONARY = 5
+var $NUMBER = 6
 
 /*
 	Toy Language Data

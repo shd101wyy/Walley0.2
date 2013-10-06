@@ -31,6 +31,14 @@
 
 
 */
+
+/*
+    Number Types
+*/
+var INT = 1
+var FLOAT = 2
+var RATIONAL = 3
+
 // convert array to linked list
 // [1,2,3] -> [1,[2,[3,[]]]]
 var arrayToList = function(arg){
@@ -271,13 +279,13 @@ var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_dig
             return "Unknown_or_Invalid"
         else if (num_of_slash==1){
         	if (num_of_e==0 && num_of_dot==0)
-            	return "Fraction"
+            	return RATIONAL
             return "Unknown_or_Invalid"
         }
         else if (num_of_slash==0 && num_of_e==0 && num_of_dot==0)
-            return "Integer"
+            return INT
         else if (num_of_dot==1 || num_of_e==1)
-            return "Float"
+            return FLOAT
         return "Unknown_or_Invalid"
     }
     else if (input_str[0]=="e")
@@ -293,7 +301,7 @@ var checkTypeOfNum = function(input_str,num_of_e,num_of_dot,num_of_slash,has_dig
 }
 // get type of num
 var typeOfNum = function(input_str){
-    if (input_str[0]=="-")
+    if (input_str[0]=="-" || input_str[0]=="+")
         return checkTypeOfNum(input_str.slice(1),0,0,0,false)
     return checkTypeOfNum(input_str,0,0,0,false)
 }
@@ -435,7 +443,7 @@ var ENV_LIST = [{
     'atom-slice':'atom-slice','atom-ref':'atom-ref',
     'vector':'vector','vector?':'vector?','#vector':'#vector',
     'vector-ref':'vector-ref','vector-len':'vector-len','vector-slice':'vector-slice','vector-set!':'vector-set!','vector-push':'vector-push','vector-pop':'vector-pop','vector-copy':'vector-copy',
-    '#dict':'#dict', 'dict-keys':'dict-keys', 'dict-set!':'dict-set!', 'dict-get':'dict-get', 
+    'dictionary':'dictionary', 'dict-keys':'dict-keys', 'dict-set!':'dict-set!', 'dict-get':'dict-get', 
     'len':'len',
     '^':'^', 'sin':'sin', 'cos':'cos', 'tan':'tan', 'exp':'exp', 'log':'log', 'floor':'floor', 'ceil':'ceil', 
     'number?':'number?', 'int?':'int?', 'float?':'float?', 'rational?':'rational?',
@@ -670,7 +678,7 @@ var toy = function(tree,env,module_name){
                     var left = toy(tree[1][1][0],env,module_name)
                     var right = toy(tree[1][1][1][0],env,module_name)
                     if(left.constructor == Number && right.constructor == Number &&
-                        left.type == 'int' && right.type == 'int' ){
+                        left.type == INT && right.type == INT ){
                         return value.slice(left.numer, right.numer)
                     }
                 }
@@ -681,7 +689,7 @@ var toy = function(tree,env,module_name){
                 var value = toy(tree[1][0],env,module_name)
                 if(typeof(value)=='string'){
                     var index = toy(tree[1][1][0],env,module_name)
-                    if(index.constructor == Number && index.type == 'int'){
+                    if(index.constructor == Number && index.type == INT){
                         return value[index.numer]
                     }
                 }
@@ -711,6 +719,29 @@ var toy = function(tree,env,module_name){
                     i = i + 1
                 }
                 return new Vector(tree[1])
+            }
+
+            // vector
+            if (tree[0] == 'vector'){
+                var output = []
+                var value = cdr(tree)
+                while(value.length!=0){
+                    output.push(toy(car(value), env, module_name))
+                    value = cdr(value)
+                }
+                return new Vector(output)
+            }
+            // dict
+            else if (tree[0] == 'dictionary'){
+                var output = {}
+                var value = cdr(tree)
+                while(value.length!=0){
+                    var key = toy(car(value), env, module_name)
+                    var val = toy(car(cdr(value)), env, module_name)
+                    output[key] = val
+                    value = cdr(cdr(value))
+                }
+                return new Dict(output)
             }
 
             // FOR LISP LIST OPERATION
@@ -747,7 +778,7 @@ var toy = function(tree,env,module_name){
                     console.log("Error...function vector-len wrong type var")
                     return 'undefined'
                 }
-                return new Number(value.value.length, 1, 'int')
+                return new Number(value.value.length, 1, INT)
             }
             // (slice '(a b c) 0 2) -> '(a b)
             else if (tree[0]=="vector-slice"){
@@ -758,11 +789,11 @@ var toy = function(tree,env,module_name){
                     console.log("Error...function vector-slice wrong type var")
                     return 'undefined'
                 }
-                if (left.constructor!=Number || left.type!='int'){
+                if (left.constructor!=Number || left.type!=INT){
                     console.log("Error...function vector-slice left index error")
                     return 'undefined'
                 }
-                if (right.constructor!=Number || right.type!='int'){
+                if (right.constructor!=Number || right.type!=INT){
                     console.log("Error...function vector-slice left index error")
                     return 'undefined'
                 }
@@ -787,7 +818,7 @@ var toy = function(tree,env,module_name){
                     console.log("Error...function vector-set! wrong type var")
                     return 'undefined'
                 }
-                if (index0.constructor!=Number || index0.type!="int"){
+                if (index0.constructor!=Number || index0.type!=INT){
                     console.log("Error...function vector-set! wrong index")
                     return 'undefined'
                 }
@@ -828,13 +859,6 @@ var toy = function(tree,env,module_name){
             /*
                 Dict data type
             */
-            else if (tree[0]=="#dict"){
-                var value = tree[1]
-                for(var i in value){
-                    value[i] = toy(value[i], env, module_name)
-                }
-                return new Dict(value)
-            }
             // return vector(array)
             // {:a 12 :b 13} -> [:a :b]
             else if (tree[0]=='dict-keys'){
@@ -875,11 +899,11 @@ var toy = function(tree,env,module_name){
             else if (tree[0] == 'len'){
                 var value = toy(tree[1][0],env,module_name)
                 if (typeof(value) == 'string')
-                    return new Number(value.length, 1, 'int')
+                    return new Number(value.length, 1, INT)
                 else if (value.constructor == Vector)
-                    return new Number(value.value.length, 1, 'int')
+                    return new Number(value.value.length, 1, INT)
                 else if (value.constructor == Dict)
-                    return new Number(Object.keys( value.value ).length, 1, 'int')
+                    return new Number(Object.keys( value.value ).length, 1, INT)
                 else if (value.constructor == Number){
                     console.log("Error...cannot get length of number")
                     return 'undefined'
@@ -1010,48 +1034,48 @@ var toy = function(tree,env,module_name){
                 }
                 var value1 = toy(tree[1][0],env,module_name)
                 var power = toy(tree[1][1][0],env,module_name)
-                if (value1.type == 'rational'){
+                if (value1.type == RATIONAL){
                     var numer = Math.pow(value1.numer, power.numer/power.denom)
                     var denom = Math.pow(value1.denom, power.numer/power.denom)
                     if (isInt(numer) && isInt(denom))
-                        return new Number(numer, denom, 'rational')
-                    return new Number(numer/denom, 1, 'float')
+                        return new Number(numer, denom, RATIONAL)
+                    return new Number(numer/denom, 1, FLOAT)
                 }
                 else{
                     var answer = Math.pow( value1.numer/value1.denom  , power.numer/power.denom )
                     if (isInt(answer))
-                        return new Number(answer, 1, 'int')
-                    return new Number(answer, 1, 'float')
+                        return new Number(answer, 1, INT)
+                    return new Number(answer, 1, FLOAT)
                 }
                 return str(Math.pow(eval(value1),eval(power)))
             }
             else if (tree[0]=="sin"){
                 var value = toy(tree[1][0],env,module_name)
-                return new Number(Math.sin(value.numer / value.denom), 1, 'float')
+                return new Number(Math.sin(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='cos'){
                 var value = toy(tree[1][0],env,module_name)
-                return new Number(Math.cos(value.numer / value.denom), 1, 'float')
+                return new Number(Math.cos(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='tan'){
                 var value = toy(tree[1][0],env,module_name)
-                return new Number(Math.tan(value.numer / value.denom), 1, 'float')
+                return new Number(Math.tan(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='exp'){
                 var value = toy(tree[1][0],env, module_name)
-                return new Number(Math.exp(value.numer / value.denom), 1, 'float')
+                return new Number(Math.exp(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='log'){
                 var value = toy(tree[1][0],env, module_name)
-                return new Number(Math.log(value.numer / value.denom), 1, 'float')
+                return new Number(Math.log(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='floor'){
                 var value = toy(tree[1][0],env, module_name)
-                return new Number(Math.floor(value.numer / value.denom), 1, 'float')
+                return new Number(Math.floor(value.numer / value.denom), 1, FLOAT)
             }
             else if (tree[0]=='ceil'){
                 var value = toy(tree[1][0],env, module_name)
-                return new Number(Math.ceil(value.numer / value.denom), 1, 'float')
+                return new Number(Math.ceil(value.numer / value.denom), 1, FLOAT)
             }
             // judge number type
             else if (tree[0]=='number?'){
@@ -1063,21 +1087,21 @@ var toy = function(tree,env,module_name){
             // judge int
             else if (tree[0]=='int?'){
                 var value = toy(tree[1][0],env, module_name)
-                if (value.constructor == Number && value.type == 'int')
+                if (value.constructor == Number && value.type == INT)
                     return 'true'
                 return []
             }
             // judge float
             else if (tree[0]=='float?'){
                 var value = toy(tree[1][0],env, module_name)
-                if (value.constructor == Number && value.type == 'float')
+                if (value.constructor == Number && value.type == FLOAT)
                     return 'true'
                 return []
             }
             // judge rational?
             else if (tree[0]=='rational?'){
                 var value = toy(tree[1][0],env, module_name)
-                if (value.constructor == Number && (value.type == 'rational' || value.type == 'int'))
+                if (value.constructor == Number && (value.type == RATIONAL || value.type == INT))
                     return 'true'
                 return []
             }
@@ -1099,7 +1123,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0] == 'get-numerator'){
                 var value = toy(tree[1][0], env, module_name)
                 if (value.constructor == Number)
-                    return new Number(value.numer, 1, 'int')
+                    return new Number(value.numer, 1, INT)
                 else 
                     return 'undefined'
             }
@@ -1107,7 +1131,7 @@ var toy = function(tree,env,module_name){
             else if (tree[0] == 'get-denominator'){
                 var value = toy(tree[1][0], env, module_name)
                 if (value.constructor == Number)
-                    return new Number(value.denom, 1, 'int')
+                    return new Number(value.denom, 1, INT)
                 else 
                     return 'undefined'
             }
@@ -1120,7 +1144,7 @@ var toy = function(tree,env,module_name){
                 }
                 var value = toy(tree[1][0], env, module_name)
                 if (value.constructor == Number){
-                    if (value.type == 'float'){
+                    if (value.type == FLOAT){
                         var num_behind = getNumOfNumberAfterDot(value.numer)
                         var denom = 1
                         for(var i = 0; i < num_behind; i++){
@@ -1128,7 +1152,7 @@ var toy = function(tree,env,module_name){
                         }
                         var numer = value.numer*denom
                         var rat = make_rat(numer,denom)
-                        return new Number(rat[0], rat[1], 'rational')
+                        return new Number(rat[0], rat[1], RATIONAL)
                     }
                     return value
                 }
@@ -1184,30 +1208,10 @@ var toy = function(tree,env,module_name){
                 return toy(cons(value , cdr(tree)),env,module_name)
             }
         }
-        else if (typeof(tree[0]) == 'number'){
-            // vector
-            if (tree[0] == 0){
-                var value_tree = tree[1]
-                var i = 0
-                while (i < value_tree.length){
-                    value_tree[i] = toy(value_tree[i],env,module_name)
-                    i = i + 1
-                }
-                return new Vector(tree[1])
-            }
-            // dict
-            else if (tree[0] == 1){
-                var value = tree[1]
-                for(var i in value){
-                    value[i] = toy(value[i], env, module_name)
-                }
-                return new Dict(value)
-            }
-        }
         else if (tree[0].constructor == Vector){
             // get index
             var index = toy(tree[1][0], env, module_name)
-            if (index.constructor!=Number || index.type!='int'){
+            if (index.constructor!=Number || index.type!=INT){
                 console.log("Error...invalid index type.")
                 return 'undefined'
             }
@@ -1215,28 +1219,28 @@ var toy = function(tree,env,module_name){
                 console.log("Error...index out of boundary")
                 return 'undefined'
             }
-            return tree[0].value[index.numer]
-        }
-        else if (tree[0].constructor == Dict){
-            // get value according to key
-            var key = tree[1][0]
-            var set_value = tree[1][1]
-            console.log(set_value)
-            var value;
-            if (typeof(key) == 'string' && key[0]==':'){
-            	if(set_value.length!=0){
-            		tree[0].value[key] = set_value[0]
-            		return
-            	}
-                value = tree[0].value[key]
+            // (x 0)
+            if(cdr(cdr(tree)).length == 0){
+                return tree[0].value[index.numer]
             }
             else{
-                var key = toy(tree[1][0], env, module_name)
-                if(set_value.length!=0){
-            		tree[0].value[key] = set_value[0]
-            		return
-            	}
-                value = tree[0].value[key]
+                var set_value  = toy(car(cdr(cdr(tree))), env, module_name)
+                tree[0].value[index.numer] = set_value
+                return set_value
+            }
+        }
+        // (x :a)
+        // (x :a 12)
+        else if (tree[0].constructor == Dict){
+            var key = toy(car(cdr(tree)), env, module_name)
+            // (x :a)
+            if (cdr(cdr(tree)).length == 0){
+                return tree[0].value[key]
+            }
+            else{
+                var set_value = toy(car(cdr(cdr(tree))), env, module_name)
+                tree[0].value[key] = set_value
+                return set_value
             }
             if(typeof(value)=='undefined')
                 return 'undefined'
@@ -1383,52 +1387,52 @@ var _add_ = function(num1,num2){
                 num1 = num1.value
             return num1+num2
         }
-        else if (num1.type == 'rational')
+        else if (num1.type == RATIONAL)
             return (num1.numer + "/" + num1.denom)+num2
         else 
             return num1.numer + num2
     }
-	if (num1.type == "float" || num2.type == "float")
-		return new Number(num1.numer/num1.denom + num2.numer/num2.denom, 1, 'float')
+	if (num1.type == FLOAT || num2.type == FLOAT)
+		return new Number(num1.numer/num1.denom + num2.numer/num2.denom, 1, FLOAT)
     // [numer, denom]
 	var rat = add_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
     if (rat[1] == 1)
-        return new Number(rat[0], 1, 'int')
+        return new Number(rat[0], 1, INT)
     else
-        return new Number(rat[0], rat[1], 'rational')
+        return new Number(rat[0], rat[1], RATIONAL)
 }
 //==== substruction ===
 var _sub_ = function(num1,num2){    
-    if (num1.type == "float" || num2.type == "float")
-        return new Number(num1.numer/num1.denom - num2.numer/num2.denom, 1, 'float')
+    if (num1.type == FLOAT || num2.type == FLOAT)
+        return new Number(num1.numer/num1.denom - num2.numer/num2.denom, 1, FLOAT)
     // [numer, denom]
     var rat = sub_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
     if (rat[1] == 1)
-        return new Number(rat[0], 1, 'int')
+        return new Number(rat[0], 1, INT)
     else
-        return new Number(rat[0], rat[1], 'rational')
+        return new Number(rat[0], rat[1], RATIONAL)
 }
 //==== Multplication ===
 var _mul_ = function(num1,num2){    
-    if (num1.type == "float" || num2.type == "float")
-        return new Number( (num1.numer/num1.denom) * (num2.numer/num2.denom), 1, 'float')
+    if (num1.type == FLOAT || num2.type == FLOAT)
+        return new Number( (num1.numer/num1.denom) * (num2.numer/num2.denom), 1, FLOAT)
     // [numer, denom]
     var rat = mul_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
     if (rat[1] == 1)
-        return new Number(rat[0], 1, 'int')
+        return new Number(rat[0], 1, INT)
     else
-        return new Number(rat[0], rat[1], 'rational')
+        return new Number(rat[0], rat[1], RATIONAL)
 }
 //==== Division ====
 var _div_ = function(num1,num2){    
-    if (num1.type == "float" || num2.type == "float")
-        return new Number((num1.numer/num1.denom) / (num2.numer/num2.denom), 1, 'float')
+    if (num1.type == FLOAT || num2.type == FLOAT)
+        return new Number((num1.numer/num1.denom) / (num2.numer/num2.denom), 1, FLOAT)
     // [numer, denom]
     var rat = div_rat([num1.numer,num1.denom], [num2.numer, num2.denom])
     if (rat[1] == 1)
-        return new Number(rat[0], 1, 'int')
+        return new Number(rat[0], 1, INT)
     else
-        return new Number(rat[0], rat[1], 'rational')
+        return new Number(rat[0], rat[1], RATIONAL)
 }
 // add array
 // eg [1,2,3]-> 6
@@ -1712,27 +1716,6 @@ var dealWith_string = function(input_str,result){
      return dealWith_string(input_str.slice(1),result+input_str[0])
 }
 
-// 12 -> Number(12,1,'int')
-// if its type is not Number
-// return itself
-var formatNumber = function(input_str){
-    var type = stringIsNumber(input_str)
-    if (type!=false){
-        var append_obj
-        if(type == "Integer"){
-            append_obj = new Number(parseInt(input_str), 1, 'int')
-        }
-        else if (type == "Float"){
-            append_obj = new Number(parseFloat(input_str), 1 ,'float')
-        }
-        else if (type == "Fraction"){
-            append_obj = new Number(parseInt(get_numerator(input_str)), parseInt(get_denominator(input_str)), 'rational')
-        }
-        return append_obj
-    }
-    return input_str
-}
-
 // ['a','b','c'] -> [1 2]
 var formatArrayString = function (arr){
     var output = "["
@@ -1743,7 +1726,7 @@ var formatArrayString = function (arr){
             output = output + ' ' + arr[i] + ','
         // number
         else if (arr[i].constructor == Number){
-            if (arr[i].type === 'rational')
+            if (arr[i].type === RATIONAL)
                 output = output + ' ' + (arr[i].numer + "/" + arr[i].denom) + ','
             else
                 output = output + ' ' + (arr[i].numer) + ','
@@ -1773,7 +1756,7 @@ var formatList = function (list){
         }
         // number
         else if (list.constructor ==  Number){
-            if (list.type == 'rational')
+            if (list.type == RATIONAL)
                 output = output + ' . ' + (list.numer + '/' + list.denom)
             else 
                 output = output + ' . ' + list.numer
@@ -1806,7 +1789,7 @@ var formatList = function (list){
         }
         // number
         else if (list[0].constructor == Number){
-            if (list[0].constructor === 'rational')
+            if (list[0].constructor === RATIONAL)
                 output = output + ' ' + (list[0].numer+"/"+list[0].denom)
             else
                 output = output + ' ' + list[0].numer
@@ -1850,7 +1833,7 @@ var formatDictString = function(value){
             output = output + ' ' + v + ','
         // number
         else if (v.constructor == Number){
-            if (v.constructor === 'rational')
+            if (v.constructor === RATIONAL)
                 output = output + ' ' + (v.numer+"/"+v.denom) + ','
             else
                 output = output + ' ' + v.numer + ','
@@ -1886,7 +1869,7 @@ var display = function(arg){
     }
     // fraction
     else if (arg.constructor == Number){
-        if (arg.type === 'rational')
+        if (arg.type === RATIONAL)
             console.log(arg.numer+"/"+arg.denom)    
         else 
             console.log(arg.numer)
@@ -1906,19 +1889,44 @@ var display = function(arg){
 var Tokenize_String = function(input_str){
     var output = []
     for(var i = 0; i < input_str.length; i++){
+        /*
+            Ignore space tab newline
+        */
         if (input_str[i]==' '||input_str[i]=='\t'||input_str[i]=='\n'){
             continue
         }
+        // meet array
+        else if (input_str[i] == '['){
+            output.push('(')
+            output.push('vector')
+        }
+        else if (input_str[i] == '{'){
+            output.push('(')
+            output.push('dictionary')
+        }
+        else if (input_str[i] == '}' || input_str[i] == ']'){
+            output.push(')')
+        }
+        /*
+            special token
+        */
         else if (input_str[i]=='('||input_str[i]==')'||
             input_str[i]=='['||input_str[i]==']'||
             input_str[i]=='{'||input_str[i]=='}'||
-            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','){
+            input_str[i]=='@'||input_str[i]=="'"||input_str[i]==','){ //||
             output.push(input_str[i])
         }
+        /*
+            Comment:
+                ;
+        */
         else if (input_str[i]==";"){ // comment
             while( i!=input_str.length && input_str[i]!='\n'){i++}
             continue
         }
+        /*
+            String
+        */
         else if (input_str[i]=='"'){ // string
             var start = i
             i = i + 1
@@ -1952,6 +1960,32 @@ var Tokenize_String = function(input_str){
 // parse string and generate linked list
 var ParseString = function(token_list){
     var rest;
+
+    // 12 -> Number(12,1,INT)
+    // if its type is not Number
+    // return itself
+    var formatSymbol = function(input_str){
+        var type = stringIsNumber(input_str)
+        if (type!=false){
+            var append_obj
+            if(type == INT){
+                append_obj = new Number(parseInt(input_str), 1, INT)
+            }
+            else if (type == FLOAT){
+                append_obj = new Number(parseFloat(input_str), 1 ,FLOAT)
+            }
+            else if (type == RATIONAL){
+                append_obj = new Number(parseInt(get_numerator(input_str)), parseInt(get_denominator(input_str)), RATIONAL)
+            }
+            return append_obj
+        }
+        // check :
+        if(input_str[0] == ":" && input_str.length>1){
+            return cons('quote',cons(input_str, []))
+        }
+        return input_str
+    }
+
     var parseList = function(token_list){
         if(token_list[0]==')'){ // finish
             rest = token_list.slice(1)
@@ -1977,11 +2011,11 @@ var ParseString = function(token_list){
                     return []
                 }
                 rest = token_list.slice(3)
-                return formatNumber(token_list[1])
+                return formatSymbol(token_list[1])
             }
         }
         else 
-            return cons(formatNumber(token_list[0]), parseList(token_list.slice(1)))
+            return cons(formatSymbol(token_list[0]), parseList(token_list.slice(1)))
     }
     // parse @ ' ,
     var parseSpecial = function(token_list, sign){
@@ -1994,105 +2028,17 @@ var ParseString = function(token_list){
             flag = 'unquote'
         if (token_list[0]=='(')
             return cons(flag, cons(parseList(token_list.slice(1))))
-        else if (token_list[0]=='[')
-            return cons(flag, cons(parseVector(token_list.slice(1))))
-        else if (token_list[0]=='{')
-            return cons(flag, cons(parseDictionary(token_list.slice(1))))
+        // else if (token_list[0]=='[')
+        //   return cons(flag, cons(parseVector(token_list.slice(1))))
+        // else if (token_list[0]=='{')
+        //    return cons(flag, cons(parseDictionary(token_list.slice(1))))
         else{
             rest = token_list.slice(1)
-            return cons(flag, cons(formatNumber(token_list[0]), []))
+            return cons(flag, cons(formatSymbol(token_list[0]), []))
         }
     }
-    var parseVector = function(token_list){
-        var parseVector_iter = function(token_list, output){
-            // finish
-            if (token_list[0]==']'){
-                rest = token_list.slice(1)
-                return output
-            }
-            else if (token_list[0]=='['){
-                output.push(parseVector(token_list.slice(1)))
-                return parseVector_iter(rest, output)
-            }
-            else if (token_list[0]=='('){
-                output.push(parseList(token_list.slice(1)))
-                return parseVector_iter(rest, output)
-            }
-            else if (token_list[0]=='{'){
-                output.push(parseDictionary(token_list.slice(1)))
-                return parseVector_iter(rest, output)
-            }
-            else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
-                output.push(parseSpecial(token_list.slice(1), token_list[0]))
-                return parseVector_iter(rest, output)
-            }
-            else{
-                output.push(formatNumber(token_list[0]))
-                return parseVector_iter(token_list.slice(1), output)
-            }
-        }
-        return [0, parseVector_iter(token_list, [])]
-    }
-    var parseDictionary = function(token_list){
-        var parseDictionary_iter = function(token_list, output, is_key, key){
-            // finish
-            if (token_list[0]=='}'){
-                rest = token_list.slice(1)
-                return output
-            }
-            else if (token_list[0]=='{'){
-                if (is_key){
-                    console.log("Error...invalid key")
-                    return output
-                }
-                else{
-                    output[key] = ParseString_iter(token_list.slice(1), {}, false, "")
-                    return parseDictionary_iter(rest, output, true, key)
-                }
-            }
-            else if (token_list[0]=='['){
-                if (is_key){
-                    console.log("Error...invalid key")
-                    return output
-                }
-                else{
-                    output[key] = parseVector(token_list.slice(1))
-                    return parseDictionary_iter(rest, output, true, key)
-                }
-            }
-            else if (token_list[0]=='('){
-                if (is_key){
-                    console.log("Error...invalid key")
-                    return output
-                }
-                else{
-                    output[key] = parseList(token_list.slice(1))
-                    return parseDictionary_iter(rest, output, true, key)
-                }
-            }
-            // quasiquote quote unquote
-            else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
-                if (is_key){
-                    console.log("Error...invalid key")
-                    return output
-                }
-                else{
-                    output[key] = parseSpecial(token_list.slice(1), token_list[0])
-                    return parseDictionary_iter(rest, output, true, key)
-                }          
-            }
-            else{
-                if(is_key){
-                    return parseDictionary_iter(token_list.slice(1), output, false, token_list[0])
-                }
-                else{
-                    output[key] = formatNumber(token_list[0])
-                    return parseDictionary_iter(token_list.slice(1), output, true, key)
-                }
-            }
-        }
-        return [1, parseDictionary_iter(token_list, {}, true, "")]
-    }
+
+
     var ParseString_iter = function(token_list){
         // finish
         if(token_list.length == 0)
@@ -2101,21 +2047,13 @@ var ParseString = function(token_list){
         if(token_list[0]=='('){
             return cons(parseList(token_list.slice(1)), ParseString_iter(rest))
         }
-        // vector
-        else if (token_list[0]=='['){
-            return cons(parseVector(token_list.slice(1)), ParseString_iter(rest))
-        }
-        // dictionary
-        else if (token_list[0]=='{'){
-            return cons(parseDictionary(token_list.slice(1)), ParseString_iter(rest))
-        }
         // quasiquote quote unquote
         else if (token_list[0]=='@'||token_list[0]=="'"||token_list[0]==','){
             return cons(parseSpecial(token_list.slice(1), token_list[0]), ParseString_iter(rest))
         }
         // atom
         else{
-            return cons(formatNumber(token_list[0]), ParseString_iter(token_list.slice(1)))
+            return cons(formatSymbol(token_list[0]), ParseString_iter(token_list.slice(1)))
         }
     }
     return ParseString_iter(token_list)
