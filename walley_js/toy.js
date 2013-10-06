@@ -342,6 +342,11 @@ var Dict = function(value){
     this.value = value
 }
 
+var Func = function(content, closure_env){
+    this.content = content
+    this.closure_env = closure_env
+}
+
 /*
     TOY DATA TYPE
 
@@ -599,8 +604,17 @@ var toy = function(tree,env,module_name){
                 env.pop()
                 return return_value
             }
-            else if (tree[0]=="lambda"){
-                return tree
+            /*
+                Procedure
+            */
+            else if (tree[0]=="lambda"){ 
+                var content = tree;
+                var closure_env = {};
+                if(env.length!=1){
+                    closure_env = env[env.length - 1]
+                }
+                return new Func(content, closure_env)
+                // return tree
             }
                 /*
 
@@ -1206,7 +1220,44 @@ var toy = function(tree,env,module_name){
                 return 'undefined'
             return value
         }
-
+        // call function
+        else if (tree[0].constructor == Func){
+            var content = tree[0].content
+            var closure_env = tree[0].closure_env
+            // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
+            var pair_params = function(names,params,env,module_name,output){
+                if (names.length==0)
+                    return output
+                // calculate params
+                else if (names[0]=="."){
+                    output[names[1][0]] =  evlis(params,env,module_name)
+                    return output
+                }
+                // lazy and does not calculate params
+                else if (names[0]=="&"){
+                    output[names[1][0]] = params
+                    return output
+                }
+                else{               
+                    // add undefined support when there are not enough inputs
+                    if (params.length == 0){
+                        output[names[0]] = 'undefined'
+                        return pair_params(cdr(names),[],env,module_name,output)
+                    }
+                    output[names[0]] = toy(params[0],env,module_name)
+                    return pair_params(cdr(names) , cdr(params) , env , module_name, output)
+                }
+            }
+            // add local env
+            var output = pair_params(car(cdr(content)), cdr(tree), env, module_name, closure_env)
+            env.push(output)
+            
+            var stms = cons('begin', cdr(cdr(content)))
+            var return_value = toy(stms, env , module_name)
+            // delete 新加入的 env
+            env.pop()
+            return return_value
+        }
         else{
             /*
                 (
@@ -1215,6 +1266,7 @@ var toy = function(tree,env,module_name){
                     )
 
             */
+            /*
             if (tree[0][0]=="lambda"){
                 // ["a","b"] ["1","2"] according to env_list -> [["a","1"],["b","2"]]
                 var pair_params = function(names,params,env,module_name,output){
@@ -1249,7 +1301,7 @@ var toy = function(tree,env,module_name){
                 // delete 新加入的 env
                 env.pop()
                 return return_value
-            }
+            } */
             /* macro
             
 ((macro (x) (quasiquote (* (unquote x) (unquote x)))) 3)
@@ -1259,7 +1311,7 @@ var toy = function(tree,env,module_name){
                 -> 9
 
             */
-            else if (tree[0][0]=="macro"){
+            if (tree[0][0]=="macro"){
                 var to_run = macroexpand(tree,env,module_name)
                 return toy(to_run,env,module_name)
             }
@@ -1697,6 +1749,9 @@ var formatArrayString = function (arr){
         // dict
         else if (arr[i].constructor == Dict)
             output = output + ' ' + formatDictString(arr[i].value) + ','
+        // func
+        else if (arr[i].constructor == Func)
+            output = output + ' ' + formatList(arr[i].content) + ','
         // list
         else
             output = output + ' ' + formatList(arr[i]) + ','
@@ -1732,6 +1787,11 @@ var formatList = function (list){
             output = output + formatDictString(list.value)
             break
         }
+        // function
+        else if (list.constructor == Func){
+            output = output + formatList( list.content )
+            break
+        }
         if(list.length == 0)
             break
         // atom
@@ -1752,6 +1812,10 @@ var formatList = function (list){
         // dict
         else if (list[0].constructor == Dict)
             output = output + ' ' + formatDictString(list[0].value)
+        // func
+        else if (list[0].constructor == Func){
+            output = output + ' ' + formatList(list[0].content)
+        }
         // list
         else{
             // list
@@ -1788,6 +1852,9 @@ var formatDictString = function(value){
         // dict
         else if (v.constructor == Dict)
             output = output + ' ' + formatDictString(v.value) + ','
+        // func
+        else if (v.constructor == Func)
+            output = output + ' ' + formatDictString(v.content) + 'm'
         // list
         else
             output = output + ' ' + formatList(v) + ','
