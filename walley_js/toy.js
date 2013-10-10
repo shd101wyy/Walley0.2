@@ -1928,7 +1928,7 @@ var ParseString = function(token_list){
         else 
             flag = 'unquote'
         if (token_list[0]=='(')
-            return cons(flag, cons(parseList(token_list.slice(1))))
+            return cons(flag, cons(parseList(token_list.slice(1), [])))
         // else if (token_list[0]=='[')
         //   return cons(flag, cons(parseVector(token_list.slice(1))))
         // else if (token_list[0]=='{')
